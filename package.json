@@ -1,0 +1,24 @@
+{
+  "name": "whippe",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Whippe — AIT internal intern management platform",
+  "scripts": {
+    "dev:api": "pnpm --filter @whippe/api dev",
+    "dev:web": "pnpm --filter @whippe/web dev",
+    "dev:pwa": "pnpm --filter @whippe/intern-pwa dev",
+    "build:api": "pnpm --filter @whippe/api build",
+    "build:web": "pnpm --filter @whippe/web build",
+    "build:pwa": "pnpm --filter @whippe/intern-pwa build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r exec rm -rf .next dist node_modules/.cache"
+  },
+  "devDependencies": {
+    "typescript": "5.5.4"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

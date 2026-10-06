@@ -1,0 +1,9 @@
+/**
+ * features/
+ *
+ * Feature folders are created when the corresponding feature phase begins.
+ * Each feature folder contains its own components, hooks, API functions,
+ * and types scoped to that domain.
+ *
+ * See 04-WHIPPE-PROJECT-STRUCTURE.md §7 for the convention.
+ */
