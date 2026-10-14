@@ -85,6 +85,21 @@ export interface InternsListParams {
   supervisor?: string;
 }
 
+// ─── Exit / Completion ────────────────────────────────────────────────────────
+
+export interface ExitChecklistItem {
+  label: string;
+  passed: boolean;
+  detail?: string;
+}
+
+export interface ExitChecklist {
+  internId: string;
+  internName: string;
+  canComplete: boolean;
+  items: ExitChecklistItem[];
+}
+
 // ─── Attendance ───────────────────────────────────────────────────────────────
 
 export type AttendanceStatus  = "ACCEPTED" | "FLAGGED" | "REJECTED";
