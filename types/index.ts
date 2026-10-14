@@ -85,6 +85,63 @@ export interface InternsListParams {
   supervisor?: string;
 }
 
+// ─── Departments ──────────────────────────────────────────────────────────────
+
+export type Subsidiary = "AIT" | "Raypower" | "Faaji" | "Corporate";
+
+export interface DepartmentObject {
+  _id: string;
+  name: string;
+  subsidiary?: Subsidiary;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDepartmentInput {
+  name: string;
+  subsidiary?: Subsidiary;
+  description?: string;
+}
+
+export interface UpdateDepartmentInput {
+  name?: string;
+  subsidiary?: Subsidiary;
+  description?: string;
+  isActive?: boolean;
+}
+
+// ─── Supervisors ──────────────────────────────────────────────────────────────
+
+export interface SupervisorObject {
+  _id: string;
+  user?: { _id: string; email: string };
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  department?: { _id: string; name: string; subsidiary?: string } | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSupervisorInput {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  department?: string;
+}
+
+export interface UpdateSupervisorInput {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  department?: string;
+  isActive?: boolean;
+}
+
 // ─── API responses ────────────────────────────────────────────────────────────
 
 export interface ApiResponse<T> {

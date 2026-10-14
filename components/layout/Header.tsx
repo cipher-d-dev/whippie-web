@@ -13,6 +13,7 @@ function getPageTitle(pathname: string): string {
   const titles: Record<string, string> = {
     dashboard:   "Dashboard",
     interns:     "Interns",
+    departments: "Departments",
     onboarding:  "Onboarding",
     attendance:  "Attendance",
     tasks:       "Tasks",

@@ -15,6 +15,7 @@ import {
   DoorOpen,
   LogOut,
   ChevronRight,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/context";
@@ -32,6 +33,7 @@ interface NavItem {
 const hrNav: NavItem[] = [
   { label: "Dashboard",       href: "/dashboard",    icon: LayoutDashboard },
   { label: "Interns",         href: "/interns",      icon: Users },
+  { label: "Departments",     href: "/departments",  icon: Building2 },
   { label: "Onboarding",      href: "/onboarding",   icon: ClipboardCheck },
   { label: "Attendance",      href: "/attendance",   icon: CalendarDays },
   { label: "Tasks",           href: "/tasks",        icon: CheckSquare },
