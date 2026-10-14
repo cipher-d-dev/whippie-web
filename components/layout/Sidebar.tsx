@@ -16,6 +16,7 @@ import {
   LogOut,
   ChevronRight,
   Building2,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/context";
@@ -41,15 +42,17 @@ const hrNav: NavItem[] = [
   { label: "Supervisors",     href: "/supervisors",  icon: UserCog },
   { label: "Documents",       href: "/documents",    icon: FolderOpen },
   { label: "Evaluations",     href: "/evaluations",  icon: Star },
-  { label: "Exit",            href: "/exit",         icon: DoorOpen },
+  { label: "Exit",            href: "/exit",          icon: DoorOpen },
+  { label: "Notifications",   href: "/notifications",  icon: Bell },
 ];
 
 const supervisorNav: NavItem[] = [
-  { label: "Dashboard",       href: "/dashboard",    icon: LayoutDashboard },
-  { label: "My Interns",      href: "/interns",      icon: Users },
-  { label: "Tasks",           href: "/tasks",        icon: CheckSquare },
-  { label: "Reports",         href: "/reports",      icon: FileText },
-  { label: "Evaluations",     href: "/evaluations",  icon: Star },
+  { label: "Dashboard",       href: "/dashboard",     icon: LayoutDashboard },
+  { label: "My Interns",      href: "/interns",       icon: Users },
+  { label: "Tasks",           href: "/tasks",         icon: CheckSquare },
+  { label: "Reports",         href: "/reports",       icon: FileText },
+  { label: "Evaluations",     href: "/evaluations",   icon: Star },
+  { label: "Notifications",   href: "/notifications", icon: Bell },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────

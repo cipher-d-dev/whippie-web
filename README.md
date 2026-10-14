@@ -144,7 +144,7 @@ All data comes from `whippie-api`. See [`../whippie-api/docs/API-CONTRACT.md`](.
 | 8 | Attendance monitoring | ✅ Done |
 | 9 | Internship exit & completion | ✅ Done |
 | 10 | Document generation | — |
-| 11 | Notifications | 🔜 Next |
-| 12 | Security & hardening | — |
+| 11 | Notifications | ✅ Done |
+| 12 | Security & hardening | 🔜 Next |
 | 13 | HR dashboard refinement | — |
 | 14 | Optional AI | — |

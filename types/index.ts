@@ -85,6 +85,30 @@ export interface InternsListParams {
   supervisor?: string;
 }
 
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export type NotificationType =
+  | "ACCOUNT_APPROVED"
+  | "ACCOUNT_REJECTED"
+  | "SUPERVISOR_ASSIGNED"
+  | "TASK_ASSIGNED"
+  | "TASK_FEEDBACK"
+  | "SUBMISSION_APPROVED"
+  | "SUBMISSION_CHANGES_REQUESTED"
+  | "EVALUATION_SUBMITTED"
+  | "DOCUMENT_STATUS_CHANGED"
+  | "REPORT_REVIEWED";
+
+export interface NotificationObject {
+  _id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  read: boolean;
+  relatedEntity?: { kind: string; id: string } | null;
+  createdAt: string;
+}
+
 // ─── Exit / Completion ────────────────────────────────────────────────────────
 
 export interface ExitChecklistItem {
