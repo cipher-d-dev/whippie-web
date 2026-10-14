@@ -137,8 +137,8 @@ All data comes from `whippie-api`. See [`../whippie-api/docs/API-CONTRACT.md`](.
 | 1 | Authentication — login, auth context, route protection, shadcn/ui | ✅ Done |
 | 2 | Intern records — list, create, detail, edit | ✅ Done |
 | 3 | Departments, supervisors & assignments | ✅ Done |
-| 4 | Onboarding & documents | 🔜 Next |
-| 5 | Supervisor workspace | — |
+| 4 | Onboarding & documents | ✅ Done |
+| 5 | Supervisor workspace | 🔜 Next |
 | 6 | Tasks & submissions | — |
 | 7 | Reports & evaluations | — |
 | 8 | Attendance monitoring | — |

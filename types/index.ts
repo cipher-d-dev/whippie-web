@@ -85,6 +85,64 @@ export interface InternsListParams {
   supervisor?: string;
 }
 
+// ─── Documents ────────────────────────────────────────────────────────────────
+
+export type DocumentType =
+  | "ACCEPTANCE_LETTER"
+  | "GUARANTOR_FORM"
+  | "IDENTIFICATION"
+  | "SCHOOL_LETTER"
+  | "NYSC_CALL_UP"
+  | "REPORT"
+  | "EVALUATION"
+  | "EXIT_DOCUMENT"
+  | "OTHER";
+
+export type DocumentStatus =
+  | "PENDING"
+  | "DIGITAL_RECEIVED"
+  | "PHYSICAL_RECEIVED"
+  | "VERIFIED"
+  | "REJECTED";
+
+export interface RequirementObject {
+  _id: string;
+  type: DocumentType;
+  label: string;
+  description?: string;
+  isRequired: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DocumentObject {
+  _id: string;
+  intern: { _id: string; firstName: string; lastName: string } | string;
+  requirement: RequirementObject | string;
+  status: DocumentStatus;
+  originalFilename?: string;
+  contentType?: string;
+  fileSizeBytes?: number;
+  rejectionReason?: string;
+  notes?: string;
+  reviewedBy?: { _id: string; firstName?: string; lastName?: string } | string;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChecklistItem {
+  requirement: RequirementObject;
+  document: Pick<DocumentObject, "_id" | "status"> | null;
+}
+
+export interface UploadInfo {
+  endpoint: string;
+  projectId: string;
+  bucketId: string;
+  fileId: string;
+}
+
 // ─── Departments ──────────────────────────────────────────────────────────────
 
 export type Subsidiary = "AIT" | "Raypower" | "Faaji" | "Corporate";
