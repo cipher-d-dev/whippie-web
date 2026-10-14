@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useTasks } from "@/features/tasks/hooks";
+import { useAttendance } from "@/features/attendance/hooks";
 import { Separator } from "@/components/ui/separator";
 import type { InternshipStatus } from "@/types";
 
@@ -73,6 +74,9 @@ function HRDashboard({ firstName }: { firstName: string }) {
   const { data: activeInterns }     = useInterns({ status: "ACTIVE",     limit: 1 });
   const { data: onboardingInterns } = useInterns({ status: "ONBOARDING", limit: 5 });
 
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const { data: todayAttendance } = useAttendance({ date: todayISO, checkType: "CHECK_IN", limit: 1 });
+
   const total      = allInterns?.total ?? 0;
   const active     = activeInterns?.total ?? 0;
   const onboarding = onboardingInterns?.total ?? 0;
@@ -117,11 +121,12 @@ function HRDashboard({ firstName }: { firstName: string }) {
           accent="bg-amber-500"
         />
         <StatCard
-          label="Attendance"
-          value="—"
-          description="Available in Phase 8"
+          label="Attendance today"
+          value={todayAttendance?.total ?? "—"}
+          description="Check-ins recorded"
           icon={CalendarDays}
-          accent="bg-slate-400"
+          href="/attendance"
+          accent="bg-blue-500"
         />
       </div>
 

@@ -85,6 +85,29 @@ export interface InternsListParams {
   supervisor?: string;
 }
 
+// ─── Attendance ───────────────────────────────────────────────────────────────
+
+export type AttendanceStatus  = "ACCEPTED" | "FLAGGED" | "REJECTED";
+export type AttendanceCheckType = "CHECK_IN" | "CHECK_OUT";
+
+export interface AttendanceObject {
+  _id: string;
+  intern: { _id: string; firstName: string; lastName: string } | string;
+  date: string;
+  checkType: AttendanceCheckType;
+  status: AttendanceStatus;
+  submittedAt: string;
+  distanceFromOffice?: number;
+  withinGeofence?: boolean;
+  locationAccuracy?: number;
+  flagReasons?: string[];
+  correctionNote?: string;
+  correctedBy?: string;
+  correctedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Reports ──────────────────────────────────────────────────────────────────
 
 export type ReportType   = "DAILY" | "WEEKLY";
