@@ -16,6 +16,7 @@ import { useSupervisorMe, useSupervisorInterns } from "@/features/supervisors/ho
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useTasks } from "@/features/tasks/hooks";
 import { Separator } from "@/components/ui/separator";
 import type { InternshipStatus } from "@/types";
 
@@ -190,7 +191,9 @@ function SupervisorDashboard({ firstName }: { firstName: string }) {
 
   const interns       = internsData?.data?.interns ?? [];
   const activeCount   = interns.filter((i) => i.status === "ACTIVE").length;
-  const pendingTasks  = "—"; // wired in Phase 6
+
+  const { data: submittedTasksData } = useTasks({ status: "SUBMITTED", limit: 1 });
+  const pendingTasks = submittedTasksData?.total ?? "—";
 
   return (
     <div className="space-y-8">
@@ -223,9 +226,10 @@ function SupervisorDashboard({ firstName }: { firstName: string }) {
         <StatCard
           label="Pending tasks"
           value={pendingTasks}
-          description="Available in Phase 6"
+          description="Submissions to review"
           icon={Clock}
-          accent="bg-slate-400"
+          href="/tasks"
+          accent="bg-amber-500"
         />
       </div>
 

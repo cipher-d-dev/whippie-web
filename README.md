@@ -139,8 +139,8 @@ All data comes from `whippie-api`. See [`../whippie-api/docs/API-CONTRACT.md`](.
 | 3 | Departments, supervisors & assignments | ✅ Done |
 | 4 | Onboarding & documents | ✅ Done |
 | 5 | Supervisor workspace | ✅ Done |
-| 6 | Tasks & submissions | 🔜 Next |
-| 7 | Reports & evaluations | — |
+| 6 | Tasks & submissions | ✅ Done |
+| 7 | Reports & evaluations | 🔜 Next |
 | 8 | Attendance monitoring | — |
 | 9 | Internship exit & completion | — |
 | 10 | Document generation | — |

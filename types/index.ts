@@ -85,6 +85,62 @@ export interface InternsListParams {
   supervisor?: string;
 }
 
+// ─── Tasks ────────────────────────────────────────────────────────────────────
+
+export type TaskStatus =
+  | "TODO"
+  | "IN_PROGRESS"
+  | "SUBMITTED"
+  | "CHANGES_REQUESTED"
+  | "COMPLETED";
+
+export interface TaskObject {
+  _id: string;
+  title: string;
+  description: string;
+  intern: { _id: string; firstName: string; lastName: string } | string;
+  supervisor: { _id: string; firstName: string; lastName: string } | string | null;
+  createdBy: string;
+  status: TaskStatus;
+  deadline?: string;
+  feedback?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTaskInput {
+  title: string;
+  description: string;
+  internId: string;
+  deadline?: string;
+}
+
+export interface UpdateTaskInput {
+  title?: string;
+  description?: string;
+  deadline?: string;
+  status?: TaskStatus;
+  feedback?: string;
+}
+
+// ─── Submissions ──────────────────────────────────────────────────────────────
+
+export type SubmissionStatus = "PENDING_REVIEW" | "APPROVED" | "CHANGES_REQUESTED";
+
+export interface SubmissionObject {
+  _id: string;
+  task: string;
+  intern: { _id: string; firstName: string; lastName: string } | string;
+  content: string;
+  status: SubmissionStatus;
+  feedback?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Documents ────────────────────────────────────────────────────────────────
 
 export type DocumentType =
