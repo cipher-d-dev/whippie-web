@@ -85,6 +85,51 @@ export interface InternsListParams {
   supervisor?: string;
 }
 
+// ─── Reports ──────────────────────────────────────────────────────────────────
+
+export type ReportType   = "DAILY" | "WEEKLY";
+export type ReportStatus = "DRAFT" | "SUBMITTED" | "REVIEWED";
+
+export interface ReportObject {
+  _id: string;
+  type: ReportType;
+  title: string;
+  content: string;
+  status: ReportStatus;
+  periodStart?: string;
+  periodEnd?: string;
+  intern: { _id: string; firstName: string; lastName: string } | string;
+  reviewedBy?: { _id: string; firstName?: string; lastName?: string } | string;
+  reviewedAt?: string;
+  feedback?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Evaluations ──────────────────────────────────────────────────────────────
+
+export type EvaluationStatus = "DRAFT" | "SUBMITTED";
+
+export interface EvaluationScores {
+  workQuality:       number;
+  reliability:       number;
+  communication:     number;
+  learningProgress:  number;
+  professionalism:   number;
+}
+
+export interface EvaluationObject {
+  _id: string;
+  intern: { _id: string; firstName: string; lastName: string } | string;
+  supervisor: { _id: string; firstName: string; lastName: string } | string;
+  status: EvaluationStatus;
+  scores: EvaluationScores;
+  comments: string;
+  submittedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
 export type TaskStatus =
