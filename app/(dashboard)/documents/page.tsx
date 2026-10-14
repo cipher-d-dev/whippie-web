@@ -8,6 +8,7 @@ import {
   XCircle,
   AlertCircle,
   Upload,
+  FileText,
 } from "lucide-react";
 import { useDocuments } from "@/features/documents/hooks";
 import { Badge } from "@/components/ui/badge";
@@ -110,9 +111,17 @@ export default function DocumentsPage() {
             )}
           </p>
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/onboarding">View by intern</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/onboarding">View by intern</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/documents/generate">
+              <FileText className="mr-2 h-4 w-4" />
+              Generate docs
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
