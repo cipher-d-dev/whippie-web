@@ -135,8 +135,8 @@ All data comes from `whippie-api`. See [`../whippie-api/docs/API-CONTRACT.md`](.
 |---|---|---|
 | 0 | Scaffold — Next.js, Tailwind, TanStack Query, app shell | ✅ Done |
 | 1 | Authentication — login, auth context, route protection, shadcn/ui | ✅ Done |
-| 2 | Intern records | 🔜 Next |
-| 3 | Departments, supervisors & assignments | — |
+| 2 | Intern records — list, create, detail, edit | ✅ Done |
+| 3 | Departments, supervisors & assignments | 🔜 Next |
 | 4 | Onboarding & documents | — |
 | 5 | Supervisor workspace | — |
 | 6 | Tasks & submissions | — |
