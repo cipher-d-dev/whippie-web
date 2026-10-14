@@ -167,7 +167,7 @@ GET /health
 
 ## Objective
 
-Establish real authentication and the account lifecycle that connects AIT's physical screening process to Whippe.
+Establish real authentication and the account lifecycle that connects DAAR Communications' physical screening process to Whippe.
 
 This phase must distinguish:
 
@@ -178,9 +178,9 @@ This phase must distinguish:
 
 ## Physical Screening Context
 
-The intern completes AIT's physical screening before creating a Whippe account. Whippe does not replace physical screening.
+The intern completes DAAR Communications' physical screening before creating a Whippe account. Whippe does not replace physical screening.
 
-The system must have enough information to associate the new account with the appropriate screened intern/screening record. The exact matching identifier must be confirmed with AIT rather than invented by the agent.
+HR verifies accounts by visually matching the intern's name and email against the screened intern list at their desk. No formal screening reference number or additional identifier is required.
 
 ## Backend Modules
 
@@ -233,7 +233,7 @@ ACTIVE
 COMPLETED
 ```
 
-The final values must reflect AIT's confirmed process.
+The final values must reflect DAAR Communications' confirmed process.
 
 ## Signup Paths
 
@@ -257,7 +257,7 @@ Whippe account created
 PENDING_HR_VERIFICATION
 ```
 
-Google authentication does **not** automatically verify the account with AIT.
+Google authentication does **not** automatically verify the account with DAAR Communications.
 
 ## Pending Account
 
@@ -350,7 +350,7 @@ The backend must enforce:
 
 - only HR/Admin can approve
 - clients cannot self-approve
-- Google identity is not AIT verification
+- Google identity is not DAAR Communications verification
 - pending users cannot access active-intern APIs
 - expired pending accounts cannot continue as active users
 - approval/rejection is auditable
@@ -612,7 +612,7 @@ HR can assign a supervisor and that supervisor can see the assigned intern.
 
 ## Objective
 
-Digitally track onboarding while supporting AIT's paper process.
+Digitally track onboarding while supporting DAAR Communications' paper process.
 
 ## Backend Modules
 
@@ -905,7 +905,7 @@ Potential categories:
 - learning/progress
 - professionalism
 
-Exact criteria should be confirmed with AIT before finalising.
+Exact criteria should be confirmed with DAAR Communications before finalising.
 
 ## Web
 
@@ -1089,7 +1089,7 @@ Reduce repetitive document preparation.
 
 ## Build
 
-Only after AIT confirms actual templates/requirements.
+Only after DAAR Communications confirms actual templates/requirements.
 
 Potential documents:
 
@@ -1114,9 +1114,9 @@ Add:
 
 ## Important
 
-Do not invent official AIT document wording.
+Do not invent official DAAR Communications document wording.
 
-Templates must come from approved AIT content.
+Templates must come from approved DAAR Communications content.
 
 ## Definition of Done
 

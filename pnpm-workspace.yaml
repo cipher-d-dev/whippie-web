@@ -1,8 +1,0 @@
-packages:
-  - "apps/*"
-  - "packages/*"
-
-# Allow native build scripts for these packages (required by Next.js / Tailwind).
-onlyBuiltDependencies:
-  - esbuild
-  - unrs-resolver
