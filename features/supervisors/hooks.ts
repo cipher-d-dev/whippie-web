@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import {
   listSupervisors,
   getSupervisor,
+  getSupervisorMe,
   getSupervisorInterns,
   createSupervisor,
   updateSupervisor,
@@ -16,10 +17,18 @@ import type { CreateSupervisorInput, UpdateSupervisorInput } from "@/types";
 
 export const supervisorKeys = {
   all:    () => ["supervisors"] as const,
+  me:     () => ["supervisors", "me"] as const,
   list:   (p?: object) => ["supervisors", "list", p ?? {}] as const,
   detail: (id: string) => ["supervisors", "detail", id] as const,
   interns:(id: string) => ["supervisors", "interns", id] as const,
 };
+
+export function useSupervisorMe() {
+  return useQuery({
+    queryKey: supervisorKeys.me(),
+    queryFn:  getSupervisorMe,
+  });
+}
 
 export function useSupervisors(params?: {
   page?: number;

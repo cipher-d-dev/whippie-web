@@ -11,6 +11,10 @@ import type {
 const BASE = "/api/v1/supervisors";
 const INTERNS_BASE = "/api/v1/interns";
 
+export async function getSupervisorMe(): Promise<ApiResponse<{ supervisor: SupervisorObject }>> {
+  return apiGet<ApiResponse<{ supervisor: SupervisorObject }>>(`${BASE}/me`);
+}
+
 export async function listSupervisors(params: {
   page?: number;
   limit?: number;

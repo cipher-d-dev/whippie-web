@@ -11,16 +11,17 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace("/login");
-    }
-  }, [isLoading, isAuthenticated, router]);
+    if (isLoading) return;
+    // Not logged in → login page
+    if (!isAuthenticated) { router.replace("/login"); return; }
+    // Intern role has no web dashboard — redirect to login
+    if (user?.role === "INTERN") { router.replace("/login"); return; }
+  }, [isLoading, isAuthenticated, user, router]);
 
-  // While the silent refresh runs, show a full-screen spinner
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -29,10 +30,7 @@ export default function DashboardLayout({
     );
   }
 
-  // Not authenticated — render nothing while the redirect fires
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated || user?.role === "INTERN") return null;
 
   return <AppShell>{children}</AppShell>;
 }

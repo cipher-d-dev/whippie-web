@@ -138,8 +138,8 @@ All data comes from `whippie-api`. See [`../whippie-api/docs/API-CONTRACT.md`](.
 | 2 | Intern records — list, create, detail, edit | ✅ Done |
 | 3 | Departments, supervisors & assignments | ✅ Done |
 | 4 | Onboarding & documents | ✅ Done |
-| 5 | Supervisor workspace | 🔜 Next |
-| 6 | Tasks & submissions | — |
+| 5 | Supervisor workspace | ✅ Done |
+| 6 | Tasks & submissions | 🔜 Next |
 | 7 | Reports & evaluations | — |
 | 8 | Attendance monitoring | — |
 | 9 | Internship exit & completion | — |
