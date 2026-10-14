@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,7 +36,14 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
+
+  // Redirect loop guard — already logged in
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),

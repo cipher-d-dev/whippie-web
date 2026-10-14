@@ -4,57 +4,28 @@ import { useState } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { useInterns } from "@/features/interns/hooks";
+import { TableSkeleton } from "@/components/shared/Skeletons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import type { InternshipStatus, InternshipType } from "@/types";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const STATUS_LABELS: Record<InternshipStatus, string> = {
-  SCREENED:   "Screened",
-  ONBOARDING: "Onboarding",
-  ACTIVE:     "Active",
-  COMPLETED:  "Completed",
+  SCREENED: "Screened", ONBOARDING: "Onboarding", ACTIVE: "Active", COMPLETED: "Completed",
 };
-
-const STATUS_VARIANT: Record<
-  InternshipStatus,
-  "default" | "secondary" | "outline" | "destructive"
-> = {
-  SCREENED:   "outline",
-  ONBOARDING: "secondary",
-  ACTIVE:     "default",
-  COMPLETED:  "secondary",
+const STATUS_VARIANT: Record<InternshipStatus, "default" | "secondary" | "outline"> = {
+  SCREENED: "outline", ONBOARDING: "secondary", ACTIVE: "default", COMPLETED: "secondary",
 };
-
-function formatDate(iso?: string) {
+function fmt(iso?: string) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
-
-const PAGE_SIZE = 20;
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function InternsPage() {
   const [search, setSearch]               = useState("");
@@ -63,26 +34,19 @@ export default function InternsPage() {
   const [internshipType, setType]         = useState<InternshipType | "ALL">("ALL");
   const [page, setPage]                   = useState(1);
 
-  // Simple debounce via a timeout ref
   const handleSearch = (value: string) => {
     setSearch(value);
     setPage(1);
     clearTimeout((handleSearch as { _t?: ReturnType<typeof setTimeout> })._t);
-    (handleSearch as { _t?: ReturnType<typeof setTimeout> })._t = setTimeout(
-      () => setDebounced(value),
-      350
-    );
+    (handleSearch as { _t?: ReturnType<typeof setTimeout> })._t = setTimeout(() => setDebounced(value), 350);
   };
 
-  const params = {
-    page,
-    limit: PAGE_SIZE,
+  const { data, isLoading, isError } = useInterns({
+    page, limit: 20,
     ...(debouncedSearch          && { search: debouncedSearch }),
     ...(status !== "ALL"         && { status }),
     ...(internshipType !== "ALL" && { internshipType }),
-  };
-
-  const { data, isLoading, isError } = useInterns(params);
+  });
 
   const interns    = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
@@ -90,43 +54,24 @@ export default function InternsPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header row */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">Interns</h2>
-          {!isLoading && (
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {total} record{total !== 1 ? "s" : ""}
-            </p>
-          )}
+          {!isLoading && <p className="mt-0.5 text-sm text-muted-foreground">{total} record{total !== 1 ? "s" : ""}</p>}
         </div>
         <Button asChild>
-          <Link href="/interns/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add intern
-          </Link>
+          <Link href="/interns/new"><Plus className="mr-2 h-4 w-4" />Add intern</Link>
         </Button>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, institution or course…"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-9"
-          />
+          <Input placeholder="Search by name, institution or course…" value={search}
+            onChange={(e) => handleSearch(e.target.value)} className="pl-9" aria-label="Search interns" />
         </div>
-
-        <Select
-          value={status}
-          onValueChange={(v) => { setStatus(v as InternshipStatus | "ALL"); setPage(1); }}
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
+        <Select value={status} onValueChange={(v) => { setStatus(v as InternshipStatus | "ALL"); setPage(1); }}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All statuses</SelectItem>
             <SelectItem value="SCREENED">Screened</SelectItem>
@@ -135,14 +80,8 @@ export default function InternsPage() {
             <SelectItem value="COMPLETED">Completed</SelectItem>
           </SelectContent>
         </Select>
-
-        <Select
-          value={internshipType}
-          onValueChange={(v) => { setType(v as InternshipType | "ALL"); setPage(1); }}
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
+        <Select value={internshipType} onValueChange={(v) => { setType(v as InternshipType | "ALL"); setPage(1); }}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Type" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All types</SelectItem>
             <SelectItem value="INTERNSHIP">Internship</SelectItem>
@@ -151,106 +90,54 @@ export default function InternsPage() {
         </Select>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Institution</TableHead>
-              <TableHead>Course</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Start</TableHead>
-              <TableHead>End</TableHead>
-              <TableHead>Supervisor</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && (
+      {isLoading ? (
+        <TableSkeleton rows={8} cols={8} />
+      ) : isError ? (
+        <p className="rounded-md border px-4 py-10 text-center text-sm text-destructive">Failed to load interns.</p>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
-                  Loading…
-                </TableCell>
+                <TableHead>Name</TableHead><TableHead>Institution</TableHead>
+                <TableHead>Course</TableHead><TableHead>Type</TableHead>
+                <TableHead>Status</TableHead><TableHead>Start</TableHead>
+                <TableHead>End</TableHead><TableHead>Supervisor</TableHead>
               </TableRow>
-            )}
+            </TableHeader>
+            <TableBody>
+              {interns.length === 0 ? (
+                <TableRow><TableCell colSpan={8} className="py-10 text-center text-muted-foreground">No interns found.</TableCell></TableRow>
+              ) : interns.map((intern) => (
+                <TableRow key={intern._id} className="cursor-pointer hover:bg-muted/50">
+                  <TableCell>
+                    <Link href={`/interns/${intern._id}`} className="font-medium hover:underline">
+                      {intern.firstName} {intern.lastName}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-sm">{intern.institution}</TableCell>
+                  <TableCell className="text-sm">{intern.course}</TableCell>
+                  <TableCell className="text-sm">{intern.internshipType === "NYSC_IT" ? "NYSC IT" : "Internship"}</TableCell>
+                  <TableCell><Badge variant={STATUS_VARIANT[intern.status]}>{STATUS_LABELS[intern.status]}</Badge></TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{fmt(intern.startDate)}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{fmt(intern.endDate)}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {intern.supervisor && typeof intern.supervisor !== "string"
+                      ? `${intern.supervisor.firstName} ${intern.supervisor.lastName}` : "—"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-            {isError && (
-              <TableRow>
-                <TableCell colSpan={8} className="py-10 text-center text-destructive">
-                  Failed to load interns.
-                </TableCell>
-              </TableRow>
-            )}
-
-            {!isLoading && !isError && interns.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
-                  No interns found.
-                </TableCell>
-              </TableRow>
-            )}
-
-            {interns.map((intern) => (
-              <TableRow key={intern._id} className="cursor-pointer hover:bg-muted/50">
-                <TableCell>
-                  <Link
-                    href={`/interns/${intern._id}`}
-                    className="font-medium hover:underline"
-                  >
-                    {intern.firstName} {intern.lastName}
-                  </Link>
-                </TableCell>
-                <TableCell className="text-sm">{intern.institution}</TableCell>
-                <TableCell className="text-sm">{intern.course}</TableCell>
-                <TableCell className="text-sm">
-                  {intern.internshipType === "NYSC_IT" ? "NYSC IT" : "Internship"}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={STATUS_VARIANT[intern.status]}>
-                    {STATUS_LABELS[intern.status]}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {formatDate(intern.startDate)}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {formatDate(intern.endDate)}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {intern.supervisor
-                    ? `${intern.supervisor.firstName} ${intern.supervisor.lastName}`
-                    : "—"}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
+          <span className="text-muted-foreground">Page {page} of {totalPages}</span>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
           </div>
         </div>
       )}

@@ -57,7 +57,7 @@ const supervisorNav: NavItem[] = [
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function Sidebar() {
+export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -80,7 +80,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4">
+      <nav className="flex-1 overflow-y-auto py-4" role="navigation" aria-label="Main navigation">
         <ul className="space-y-0.5 px-3">
           {navItems.map((item) => {
             const isActive =
@@ -92,6 +92,8 @@ export function Sidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  onClick={onNavigate}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     isActive

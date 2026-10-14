@@ -223,14 +223,14 @@ export function Header() {
     : "?";
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-card px-6">
+    <div className="flex flex-1 items-center justify-between px-4 lg:px-6">
       <h1 className="text-base font-semibold text-foreground">
         {getPageTitle(pathname)}
       </h1>
 
       <div className="flex items-center gap-3">
         {user && (
-          <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
+          <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs hidden sm:inline-flex">
             {user.role}
           </Badge>
         )}
@@ -243,6 +243,6 @@ export function Header() {
           </AvatarFallback>
         </Avatar>
       </div>
-    </header>
+    </div>
   );
 }
