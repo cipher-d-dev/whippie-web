@@ -100,7 +100,7 @@ export default function LoginPage() {
               placeholder="you@daarcomms.tv"
               autoComplete="email"
               disabled={mutation.isPending}
-              className="h-11 rounded-xl border-border/60 pl-10 text-sm transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="h-11 rounded-xl border-border/60 pl-10 text-sm"
               {...form.register("email")}
             />
           </div>
@@ -124,7 +124,7 @@ export default function LoginPage() {
               placeholder="••••••••"
               autoComplete="current-password"
               disabled={mutation.isPending}
-              className="h-11 rounded-xl border-border/60 pl-10 text-sm transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="h-11 rounded-xl border-border/60 pl-10 text-sm"
               {...form.register("password")}
             />
           </div>
@@ -140,7 +140,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={mutation.isPending}
-            className="group h-11 w-full rounded-xl text-sm font-semibold shadow-md shadow-primary/25 transition-all duration-200 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+            className="group h-11 w-full rounded-xl text-sm font-semibold shadow-md shadow-primary/25 transition-all duration-200 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 hover-press cursor-pointer"
           >
             {mutation.isPending ? (
               <>

@@ -7,74 +7,54 @@
 
 @layer base {
   :root {
-    /* ── Brand: Violet-based palette ── */
-    --background:     270 60% 98%;      /* #FAF5FF soft lavender */
-    --foreground:     270 80% 12%;      /* #1E0A3C deep violet text */
-
-    --card:           0 0% 100%;
-    --card-foreground: 270 80% 12%;
-
-    --popover:        0 0% 100%;
+    --background:       270 60% 98%;
+    --foreground:       270 80% 12%;
+    --card:             0 0% 100%;
+    --card-foreground:  270 80% 12%;
+    --popover:          0 0% 100%;
     --popover-foreground: 270 80% 12%;
-
-    --primary:        262 83% 58%;      /* #7C3AED violet-600 */
+    --primary:          262 83% 58%;
     --primary-foreground: 0 0% 100%;
-
-    --secondary:      262 100% 93%;     /* #EDE9FE violet-100 */
+    --secondary:        262 100% 93%;
     --secondary-foreground: 262 83% 40%;
-
-    --muted:          270 30% 95%;
+    --muted:            270 30% 95%;
     --muted-foreground: 270 20% 48%;
-
-    --accent:         270 40% 94%;
+    --accent:           270 40% 94%;
     --accent-foreground: 262 83% 40%;
-
-    --destructive:    0 84% 60%;
+    --destructive:      0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-
-    --border:         270 30% 88%;
-    --input:          270 30% 88%;
-    --ring:           262 83% 58%;
-
-    --radius:         0.75rem;
-
-    /* ── Colored card tints ── */
-    --card-violet:    262 100% 97%;
-    --card-emerald:   152 76% 96%;
-    --card-amber:     45 100% 96%;
-    --card-blue:      213 100% 96%;
-    --card-orange:    25 100% 96%;
-    --card-rose:      350 100% 96%;
+    --border:           270 30% 88%;
+    --input:            270 30% 88%;
+    --ring:             262 83% 58%;
+    --radius:           0.75rem;
+    --card-violet:      262 100% 97%;
+    --card-emerald:     152 76% 96%;
+    --card-amber:       45 100% 96%;
+    --card-blue:        213 100% 96%;
+    --card-orange:      25 100% 96%;
+    --card-rose:        350 100% 96%;
   }
 
   .dark {
-    --background:     270 40% 6%;
-    --foreground:     270 20% 96%;
-
-    --card:           270 35% 10%;
-    --card-foreground: 270 20% 96%;
-
-    --popover:        270 35% 10%;
+    --background:       270 40% 6%;
+    --foreground:       270 20% 96%;
+    --card:             270 35% 10%;
+    --card-foreground:  270 20% 96%;
+    --popover:          270 35% 10%;
     --popover-foreground: 270 20% 96%;
-
-    --primary:        262 83% 65%;
+    --primary:          262 83% 65%;
     --primary-foreground: 0 0% 100%;
-
-    --secondary:      262 30% 18%;
+    --secondary:        262 30% 18%;
     --secondary-foreground: 262 80% 80%;
-
-    --muted:          270 25% 16%;
+    --muted:            270 25% 16%;
     --muted-foreground: 270 15% 58%;
-
-    --accent:         270 25% 16%;
+    --accent:           270 25% 16%;
     --accent-foreground: 270 20% 96%;
-
-    --destructive:    0 62% 40%;
+    --destructive:      0 62% 40%;
     --destructive-foreground: 0 0% 100%;
-
-    --border:         270 25% 18%;
-    --input:          270 25% 18%;
-    --ring:           262 83% 65%;
+    --border:           270 25% 18%;
+    --input:            270 25% 18%;
+    --ring:             262 83% 65%;
   }
 }
 
@@ -89,91 +69,165 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
+
+  /* ── Kill browser default outline everywhere ── */
+  *:focus {
+    outline: none;
+  }
+
+  /* ── Single clean violet focus ring on inputs ── */
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none;
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+
+  /* ── Buttons: remove focus ring, add active press feel ── */
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
 }
 
-/* ─── Keyframe animations ───────────────────────────────────────────────────── */
+/* ─── Keyframes ──────────────────────────────────────────────────────────────── */
 
+/* Entrance: slides up with a slight scale — feels like it has weight */
 @keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0%   { opacity: 0; transform: translateY(22px) scale(0.97); }
+  60%  { opacity: 1; transform: translateY(-3px) scale(1.005); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* Simple opacity fade */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
+/* Badge/chip pop — overshoots then settles */
 @keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0%   { opacity: 0; transform: scale(0.5) rotate(-8deg); }
+  65%  { opacity: 1; transform: scale(1.15) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
+/* Slide from left */
 @keyframes slide-right {
-  from { transform: translateX(-8px); opacity: 0; }
-  to   { transform: translateX(0);    opacity: 1; }
+  from { transform: translateX(-14px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
 
-@keyframes count-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Stat number reveal — blurs in from below */
+@keyframes count-in {
+  from { opacity: 0; transform: translateY(12px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
 }
 
+/* Notification dot throb */
 @keyframes pulse-dot {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50%       { transform: scale(1.4); opacity: 0.7; }
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.6); opacity: 0.5; }
 }
 
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* Icon float on hover — gentle bob */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
 }
 
+/* Sparkline draw */
 @keyframes draw-line {
-  from { stroke-dashoffset: 1000; }
-  to   { stroke-dashoffset: 0; }
+  from { stroke-dashoffset: 1000; opacity: 0.4; }
+  to   { stroke-dashoffset: 0;    opacity: 1; }
 }
 
-/* ─── Animation utility classes ─────────────────────────────────────────────── */
+/* Card icon pop when card enters */
+@keyframes icon-pop {
+  0%   { transform: scale(0.6) rotate(-12deg); }
+  65%  { transform: scale(1.12) rotate(4deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* Shimmer for skeleton loaders */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+/* ─── Animation utilities ────────────────────────────────────────────────────── */
 
 @layer utilities {
+
   .animate-fade-up {
-    animation: fade-up 0.4s ease-out both;
+    animation: fade-up 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
 
   .animate-fade-in {
-    animation: fade-in 0.3s ease-out both;
+    animation: fade-in 0.25s ease-out both;
   }
 
   .animate-scale-in {
-    animation: scale-in 0.25s ease-out both;
+    animation: scale-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   }
 
   .animate-slide-right {
     animation: slide-right 0.3s ease-out both;
   }
 
-  .animate-count-up {
-    animation: count-up 0.5s ease-out both;
+  .animate-count-in {
+    animation: count-in 0.45s ease-out both;
   }
 
   .animate-pulse-dot {
-    animation: pulse-dot 1.5s ease-in-out infinite;
+    animation: pulse-dot 1.8s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-icon-pop {
+    animation: icon-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  /* Shimmer skeleton */
+  .animate-shimmer {
+    background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--accent)) 50%, hsl(var(--muted)) 75%);
+    background-size: 400px 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+
+  /* ── Hover interactions ── */
+
+  /* Cards: lift + shadow grow */
+  .hover-lift {
+    transition: transform 0.2s cubic-bezier(0.34, 1.2, 0.64, 1), box-shadow 0.2s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px -8px hsl(var(--primary) / 0.15), 0 4px 12px -4px hsl(0 0% 0% / 0.08);
+  }
+  .hover-lift:active {
+    transform: translateY(-1px);
+  }
+
+  /* Buttons: press down on click */
+  .hover-press:active {
+    transform: scale(0.97);
+  }
+
+  /* Icon: scale up on hover */
+  .hover-icon:hover > svg,
+  .hover-icon:hover .icon {
+    transform: scale(1.15);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   /* Stagger delays */
@@ -186,41 +240,35 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-350 { animation-delay: 350ms; }
   .delay-400 { animation-delay: 400ms; }
+  .delay-450 { animation-delay: 450ms; }
+  .delay-500 { animation-delay: 500ms; }
 
-  /* Respect reduced motion */
+  /* ── Reduced motion ── */
   @media (prefers-reduced-motion: reduce) {
     .animate-fade-up,
     .animate-fade-in,
     .animate-scale-in,
     .animate-slide-right,
-    .animate-count-up,
-    .animate-pulse-dot {
+    .animate-count-in,
+    .animate-pulse-dot,
+    .animate-float,
+    .animate-icon-pop,
+    .animate-shimmer {
       animation: none !important;
       opacity: 1 !important;
       transform: none !important;
+      filter: none !important;
+    }
+    .hover-lift:hover {
+      transform: none;
     }
   }
 
-  /* Card tint backgrounds */
+  /* ── Card tint backgrounds ── */
   .bg-card-violet  { background-color: hsl(var(--card-violet)); }
   .bg-card-emerald { background-color: hsl(var(--card-emerald)); }
   .bg-card-amber   { background-color: hsl(var(--card-amber)); }
   .bg-card-blue    { background-color: hsl(var(--card-blue)); }
   .bg-card-orange  { background-color: hsl(var(--card-orange)); }
   .bg-card-rose    { background-color: hsl(var(--card-rose)); }
-
-  /* Icon blob glow */
-  .icon-blob {
-    position: relative;
-  }
-  .icon-blob::before {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    filter: blur(8px);
-    opacity: 0.35;
-    background: inherit;
-    z-index: -1;
-  }
 }

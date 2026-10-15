@@ -98,15 +98,15 @@ function StatCard({
   const inner = (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border/60 p-5 transition-all duration-200 cursor-pointer",
-        "hover:shadow-lg hover:-translate-y-0.5",
+        "group relative overflow-hidden rounded-2xl border border-border/60 p-5",
+        "hover-lift cursor-pointer",
         cardBg ?? "bg-card",
         alert && Number(value) > 0 && "border-destructive/30 bg-destructive/5"
       )}
     >
-      {/* Background decoration blob */}
+      {/* Background decoration blob — animates on hover via group */}
       <div className={cn(
-        "absolute -right-4 -top-4 h-20 w-20 rounded-full opacity-10 blur-2xl",
+        "absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-15 blur-2xl transition-all duration-500 group-hover:opacity-30 group-hover:scale-110",
         iconBg
       )} />
 
@@ -116,7 +116,7 @@ function StatCard({
             {label}
           </p>
           <p className={cn(
-            "mt-2 text-3xl font-bold tracking-tight",
+            "mt-2 text-3xl font-black tracking-tight",
             alert && Number(value) > 0 ? "text-destructive" : "text-foreground"
           )}>
             {isNum ? <CountUp value={value as number} loading={loading} /> : value}
@@ -124,19 +124,21 @@ function StatCard({
           <p className="mt-1 text-xs text-muted-foreground">{description}</p>
         </div>
 
-        {/* Icon with blob glow */}
+        {/* Icon with pop animation and glow blob */}
         <div className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-110",
+          "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-md animate-icon-pop",
           iconBg
-        )}>
-          <Icon className="h-5 w-5 text-white" />
+        )}
+          style={{ animationDelay: `${delay + 100}ms` }}
+        >
+          <Icon className="h-5 w-5 text-white transition-transform duration-300 group-hover:scale-110" />
         </div>
       </div>
 
       {href && (
-        <div className="mt-3 flex items-center gap-1 text-xs font-medium text-muted-foreground">
+        <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-muted-foreground transition-colors duration-200 group-hover:text-primary">
           <span>View details</span>
-          <ArrowRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+          <ArrowRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-1" />
         </div>
       )}
     </div>
@@ -392,17 +394,21 @@ function QuickAction({
   return (
     <Link href={href}>
       <div
-        className="group flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer animate-fade-up"
+        className={cn(
+          "group flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3.5 cursor-pointer hover-lift animate-fade-up"
+        )}
         style={{ animationDelay: `${delay}ms` }}
       >
         <div className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110",
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm animate-icon-pop transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3",
           iconBg
-        )}>
+        )}
+          style={{ animationDelay: `${delay + 80}ms` }}
+        >
           <Icon className="h-4 w-4 text-white" />
         </div>
         <span className="flex-1 text-sm font-semibold">{label}</span>
-        <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
+        <ArrowRight className="h-4 w-4 text-muted-foreground transition-all duration-200 group-hover:translate-x-1 group-hover:text-primary" />
       </div>
     </Link>
   );
@@ -693,7 +699,7 @@ function SupervisorDashboard({ firstName }: { firstName: string }) {
             {interns.map((intern, i) => (
               <Link key={intern._id} href={`/interns/${intern._id}`}>
                 <div
-                  className="group flex items-center gap-4 rounded-2xl border border-border/60 bg-card px-4 py-3.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer animate-fade-up"
+                  className="group flex items-center gap-4 rounded-2xl border border-border/60 bg-card px-4 py-3.5 cursor-pointer hover-lift animate-fade-up"
                   style={{ animationDelay: `${350 + i * 40}ms` }}
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
