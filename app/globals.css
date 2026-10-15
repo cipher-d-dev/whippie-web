@@ -55,6 +55,13 @@
     --border:           270 25% 18%;
     --input:            270 25% 18%;
     --ring:             262 83% 65%;
+    /* Dark card tints — enough contrast against dark card bg (270 35% 10%) */
+    --card-violet:      262 45% 17%;
+    --card-emerald:     152 35% 14%;
+    --card-amber:       40  45% 15%;
+    --card-blue:        213 45% 16%;
+    --card-orange:      25  45% 15%;
+    --card-rose:        350 45% 15%;
   }
 }
 
@@ -69,8 +76,16 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* ── Theme transition — smooth colour crossfade on mode switch ── */
   html {
     scroll-behavior: smooth;
+  }
+
+  html.transitioning,
+  html.transitioning *,
+  html.transitioning *::before,
+  html.transitioning *::after {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.15s ease !important;
   }
 
   /* ── Kill browser default outline everywhere ── */

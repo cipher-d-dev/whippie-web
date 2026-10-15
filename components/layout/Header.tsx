@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, CheckCheck, ExternalLink } from "lucide-react";
+import { Bell, CheckCheck, ExternalLink, Sun, Moon } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/context";
 import { useBellNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from "@/features/notifications/hooks";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +19,47 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils/cn";
 import type { NotificationObject, NotificationType } from "@/types";
+
+// ─── Theme toggle ─────────────────────────────────────────────────────────────
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return <div className="h-9 w-9" />;
+
+  const isDark = theme === "dark";
+
+  const toggle = () => {
+    // Add transitioning class to trigger smooth CSS crossfade
+    const html = document.documentElement;
+    html.classList.add("transitioning");
+    setTheme(isDark ? "light" : "dark");
+    setTimeout(() => html.classList.remove("transitioning"), 350);
+  };
+
+  return (
+    <button
+      onClick={toggle}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      className="relative flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-foreground cursor-pointer hover-press"
+    >
+      <Sun
+        className={cn(
+          "absolute h-4 w-4 transition-all duration-300",
+          isDark ? "opacity-100 rotate-0 scale-100" : "opacity-0 rotate-90 scale-50"
+        )}
+      />
+      <Moon
+        className={cn(
+          "absolute h-4 w-4 transition-all duration-300",
+          isDark ? "opacity-0 -rotate-90 scale-50" : "opacity-100 rotate-0 scale-100"
+        )}
+      />
+    </button>
+  );
+}
 
 // ─── Page title map ───────────────────────────────────────────────────────────
 
@@ -234,6 +277,7 @@ export function Header() {
           </span>
         )}
 
+        <ThemeToggle />
         <NotificationBell />
 
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary cursor-default select-none">

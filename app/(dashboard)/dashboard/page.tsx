@@ -101,12 +101,14 @@ function StatCard({
         "group relative overflow-hidden rounded-2xl border border-border/60 p-5",
         "hover-lift cursor-pointer",
         cardBg ?? "bg-card",
-        alert && Number(value) > 0 && "border-destructive/30 bg-destructive/5"
+        alert && Number(value) > 0 && "border-destructive/30 bg-destructive/5",
+        // Dark mode: ensure tinted border matches tinted bg
+        cardBg && "dark:border-white/5"
       )}
     >
       {/* Background decoration blob — animates on hover via group */}
       <div className={cn(
-        "absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-15 blur-2xl transition-all duration-500 group-hover:opacity-30 group-hover:scale-110",
+        "absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-15 blur-2xl transition-all duration-500 group-hover:opacity-35 group-hover:scale-110 dark:opacity-25 dark:group-hover:opacity-50",
         iconBg
       )} />
 
