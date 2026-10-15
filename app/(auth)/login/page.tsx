@@ -7,25 +7,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowRight } from "lucide-react";
 
 import { useAuth } from "@/lib/auth/context";
 import { ApiError, applyApiErrors } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const loginSchema = z.object({
-  email: z.string().email("Enter a valid email address"),
+  email:    z.string().email("Enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -37,7 +30,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { login, isAuthenticated, isLoading } = useAuth();
 
-  // Redirect loop guard — already logged in
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       router.replace("/dashboard");
@@ -60,86 +52,117 @@ export default function LoginPage() {
           form.setError(field as keyof LoginFormValues, error)
         );
       }
-      const message =
+      toast.error(
         err instanceof ApiError
           ? err.message
-          : "Something went wrong. Please try again.";
-      toast.error(message);
+          : "Something went wrong. Please try again."
+      );
     },
   });
 
-  const onSubmit = (values: LoginFormValues) => {
-    mutation.mutate(values);
-  };
-
   return (
-    <Card className="w-full max-w-md shadow-lg">
-      <CardHeader className="space-y-1 pb-4">
-        <div className="mb-2 flex items-center gap-2">
-          <span className="text-2xl font-bold tracking-tight text-primary">
-            Whippe
-          </span>
+    <div className="w-full max-w-sm animate-fade-up">
+      {/* Mobile brand mark (hidden on lg where left panel shows) */}
+      <div className="mb-8 flex flex-col items-center lg:hidden">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30">
+          <span className="text-xl font-black text-primary-foreground">W</span>
         </div>
-        <CardTitle className="text-xl">Sign in to your account</CardTitle>
-        <CardDescription>
-          DAAR Communications intern management platform
-        </CardDescription>
-      </CardHeader>
+        <h1 className="mt-3 text-xl font-black text-foreground">Whippe</h1>
+        <p className="text-xs text-muted-foreground">DAAR Communications</p>
+      </div>
 
-      <CardContent className="space-y-4">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email address</Label>
+      {/* Heading */}
+      <div className="mb-8 animate-fade-up delay-50">
+        <h2 className="text-2xl font-black tracking-tight text-foreground">
+          Welcome back
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Sign in to your staff account to continue
+        </p>
+      </div>
+
+      {/* Form */}
+      <form
+        onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+        className="space-y-5"
+        noValidate
+      >
+        {/* Email */}
+        <div className="animate-fade-up delay-100 space-y-2">
+          <Label htmlFor="email" className="text-sm font-semibold">
+            Email address
+          </Label>
+          <div className="relative">
+            <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder="you@daarcomms.tv"
               autoComplete="email"
               disabled={mutation.isPending}
+              className="h-11 rounded-xl border-border/60 pl-10 text-sm transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               {...form.register("email")}
             />
-            {form.formState.errors.email && (
-              <p className="text-xs text-destructive">
-                {form.formState.errors.email.message}
-              </p>
-            )}
           </div>
+          {form.formState.errors.email && (
+            <p className="text-xs font-medium text-destructive animate-fade-in">
+              {form.formState.errors.email.message}
+            </p>
+          )}
+        </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+        {/* Password */}
+        <div className="animate-fade-up delay-150 space-y-2">
+          <Label htmlFor="password" className="text-sm font-semibold">
+            Password
+          </Label>
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <Input
               id="password"
               type="password"
               placeholder="••••••••"
               autoComplete="current-password"
               disabled={mutation.isPending}
+              className="h-11 rounded-xl border-border/60 pl-10 text-sm transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               {...form.register("password")}
             />
-            {form.formState.errors.password && (
-              <p className="text-xs text-destructive">
-                {form.formState.errors.password.message}
-              </p>
-            )}
           </div>
+          {form.formState.errors.password && (
+            <p className="text-xs font-medium text-destructive animate-fade-in">
+              {form.formState.errors.password.message}
+            </p>
+          )}
+        </div>
 
+        {/* Submit */}
+        <div className="animate-fade-up delay-200 pt-1">
           <Button
             type="submit"
-            className="w-full"
             disabled={mutation.isPending}
+            className="group h-11 w-full rounded-xl text-sm font-semibold shadow-md shadow-primary/25 transition-all duration-200 hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
           >
-            {mutation.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {mutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in…
+              </>
+            ) : (
+              <>
+                Sign in
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </>
             )}
-            Sign in
           </Button>
-        </form>
+        </div>
+      </form>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Access is restricted to DAAR Communications staff.
-          <br />
-          Contact HR if you need an account.
-        </p>
-      </CardContent>
-    </Card>
+      {/* Footer note */}
+      <p className="animate-fade-up delay-300 mt-8 text-center text-xs text-muted-foreground leading-relaxed">
+        Access is restricted to DAAR Communications staff.
+        <br />
+        Contact HR if you need an account.
+      </p>
+    </div>
   );
 }

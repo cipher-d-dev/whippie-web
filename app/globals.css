@@ -2,50 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Google Fonts ─────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    /* ── Brand: Violet-based palette ── */
+    --background:     270 60% 98%;      /* #FAF5FF soft lavender */
+    --foreground:     270 80% 12%;      /* #1E0A3C deep violet text */
+
+    --card:           0 0% 100%;
+    --card-foreground: 270 80% 12%;
+
+    --popover:        0 0% 100%;
+    --popover-foreground: 270 80% 12%;
+
+    --primary:        262 83% 58%;      /* #7C3AED violet-600 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary:      262 100% 93%;     /* #EDE9FE violet-100 */
+    --secondary-foreground: 262 83% 40%;
+
+    --muted:          270 30% 95%;
+    --muted-foreground: 270 20% 48%;
+
+    --accent:         270 40% 94%;
+    --accent-foreground: 262 83% 40%;
+
+    --destructive:    0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border:         270 30% 88%;
+    --input:          270 30% 88%;
+    --ring:           262 83% 58%;
+
+    --radius:         0.75rem;
+
+    /* ── Colored card tints ── */
+    --card-violet:    262 100% 97%;
+    --card-emerald:   152 76% 96%;
+    --card-amber:     45 100% 96%;
+    --card-blue:      213 100% 96%;
+    --card-orange:    25 100% 96%;
+    --card-rose:      350 100% 96%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --background:     270 40% 6%;
+    --foreground:     270 20% 96%;
+
+    --card:           270 35% 10%;
+    --card-foreground: 270 20% 96%;
+
+    --popover:        270 35% 10%;
+    --popover-foreground: 270 20% 96%;
+
+    --primary:        262 83% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary:      262 30% 18%;
+    --secondary-foreground: 262 80% 80%;
+
+    --muted:          270 25% 16%;
+    --muted-foreground: 270 15% 58%;
+
+    --accent:         270 25% 16%;
+    --accent-foreground: 270 20% 96%;
+
+    --destructive:    0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border:         270 25% 18%;
+    --input:          270 25% 18%;
+    --ring:           262 83% 65%;
   }
 }
 
@@ -56,5 +85,142 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ─── Keyframe animations ───────────────────────────────────────────────────── */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-right {
+  from { transform: translateX(-8px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.4); opacity: 0.7; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes draw-line {
+  from { stroke-dashoffset: 1000; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* ─── Animation utility classes ─────────────────────────────────────────────── */
+
+@layer utilities {
+  .animate-fade-up {
+    animation: fade-up 0.4s ease-out both;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out both;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.25s ease-out both;
+  }
+
+  .animate-slide-right {
+    animation: slide-right 0.3s ease-out both;
+  }
+
+  .animate-count-up {
+    animation: count-up 0.5s ease-out both;
+  }
+
+  .animate-pulse-dot {
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+
+  /* Stagger delays */
+  .delay-0   { animation-delay: 0ms; }
+  .delay-50  { animation-delay: 50ms; }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-250 { animation-delay: 250ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-350 { animation-delay: 350ms; }
+  .delay-400 { animation-delay: 400ms; }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-up,
+    .animate-fade-in,
+    .animate-scale-in,
+    .animate-slide-right,
+    .animate-count-up,
+    .animate-pulse-dot {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+
+  /* Card tint backgrounds */
+  .bg-card-violet  { background-color: hsl(var(--card-violet)); }
+  .bg-card-emerald { background-color: hsl(var(--card-emerald)); }
+  .bg-card-amber   { background-color: hsl(var(--card-amber)); }
+  .bg-card-blue    { background-color: hsl(var(--card-blue)); }
+  .bg-card-orange  { background-color: hsl(var(--card-orange)); }
+  .bg-card-rose    { background-color: hsl(var(--card-rose)); }
+
+  /* Icon blob glow */
+  .icon-blob {
+    position: relative;
+  }
+  .icon-blob::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    filter: blur(8px);
+    opacity: 0.35;
+    background: inherit;
+    z-index: -1;
   }
 }

@@ -18,16 +18,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Unified header — mobile gets a hamburger prepended */}
-        <div className="flex h-14 items-center border-b bg-card">
-          {/* Mobile hamburger — hidden on desktop */}
+        {/* Header bar */}
+        <div className="flex h-14 items-center border-b border-border/60 bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+          {/* Mobile hamburger */}
           <div className="flex items-center pl-4 lg:hidden">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 mr-2"
+                  className="h-9 w-9 rounded-xl mr-2 cursor-pointer"
                   aria-label="Open navigation menu"
                 >
                   <Menu className="h-5 w-5" />
@@ -39,7 +39,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Sheet>
           </div>
 
-          {/* Header fills the rest */}
           <div className="flex-1">
             <Header />
           </div>
