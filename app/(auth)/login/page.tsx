@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth/context";
-import { ApiError } from "@/lib/api/client";
+import { ApiError, applyApiErrors } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +56,11 @@ export default function LoginPage() {
       router.replace("/dashboard");
     },
     onError: (err) => {
+      if (err instanceof ApiError) {
+        applyApiErrors(err, (field, error) =>
+          form.setError(field as keyof LoginFormValues, error)
+        );
+      }
       const message =
         err instanceof ApiError
           ? err.message

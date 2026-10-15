@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { listEvaluations, getEvaluation, createEvaluation, updateEvaluation, submitEvaluation } from "./api";
+import { ApiError, applyApiErrors } from "@/lib/api/client";
 import type { EvaluationStatus, EvaluationScores } from "@/types";
+
+type SetError = (field: string, error: { type: string; message: string }) => void;
 
 export const evaluationKeys = {
   all:    () => ["evaluations"] as const,
@@ -17,7 +20,7 @@ export function useEvaluation(id: string) {
   return useQuery({ queryKey: evaluationKeys.detail(id), queryFn: () => getEvaluation(id), enabled: Boolean(id) });
 }
 
-export function useCreateEvaluation(onSuccess?: (id: string) => void) {
+export function useCreateEvaluation(onSuccess?: (id: string) => void, setError?: SetError) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: createEvaluation,
@@ -26,11 +29,16 @@ export function useCreateEvaluation(onSuccess?: (id: string) => void) {
       toast.success("Evaluation saved as draft.");
       onSuccess?.(res.data?.evaluation._id ?? "");
     },
-    onError: (err: Error) => toast.error(err.message ?? "Failed to create evaluation."),
+    onError: (err: Error) => {
+      if (err instanceof ApiError && setError) {
+        applyApiErrors(err, setError);
+      }
+      toast.error(err.message ?? "Failed to create evaluation.");
+    },
   });
 }
 
-export function useUpdateEvaluation(id: string, onSuccess?: () => void) {
+export function useUpdateEvaluation(id: string, onSuccess?: () => void, setError?: SetError) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: { scores?: Partial<EvaluationScores>; comments?: string }) => updateEvaluation(id, input),
@@ -39,7 +47,12 @@ export function useUpdateEvaluation(id: string, onSuccess?: () => void) {
       toast.success("Evaluation updated.");
       onSuccess?.();
     },
-    onError: (err: Error) => toast.error(err.message ?? "Failed to update evaluation."),
+    onError: (err: Error) => {
+      if (err instanceof ApiError && setError) {
+        applyApiErrors(err, setError);
+      }
+      toast.error(err.message ?? "Failed to update evaluation.");
+    },
   });
 }
 

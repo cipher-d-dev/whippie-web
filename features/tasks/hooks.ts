@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { listTasks, getTask, createTask, updateTask } from "./api";
+import { ApiError, applyApiErrors } from "@/lib/api/client";
 import type { TaskStatus, CreateTaskInput, UpdateTaskInput } from "@/types";
+
+type SetError = (field: string, error: { type: string; message: string }) => void;
 
 export const taskKeys = {
   all:    () => ["tasks"] as const,
@@ -27,7 +30,7 @@ export function useTask(id: string) {
   });
 }
 
-export function useCreateTask(onSuccess?: () => void) {
+export function useCreateTask(onSuccess?: () => void, setError?: SetError) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateTaskInput) => createTask(input),
@@ -36,11 +39,16 @@ export function useCreateTask(onSuccess?: () => void) {
       toast.success("Task created.");
       onSuccess?.();
     },
-    onError: (err: Error) => toast.error(err.message ?? "Failed to create task."),
+    onError: (err: Error) => {
+      if (err instanceof ApiError && setError) {
+        applyApiErrors(err, setError);
+      }
+      toast.error(err.message ?? "Failed to create task.");
+    },
   });
 }
 
-export function useUpdateTask(id: string, onSuccess?: () => void) {
+export function useUpdateTask(id: string, onSuccess?: () => void, setError?: SetError) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateTaskInput) => updateTask(id, input),
@@ -50,6 +58,11 @@ export function useUpdateTask(id: string, onSuccess?: () => void) {
       toast.success("Task updated.");
       onSuccess?.();
     },
-    onError: (err: Error) => toast.error(err.message ?? "Failed to update task."),
+    onError: (err: Error) => {
+      if (err instanceof ApiError && setError) {
+        applyApiErrors(err, setError);
+      }
+      toast.error(err.message ?? "Failed to update task.");
+    },
   });
 }

@@ -80,12 +80,13 @@ export default function NewInternPage() {
     setValue,
     watch,
     formState: { errors },
+    setError,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { internshipType: "INTERNSHIP", status: "SCREENED" },
   });
 
-  const mutation = useCreateIntern(() => router.push("/interns"));
+  const mutation = useCreateIntern(() => router.push("/interns"), setError as (field: string, error: { type: string; message: string }) => void);
 
   const onSubmit = (values: FormValues) => {
     // Strip empty optional strings so the API doesn't receive ""

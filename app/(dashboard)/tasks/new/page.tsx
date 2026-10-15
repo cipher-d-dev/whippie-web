@@ -67,16 +67,16 @@ export default function NewTaskPage() {
     ? (allInternsData?.data ?? [])
     : (myInternsData?.data?.interns ?? []);
 
-  const createMut = useCreateTask(() => router.push("/tasks"));
-
-  const { register, handleSubmit, setValue, watch, formState: { errors } } =
+  const { register, handleSubmit, setValue, watch, formState: { errors }, setError } =
     useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  const mutation = useCreateTask(() => router.push("/tasks"), setError as (field: string, error: { type: string; message: string }) => void);
 
   const onSubmit = (values: FormValues) => {
     const cleaned = Object.fromEntries(
       Object.entries(values).filter(([, v]) => v !== "" && v !== undefined)
     ) as FormValues;
-    createMut.mutate(cleaned);
+    mutation.mutate(cleaned);
   };
 
   return (
@@ -147,8 +147,8 @@ export default function NewTaskPage() {
           <Button variant="outline" asChild>
             <Link href="/tasks">Cancel</Link>
           </Button>
-          <Button type="submit" disabled={createMut.isPending}>
-            {createMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Create task
           </Button>
         </div>

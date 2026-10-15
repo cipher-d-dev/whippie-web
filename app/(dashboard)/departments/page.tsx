@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useDepartments, useCreateDepartment, useUpdateDepartment } from "@/features/departments/hooks";
+import { ApiError, applyApiErrors } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,6 +61,8 @@ const SUBSIDIARY_COLORS: Record<string, string> = {
 
 // ─── Department form (shared for create + edit) ───────────────────────────────
 
+type SetError = (field: string, error: { type: string; message: string }) => void;
+
 function DepartmentForm({
   defaultValues,
   onSubmit,
@@ -67,18 +70,18 @@ function DepartmentForm({
   isEdit,
 }: {
   defaultValues?: Partial<FormValues>;
-  onSubmit: (v: FormValues) => void;
+  onSubmit: (v: FormValues, setError: SetError) => void;
   isPending: boolean;
   isEdit?: boolean;
 }) {
-  const { register, handleSubmit, setValue, watch, formState: { errors } } =
+  const { register, handleSubmit, setValue, watch, formState: { errors }, setError } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
       defaultValues: { isActive: true, ...defaultValues },
     });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit((v) => onSubmit(v, setError as SetError))} className="space-y-4">
       <Field label="Name" error={errors.name?.message}>
         <Input placeholder="e.g. News & Current Affairs" {...register("name")} />
       </Field>
@@ -221,7 +224,9 @@ export default function DepartmentsPage() {
             <DialogTitle>New department</DialogTitle>
           </DialogHeader>
           <DepartmentForm
-            onSubmit={(v) => createMut.mutate(v)}
+            onSubmit={(v, se) => createMut.mutate(v, {
+              onError: (err) => { if (err instanceof ApiError) applyApiErrors(err, se); }
+            })}
             isPending={createMut.isPending}
           />
         </DialogContent>
@@ -242,7 +247,9 @@ export default function DepartmentsPage() {
                 description: editTarget.description,
                 isActive:    editTarget.isActive,
               }}
-              onSubmit={(v) => editMut.mutate(v)}
+              onSubmit={(v, se) => editMut.mutate(v, {
+                onError: (err) => { if (err instanceof ApiError) applyApiErrors(err, se); }
+              })}
               isPending={editMut.isPending}
             />
           )}

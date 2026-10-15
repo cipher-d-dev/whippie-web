@@ -26,13 +26,37 @@ export function getAccessToken(): string | null {
 
 // ─── Error class ──────────────────────────────────────────────────────────────
 
+export interface ApiFieldError {
+  field: string;
+  message: string;
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,
-    public readonly status: number
+    public readonly status: number,
+    public readonly errors?: ApiFieldError[]
   ) {
     super(message);
     this.name = "ApiError";
+  }
+}
+
+/**
+ * Apply per-field API validation errors to a react-hook-form instance.
+ * Falls back to a no-op when no field errors are present.
+ *
+ * Usage inside mutation onError:
+ *   if (err instanceof ApiError) applyApiErrors(err, form.setError);
+ */
+export function applyApiErrors(
+  err: ApiError,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  setError: (field: string, error: { type: string; message: string }) => void
+): void {
+  if (!err.errors?.length) return;
+  for (const { field, message } of err.errors) {
+    setError(field, { type: "server", message });
   }
 }
 
@@ -41,13 +65,20 @@ export class ApiError extends Error {
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let message = `HTTP ${response.status}`;
+    let errors: ApiFieldError[] | undefined;
     try {
-      const body = (await response.json()) as { message?: string };
+      const body = (await response.json()) as {
+        message?: string;
+        errors?: ApiFieldError[];
+      };
       if (body.message) message = body.message;
+      if (Array.isArray(body.errors) && body.errors.length > 0) {
+        errors = body.errors;
+      }
     } catch {
       // ignore JSON parse failures
     }
-    throw new ApiError(message, response.status);
+    throw new ApiError(message, response.status, errors);
   }
   return response.json() as Promise<T>;
 }

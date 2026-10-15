@@ -146,5 +146,5 @@ All data comes from `whippie-api`. See [`../whippie-api/docs/API-CONTRACT.md`](.
 | 10 | Document generation | — |
 | 11 | Notifications | ✅ Done |
 | 12 | Security & hardening | ✅ Done |
-| 13 | HR dashboard refinement | 🔜 Next |
+| 13 | HR dashboard refinement | ✅ Done |
 | 14 | Optional AI | — |

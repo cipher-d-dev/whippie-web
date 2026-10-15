@@ -1,11 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { listInterns, getIntern, createIntern, updateIntern } from "./api";
+import { ApiError, applyApiErrors } from "@/lib/api/client";
 import type {
   InternsListParams,
   CreateInternInput,
   UpdateInternInput,
 } from "@/types";
+
+type SetError = (field: string, error: { type: string; message: string }) => void;
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
 
@@ -36,7 +39,7 @@ export function useIntern(id: string) {
 
 // ─── Create ───────────────────────────────────────────────────────────────────
 
-export function useCreateIntern(onSuccess?: () => void) {
+export function useCreateIntern(onSuccess?: () => void, setError?: SetError) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateInternInput) => createIntern(input),
@@ -46,6 +49,9 @@ export function useCreateIntern(onSuccess?: () => void) {
       onSuccess?.();
     },
     onError: (err: Error) => {
+      if (err instanceof ApiError && setError) {
+        applyApiErrors(err, setError);
+      }
       toast.error(err.message ?? "Failed to create intern.");
     },
   });
@@ -53,7 +59,7 @@ export function useCreateIntern(onSuccess?: () => void) {
 
 // ─── Update ───────────────────────────────────────────────────────────────────
 
-export function useUpdateIntern(id: string, onSuccess?: () => void) {
+export function useUpdateIntern(id: string, onSuccess?: () => void, setError?: SetError) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateInternInput) => updateIntern(id, input),
@@ -64,6 +70,9 @@ export function useUpdateIntern(id: string, onSuccess?: () => void) {
       onSuccess?.();
     },
     onError: (err: Error) => {
+      if (err instanceof ApiError && setError) {
+        applyApiErrors(err, setError);
+      }
       toast.error(err.message ?? "Failed to update intern.");
     },
   });

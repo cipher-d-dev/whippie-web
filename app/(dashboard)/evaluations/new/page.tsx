@@ -93,10 +93,10 @@ export default function NewEvaluationPage() {
     workQuality: 3, reliability: 3, communication: 3, learningProgress: 3, professionalism: 3,
   });
 
-  const createMut = useCreateEvaluation((id) => router.push(`/evaluations/${id}`));
-
-  const { register, handleSubmit, setValue, watch, formState: { errors } } =
+  const { register, handleSubmit, setValue, watch, formState: { errors }, setError } =
     useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  const createMut = useCreateEvaluation((id) => router.push(`/evaluations/${id}`), setError as (field: string, error: { type: string; message: string }) => void);
 
   const onSubmit = (values: FormValues) => {
     createMut.mutate({ internId: values.internId, scores, comments: values.comments });

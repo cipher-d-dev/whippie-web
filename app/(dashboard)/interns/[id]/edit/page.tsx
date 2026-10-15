@@ -79,6 +79,7 @@ export default function EditInternPage({
     watch,
     reset,
     formState: { errors },
+    setError,
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
   // Pre-fill once the intern loads
@@ -98,7 +99,7 @@ export default function EditInternPage({
   }, [intern, reset]);
 
   const mutation = useUpdateIntern(id, () =>
-    router.push(`/interns/${id}`)
+    router.push(`/interns/${id}`), setError as (field: string, error: { type: string; message: string }) => void
   );
 
   const onSubmit = (values: FormValues) => {

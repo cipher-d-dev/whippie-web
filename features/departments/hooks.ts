@@ -6,7 +6,10 @@ import {
   createDepartment,
   updateDepartment,
 } from "./api";
+import { ApiError, applyApiErrors } from "@/lib/api/client";
 import type { CreateDepartmentInput, UpdateDepartmentInput } from "@/types";
+
+type SetError = (field: string, error: { type: string; message: string }) => void;
 
 export const departmentKeys = {
   all:    () => ["departments"] as const,
@@ -29,7 +32,7 @@ export function useDepartment(id: string) {
   });
 }
 
-export function useCreateDepartment(onSuccess?: () => void) {
+export function useCreateDepartment(onSuccess?: () => void, setError?: SetError) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateDepartmentInput) => createDepartment(input),
@@ -38,11 +41,16 @@ export function useCreateDepartment(onSuccess?: () => void) {
       toast.success("Department created.");
       onSuccess?.();
     },
-    onError: (err: Error) => toast.error(err.message ?? "Failed to create department."),
+    onError: (err: Error) => {
+      if (err instanceof ApiError && setError) {
+        applyApiErrors(err, setError);
+      }
+      toast.error(err.message ?? "Failed to create department.");
+    },
   });
 }
 
-export function useUpdateDepartment(id: string, onSuccess?: () => void) {
+export function useUpdateDepartment(id: string, onSuccess?: () => void, setError?: SetError) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateDepartmentInput) => updateDepartment(id, input),
@@ -52,6 +60,11 @@ export function useUpdateDepartment(id: string, onSuccess?: () => void) {
       toast.success("Department updated.");
       onSuccess?.();
     },
-    onError: (err: Error) => toast.error(err.message ?? "Failed to update department."),
+    onError: (err: Error) => {
+      if (err instanceof ApiError && setError) {
+        applyApiErrors(err, setError);
+      }
+      toast.error(err.message ?? "Failed to update department.");
+    },
   });
 }
