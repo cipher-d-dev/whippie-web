@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Plus, Search, MoreHorizontal, Pencil, Eye } from "lucide-react";
 import { useInterns } from "@/features/interns/hooks";
+import { useAuth } from "@/lib/auth/context";
 import { EditInternSheet } from "@/features/interns/components/EditInternSheet";
 import { TableSkeleton } from "@/components/shared/Skeletons";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,8 @@ function fmt(iso?: string) {
 }
 
 export default function InternsPage() {
+  const { user } = useAuth();
+  const isHR = user?.role === "HR";
   const [search, setSearch]             = useState("");
   const [debouncedSearch, setDebounced] = useState("");
   const [status, setStatus]             = useState<InternshipStatus | "ALL">("ALL");
@@ -94,19 +97,21 @@ export default function InternsPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Interns</h2>
+          <h2 className="text-xl font-semibold">{isHR ? "Interns" : "My Interns"}</h2>
           {!isLoading && (
             <p className="mt-0.5 text-sm text-muted-foreground">
               {total} record{total !== 1 ? "s" : ""}
             </p>
           )}
         </div>
-        <Button asChild>
-          <Link href="/interns/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add intern
-          </Link>
-        </Button>
+        {isHR && (
+          <Button asChild>
+            <Link href="/interns/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Add intern
+            </Link>
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -232,13 +237,15 @@ export default function InternsPage() {
                               View details
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleOpenEdit(intern)}
-                            className="cursor-pointer"
-                          >
-                            <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
-                            Quick Edit
-                          </DropdownMenuItem>
+                          {isHR && (
+                            <DropdownMenuItem
+                              onClick={() => handleOpenEdit(intern)}
+                              className="cursor-pointer"
+                            >
+                              <Pencil className="mr-2 h-4 w-4 text-muted-foreground" />
+                              Quick Edit
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

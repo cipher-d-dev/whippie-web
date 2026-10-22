@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   Star
 } from "lucide-react";
+import { useAuth } from "@/lib/auth/context";
 import { EditInternSheet } from "@/features/interns/components/EditInternSheet";
 import { useIntern } from "@/features/interns/hooks";
 import {
@@ -104,6 +105,8 @@ export default function InternDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { user } = useAuth();
+  const isHR = user?.role === "HR";
   const { data, isLoading, isError } = useIntern(id);
   const intern = data?.data?.intern;
 
@@ -204,15 +207,17 @@ export default function InternDetailPage({
         <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground hover:text-foreground">
           <Link href="/interns">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            All Interns
+            {isHR ? "All Interns" : "My Interns"}
           </Link>
         </Button>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditSheetOpen(true)} className="gap-1.5">
-            <Pencil className="h-3.5 w-3.5" />
-            Edit Profile
-          </Button>
-        </div>
+        {isHR && (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setEditSheetOpen(true)} className="gap-1.5">
+              <Pencil className="h-3.5 w-3.5" />
+              Edit Profile
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Hero Banner Header */}
@@ -275,31 +280,33 @@ export default function InternDetailPage({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1 shrink-0 ml-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => {
-                  setSelectedDept(intern.department?._id ?? "");
-                  setDeptDialogOpen(true);
-                }}
-              >
-                <ChevronsUpDown className="h-3 w-3 mr-1" />
-                {intern.department ? "Change" : "Assign"}
-              </Button>
-              {intern.department && (
+            {isHR && (
+              <div className="flex items-center gap-1 shrink-0 ml-2">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                  onClick={() => removeDept.mutate()}
-                  disabled={removeDept.isPending}
+                  className="h-7 px-2 text-xs"
+                  onClick={() => {
+                    setSelectedDept(intern.department?._id ?? "");
+                    setDeptDialogOpen(true);
+                  }}
                 >
-                  <X className="h-3 w-3" />
+                  <ChevronsUpDown className="h-3 w-3 mr-1" />
+                  {intern.department ? "Change" : "Assign"}
                 </Button>
-              )}
-            </div>
+                {intern.department && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeDept.mutate()}
+                    disabled={removeDept.isPending}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Supervisor Card */}
@@ -315,31 +322,33 @@ export default function InternDetailPage({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1 shrink-0 ml-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => {
-                  setSelectedSv(intern.supervisor?._id ?? "");
-                  setSvDialogOpen(true);
-                }}
-              >
-                <ChevronsUpDown className="h-3 w-3 mr-1" />
-                {intern.supervisor ? "Change" : "Assign"}
-              </Button>
-              {intern.supervisor && (
+            {isHR && (
+              <div className="flex items-center gap-1 shrink-0 ml-2">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                  onClick={() => removeSv.mutate()}
-                  disabled={removeSv.isPending}
+                  className="h-7 px-2 text-xs"
+                  onClick={() => {
+                    setSelectedSv(intern.supervisor?._id ?? "");
+                    setSvDialogOpen(true);
+                  }}
                 >
-                  <X className="h-3 w-3" />
+                  <ChevronsUpDown className="h-3 w-3 mr-1" />
+                  {intern.supervisor ? "Change" : "Assign"}
                 </Button>
-              )}
-            </div>
+                {intern.supervisor && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeSv.mutate()}
+                    disabled={removeSv.isPending}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Tasks Progress Metric */}
