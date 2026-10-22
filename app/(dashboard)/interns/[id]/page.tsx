@@ -3,6 +3,7 @@
 import { use, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Pencil, X, ChevronsUpDown, Loader2 } from "lucide-react";
+import { EditInternSheet } from "@/features/interns/components/EditInternSheet";
 import { useIntern } from "@/features/interns/hooks";
 import {
   useAssignDepartment,
@@ -129,6 +130,7 @@ export default function InternDetailPage({
   // Assignment dialog state
   const [deptDialogOpen, setDeptDialogOpen]       = useState(false);
   const [supervisorDialogOpen, setSvDialogOpen]   = useState(false);
+  const [editSheetOpen, setEditSheetOpen]         = useState(false);
   const [selectedDept, setSelectedDept]           = useState("");
   const [selectedSv, setSelectedSv]               = useState("");
 
@@ -191,11 +193,9 @@ export default function InternDetailPage({
             <Badge variant={STATUS_VARIANT[intern.status]}>{intern.status}</Badge>
           </div>
         </div>
-        <Button asChild size="sm">
-          <Link href={`/interns/${id}/edit`}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit
-          </Link>
+        <Button size="sm" onClick={() => setEditSheetOpen(true)}>
+          <Pencil className="mr-2 h-4 w-4" />
+          Edit
         </Button>
       </div>
 
@@ -355,6 +355,13 @@ export default function InternDetailPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Slide-over quick edit */}
+      <EditInternSheet
+        intern={intern}
+        open={editSheetOpen}
+        onOpenChange={setEditSheetOpen}
+      />
     </div>
   );
 }

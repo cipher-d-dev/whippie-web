@@ -8,7 +8,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { apiPost, apiGet, setAccessToken, getAccessToken } from "@/lib/api/client";
+import { useRouter } from "next/navigation";
+import {
+  apiPost,
+  apiGet,
+  setAccessToken,
+  setAuthFailureHandler,
+} from "@/lib/api/client";
 import type { UserRole, AccountStatus } from "@/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -45,14 +51,36 @@ const API_BASE = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:5000";
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user,      setUser]      = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const initialised               = useRef(false);
+  const router = useRouter();
 
-  // Restore session on mount.
-  // /auth/refresh returns only accessToken — then we call /auth/me for the user.
+  const [user,       setUser]       = useState<AuthUser | null>(null);
+  const [hasToken,   setHasToken]   = useState(false);
+  const [isLoading,  setIsLoading]  = useState(true);
+  const initialised                 = useRef(false);
+
+  // Helper: set both the module-level token AND the React state flag atomically
+  const storeToken = useCallback((token: string | null) => {
+    setAccessToken(token);
+    setHasToken(token !== null);
+  }, []);
+
+  // Clear everything and redirect to /login — used when the API client
+  // detects the session has expired (401 after failed refresh).
+  const handleAuthFailure = useCallback(() => {
+    storeToken(null);
+    setUser(null);
+    setIsLoading(false);
+    router.replace("/login");
+  }, [storeToken, router]);
+
+  // Register the failure handler with the API client
   useEffect(() => {
-    // Guard against double-invocation in React Strict Mode
+    setAuthFailureHandler(handleAuthFailure);
+    return () => setAuthFailureHandler(null);
+  }, [handleAuthFailure]);
+
+  // Restore session on mount — silent refresh via HTTP-only cookie
+  useEffect(() => {
     if (initialised.current) return;
     initialised.current = true;
 
@@ -63,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           credentials: "include",
         });
 
-        if (!refreshRes.ok) return; // No active session — proceed to login
+        if (!refreshRes.ok) return;
 
         const refreshBody = (await refreshRes.json()) as {
           data?: { accessToken?: string };
@@ -71,32 +99,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const token = refreshBody.data?.accessToken;
         if (!token) return;
 
-        setAccessToken(token);
+        // Store token — both module level and React state
+        storeToken(token);
 
-        // Fetch current user profile
-        const meBody = await apiGet<{ data: { user: AuthUser } }>("/api/v1/auth/me");
+        // Fetch user profile with a raw fetch — bypasses the API client's
+        // 401-retry logic to avoid silent-refresh loops during restore.
+        const meRes = await fetch(`${API_BASE}/api/v1/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
+        });
+
+        if (!meRes.ok) {
+          storeToken(null);
+          return;
+        }
+
+        const meBody = (await meRes.json()) as { data?: { user: AuthUser } };
         if (meBody.data?.user) {
           setUser(meBody.data.user);
+        } else {
+          storeToken(null);
         }
       } catch {
-        // Session restore failed — clear any stale token
-        setAccessToken(null);
+        storeToken(null);
       } finally {
         setIsLoading(false);
       }
     }
 
     restoreSession();
-  }, []);
+  }, [storeToken]);
 
   const login = useCallback(async (input: LoginInput) => {
     const res = await apiPost<{ data: { accessToken: string; user: AuthUser } }>(
       "/api/v1/auth/login",
       input
     );
-    setAccessToken(res.data.accessToken);
+    storeToken(res.data.accessToken);
     setUser(res.data.user);
-  }, []);
+  }, [storeToken]);
 
   const logout = useCallback(async () => {
     try {
@@ -104,12 +145,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // best effort
     } finally {
-      setAccessToken(null);
+      storeToken(null);
       setUser(null);
     }
-  }, []);
+  }, [storeToken]);
 
-  // Allows components to re-fetch the current user (e.g. after profile update)
   const refreshUser = useCallback(async () => {
     try {
       const res = await apiGet<{ data: { user: AuthUser } }>("/api/v1/auth/me");
@@ -124,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         isLoading,
-        isAuthenticated: user !== null && getAccessToken() !== null,
+        isAuthenticated: user !== null && hasToken,
         login,
         logout,
         refreshUser,

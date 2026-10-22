@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useSupervisors, useCreateSupervisor } from "@/features/supervisors/hooks";
 import { useDepartments } from "@/features/departments/hooks";
+import { useUsers } from "@/features/users/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,8 +66,10 @@ export default function SupervisorsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const { data, isLoading } = useSupervisors({ limit: 100 });
   const { data: deptData } = useDepartments({ limit: 100 });
+  const { data: userData } = useUsers({ role: "SUPERVISOR", limit: 100 });
   const supervisors = data?.data ?? [];
   const departments = deptData?.data ?? [];
+  const supervisorUsers = userData?.data ?? [];
 
   const createMut = useCreateSupervisor(() => setCreateOpen(false));
 
@@ -163,8 +166,33 @@ export default function SupervisorsPage() {
             <DialogTitle>Add supervisor</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Field label="User ID" required error={errors.userId?.message}>
-              <Input placeholder="Paste active SUPERVISOR account ID" {...register("userId")} />
+            <Field label="Staff Account" required error={errors.userId?.message}>
+              {supervisorUsers.length > 0 ? (
+                <Select
+                  value={watch("userId") ?? ""}
+                  onValueChange={(val) => {
+                    setValue("userId", val, { shouldValidate: true });
+                    const matched = supervisorUsers.find((u) => u._id === val);
+                    if (matched) {
+                      if (!watch("firstName")) setValue("firstName", matched.firstName);
+                      if (!watch("lastName")) setValue("lastName", matched.lastName);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an active supervisor account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {supervisorUsers.map((u) => (
+                      <SelectItem key={u._id} value={u._id}>
+                        {u.firstName} {u.lastName} ({u.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input placeholder="Enter supervisor User ID" {...register("userId")} />
+              )}
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="First name" required error={errors.firstName?.message}>

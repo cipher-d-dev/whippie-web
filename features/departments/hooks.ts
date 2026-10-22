@@ -5,6 +5,7 @@ import {
   getDepartment,
   createDepartment,
   updateDepartment,
+  deleteDepartment,
 } from "./api";
 import { ApiError, applyApiErrors } from "@/lib/api/client";
 import type { CreateDepartmentInput, UpdateDepartmentInput } from "@/types";
@@ -65,6 +66,21 @@ export function useUpdateDepartment(id: string, onSuccess?: () => void, setError
         applyApiErrors(err, setError);
       }
       toast.error(err.message ?? "Failed to update department.");
+    },
+  });
+}
+
+export function useDeleteDepartment(onSuccess?: () => void) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteDepartment(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: departmentKeys.all() });
+      toast.success("Department deleted.");
+      onSuccess?.();
+    },
+    onError: (err: Error) => {
+      toast.error(err.message ?? "Failed to delete department.");
     },
   });
 }

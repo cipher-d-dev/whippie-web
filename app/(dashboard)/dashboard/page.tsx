@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Star,
   Timer,
+  UserCheck,
 } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth/context";
@@ -21,6 +22,7 @@ import { useSupervisorMe, useSupervisorInterns } from "@/features/supervisors/ho
 import { useTasks } from "@/features/tasks/hooks";
 import { useAttendance } from "@/features/attendance/hooks";
 import { useEvaluations } from "@/features/evaluations/hooks";
+import { usePendingCount } from "@/features/users/hooks";
 import { listAttendance } from "@/features/attendance/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -424,6 +426,7 @@ function HRDashboard({ firstName }: { firstName: string }) {
   const { data: onboardingInternsData, isLoading: loadingOnb }    = useInterns({ status: "ONBOARDING", limit: 5 });
   const { data: pendingEvalsData,      isLoading: loadingEvals }  = useEvaluations({ status: "DRAFT", limit: 1 });
   const { data: submittedTasksData,    isLoading: loadingTasks }  = useTasks({ status: "SUBMITTED", limit: 1 });
+  const { data: pendingVerifications,  isLoading: loadingVerifications } = usePendingCount();
 
   const todayISO = new Date().toISOString().slice(0, 10);
   const { data: todayAttendance, isLoading: loadingAtt } = useAttendance({
@@ -511,7 +514,18 @@ function HRDashboard({ firstName }: { firstName: string }) {
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground animate-fade-up delay-200">
           Needs attention
         </h3>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Pending verifications"
+            value={pendingVerifications ?? 0}
+            description="Awaiting HR approval"
+            icon={UserCheck}
+            href="/verification"
+            iconBg={(pendingVerifications ?? 0) > 0 ? "bg-amber-500" : "bg-muted-foreground"}
+            loading={loadingVerifications}
+            alert={(pendingVerifications ?? 0) > 0}
+            delay={300}
+          />
           <StatCard
             label="Tasks to review"
             value={needsReview}

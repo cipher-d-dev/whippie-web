@@ -46,6 +46,8 @@ export interface InternObject {
   updatedAt: string;
 }
 
+export type Intern = InternObject;
+
 export interface CreateInternInput {
   userId?: string;
   firstName: string;

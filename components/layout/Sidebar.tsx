@@ -16,10 +16,13 @@ import {
   LogOut,
   Building2,
   Bell,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/context";
 import { useUnreadCount } from "@/features/notifications/hooks";
+import { usePendingCount } from "@/features/users/hooks";
+import { WhippieLogo } from "@/components/shared/WhippieLogo";
 import { toast } from "sonner";
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
@@ -32,6 +35,7 @@ interface NavItem {
 
 const hrNav: NavItem[] = [
   { label: "Dashboard",     href: "/dashboard",     icon: LayoutDashboard },
+  { label: "Verification",  href: "/verification",  icon: UserCheck },
   { label: "Interns",       href: "/interns",       icon: Users },
   { label: "Departments",   href: "/departments",   icon: Building2 },
   { label: "Onboarding",    href: "/onboarding",    icon: ClipboardCheck },
@@ -61,6 +65,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const router   = useRouter();
   const { user, logout } = useAuth();
   const unreadCount = useUnreadCount().data ?? 0;
+  const pendingCount = usePendingCount().data ?? 0;
 
   const navItems = user?.role === "SUPERVISOR" ? supervisorNav : hrNav;
 
@@ -78,12 +83,10 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     <aside className="flex w-60 flex-col bg-card border-r border-border/60">
       {/* Brand */}
       <div className="flex h-14 items-center px-5 border-b border-border/60">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
-            <span className="text-xs font-bold text-primary-foreground">W</span>
-          </div>
+        <div className="flex items-center gap-2.5">
+          <WhippieLogo size={28} />
           <span className="text-base font-bold tracking-tight text-foreground">
-            Whippe
+            Whippie
           </span>
         </div>
       </div>
@@ -101,6 +104,8 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               (item.href !== "/dashboard" && pathname.startsWith(item.href));
             const Icon = item.icon;
             const isNotif = item.href === "/notifications";
+            const isVerification = item.href === "/verification";
+            const badgeCount = isNotif ? unreadCount : isVerification ? pendingCount : 0;
 
             return (
               <li
@@ -131,15 +136,17 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
                   <span className="flex-1 truncate">{item.label}</span>
 
-                  {/* Notification badge */}
-                  {isNotif && unreadCount > 0 && (
+                  {/* Badge for notifications or verification queue */}
+                  {badgeCount > 0 && (
                     <span className={cn(
                       "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold",
                       isActive
                         ? "bg-primary-foreground/20 text-primary-foreground"
-                        : "bg-primary text-primary-foreground animate-pulse-dot"
+                        : isVerification
+                          ? "bg-amber-500 text-white animate-pulse-dot"
+                          : "bg-primary text-primary-foreground animate-pulse-dot"
                     )}>
-                      {unreadCount > 9 ? "9+" : unreadCount}
+                      {badgeCount > 9 ? "9+" : badgeCount}
                     </span>
                   )}
                 </Link>

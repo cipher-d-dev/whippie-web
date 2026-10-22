@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Building2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Building2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useDepartments, useCreateDepartment, useUpdateDepartment } from "@/features/departments/hooks";
+import {
+  useDepartments,
+  useCreateDepartment,
+  useUpdateDepartment,
+  useDeleteDepartment,
+} from "@/features/departments/hooks";
 import { ApiError, applyApiErrors } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -149,6 +154,13 @@ export default function DepartmentsPage() {
 
   const createMut = useCreateDepartment(() => setCreateOpen(false));
   const editMut   = useUpdateDepartment(editTarget?._id ?? "", () => setEditTarget(null));
+  const deleteMut = useDeleteDepartment();
+
+  const handleDelete = (id: string, name: string) => {
+    if (confirm(`Are you sure you want to remove the "${name}" department?`)) {
+      deleteMut.mutate(id);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -191,13 +203,25 @@ export default function DepartmentsPage() {
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={() => setEditTarget(dept)}
-                  className="shrink-0 rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent"
-                  aria-label="Edit department"
-                >
-                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                </button>
+                <div className="flex items-center gap-1 shrink-0 opacity-0 transition-opacity group-hover:opacity-100">
+                  <button
+                    onClick={() => setEditTarget(dept)}
+                    className="rounded-md p-1 hover:bg-accent text-muted-foreground hover:text-foreground"
+                    aria-label="Edit department"
+                    title="Edit department"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(dept._id, dept.name)}
+                    disabled={deleteMut.isPending}
+                    className="rounded-md p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                    aria-label="Delete department"
+                    title="Delete department"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
 
               <Separator />

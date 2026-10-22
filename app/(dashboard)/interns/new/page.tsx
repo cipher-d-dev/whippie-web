@@ -1,6 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -72,7 +74,16 @@ function Field({
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function NewInternPage() {
+  return (
+    <Suspense>
+      <NewInternForm />
+    </Suspense>
+  );
+}
+
+function NewInternForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const {
     register,
@@ -87,6 +98,13 @@ export default function NewInternPage() {
   });
 
   const mutation = useCreateIntern(() => router.push("/interns"), setError as (field: string, error: { type: string; message: string }) => void);
+
+  // Pre-fill userId from query param (e.g. /interns/new?userId=abc123)
+  // Used by the verification queue's "Add intern record" link after approval
+  const userIdFromQuery = searchParams.get("userId");
+  useEffect(() => {
+    if (userIdFromQuery) setValue("userId", userIdFromQuery);
+  }, [userIdFromQuery, setValue]);
 
   const onSubmit = (values: FormValues) => {
     // Strip empty optional strings so the API doesn't receive ""

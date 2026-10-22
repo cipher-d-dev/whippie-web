@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPatch } from "@/lib/api/client";
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api/client";
 import type {
   DepartmentObject,
   CreateDepartmentInput,
@@ -39,4 +39,10 @@ export async function updateDepartment(
   input: UpdateDepartmentInput
 ): Promise<ApiResponse<{ department: DepartmentObject }>> {
   return apiPatch<ApiResponse<{ department: DepartmentObject }>>(`${BASE}/${id}`, input);
+}
+
+export async function deleteDepartment(
+  id: string
+): Promise<ApiResponse<null>> {
+  return apiDelete<ApiResponse<null>>(`${BASE}/${id}`);
 }
