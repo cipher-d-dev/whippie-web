@@ -21,6 +21,10 @@ const ENTITY_HREF: Partial<Record<NotificationType, (id: string) => string>> = {
   EVALUATION_SUBMITTED:         (id) => `/evaluations/${id}`,
   DOCUMENT_STATUS_CHANGED:      (id) => `/documents/${id}`,
   REPORT_REVIEWED:              (id) => `/reports/${id}`,
+  NEW_INTERN_PENDING:           (id) => `/interns/${id}`,
+  ATTENDANCE_FLAGGED:           (id) => `/attendance/${id}`,
+  DOCUMENT_UPLOADED:            (id) => `/documents/${id}`,
+  REPORT_SUBMITTED:             (id) => `/reports/${id}`,
 };
 
 function getEntityHref(n: NotificationObject): string | null {
@@ -52,6 +56,10 @@ const TYPE_LABELS: Partial<Record<NotificationType, string>> = {
   EVALUATION_SUBMITTED:         "Evaluation submitted",
   DOCUMENT_STATUS_CHANGED:      "Document update",
   REPORT_REVIEWED:              "Report reviewed",
+  NEW_INTERN_PENDING:           "New applicant",
+  ATTENDANCE_FLAGGED:           "Attendance flagged",
+  DOCUMENT_UPLOADED:            "Document uploaded",
+  REPORT_SUBMITTED:             "Report submitted",
 };
 
 // ─── Single notification row ──────────────────────────────────────────────────

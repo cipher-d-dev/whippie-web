@@ -99,7 +99,11 @@ export type NotificationType =
   | "SUBMISSION_CHANGES_REQUESTED"
   | "EVALUATION_SUBMITTED"
   | "DOCUMENT_STATUS_CHANGED"
-  | "REPORT_REVIEWED";
+  | "REPORT_REVIEWED"
+  | "NEW_INTERN_PENDING"
+  | "ATTENDANCE_FLAGGED"
+  | "DOCUMENT_UPLOADED"
+  | "REPORT_SUBMITTED";
 
 export interface NotificationObject {
   _id: string;

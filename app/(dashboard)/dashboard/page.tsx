@@ -119,12 +119,12 @@ function StatCard({
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {label}
           </p>
-          <p className={cn(
+          <div className={cn(
             "mt-2 text-3xl font-black tracking-tight",
             alert && Number(value) > 0 ? "text-destructive" : "text-foreground"
           )}>
             {isNum ? <CountUp value={value as number} loading={loading} /> : value}
-          </p>
+          </div>
           <p className="mt-1 text-xs text-muted-foreground">{description}</p>
         </div>
 

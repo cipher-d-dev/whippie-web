@@ -37,6 +37,7 @@ export function WhippieLogo({ className, size = 48 }: WhippieLogoProps) {
       alt="Whippie"
       width={size}
       height={size}
+      style={{ width: "auto", height: "auto" }}
       className={cn("object-contain", className)}
       priority
     />
