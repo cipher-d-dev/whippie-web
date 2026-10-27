@@ -72,3 +72,40 @@ export async function listUsers(params: {
   const query = qs.toString() ? `?${qs}` : "";
   return apiGet<ApiPaginatedResponse<PendingUser>>(`/api/v1/users${query}`);
 }
+
+export interface AvatarUploadInfo {
+  endpoint: string;
+  projectId: string;
+  bucketId: string;
+  fileId: string;
+}
+
+export async function getAvatarUploadInfo(): Promise<AvatarUploadInfo> {
+  const res = await apiGet<ApiResponse<{ uploadInfo: AvatarUploadInfo }>>("/api/v1/users/me/avatar-upload-info");
+  if (!res.data?.uploadInfo) throw new Error("Could not retrieve upload info");
+  return res.data.uploadInfo;
+}
+
+export async function uploadAvatarFile(info: AvatarUploadInfo, file: File): Promise<void> {
+  const formData = new FormData();
+  formData.append("fileId", info.fileId);
+  formData.append("file", file);
+
+  const url = `${info.endpoint}/storage/buckets/${info.bucketId}/files`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "X-Appwrite-Project": info.projectId,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(body.message ?? `Upload failed (${res.status})`);
+  }
+}
+
+export async function updateUserAvatar(avatarUrl: string): Promise<ApiResponse<{ user: unknown }>> {
+  return apiPatch<ApiResponse<{ user: unknown }>>("/api/v1/users/me/avatar", { avatarUrl });
+}

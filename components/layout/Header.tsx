@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, CheckCheck, ExternalLink, Sun, Moon } from "lucide-react";
+import { Bell, CheckCheck, ExternalLink, Sun, Moon, Camera, Loader2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/context";
+import { getAvatarUploadInfo, uploadAvatarFile, updateUserAvatar } from "@/features/users/api";
+import { toast } from "sonner";
+import { useRef } from "react";
 import { useBellNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from "@/features/notifications/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -258,9 +261,7 @@ export function Header() {
   const pathname = usePathname();
   const { user }  = useAuth();
 
-  const initials = user
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : "?";
+  const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "?";
 
   const roleLabel = user?.role === "HR" ? "HR" : user?.role === "SUPERVISOR" ? "Supervisor" : "";
 
@@ -280,10 +281,81 @@ export function Header() {
         <ThemeToggle />
         <NotificationBell />
 
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary cursor-default select-none">
-          {initials}
-        </div>
+        <UserAvatarUpload />
       </div>
+    </div>
+  );
+}
+
+function UserAvatarUpload() {
+  const { user, refreshUser } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "?";
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file (PNG, JPG, WEBP).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Profile picture must be under 5MB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const info = await getAvatarUploadInfo();
+      await uploadAvatarFile(info, file);
+      const avatarUrl = `${info.endpoint}/storage/buckets/${info.bucketId}/files/${info.fileId}/view?project=${info.projectId}`;
+      await updateUserAvatar(avatarUrl);
+      await refreshUser();
+      toast.success("Profile photo updated");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload photo");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div
+      onClick={() => fileInputRef.current?.click()}
+      title="Click to change profile picture"
+      className="group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-primary/10 text-xs font-bold text-primary cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all select-none"
+    >
+      {user?.avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={user.avatarUrl}
+          alt={`${user.firstName} ${user.lastName}`}
+          className="h-full w-full object-cover rounded-xl"
+        />
+      ) : (
+        <span>{initials}</span>
+      )}
+
+      {/* Overlay with camera icon */}
+      <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+        {uploading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Camera className="h-3.5 w-3.5" />
+        )}
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        disabled={uploading}
+        onChange={handleFileChange}
+      />
     </div>
   );
 }

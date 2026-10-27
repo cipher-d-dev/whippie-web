@@ -13,8 +13,16 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Whippe",
+  title: "Whippie | DAAR Communications",
   description: "DAAR Communications intern management platform",
+  icons: {
+    icon: [
+      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/favicon.png",
+    apple: "/icon-192.png",
+  },
 };
 
 export default function RootLayout({

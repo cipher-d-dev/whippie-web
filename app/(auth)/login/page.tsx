@@ -15,7 +15,8 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
-  Building2,
+  ShieldCheck,
+  CheckCircle2,
 } from "lucide-react";
 
 import { useAuth } from "@/lib/auth/context";
@@ -94,18 +95,18 @@ export default function LoginPage() {
   // Authenticated as INTERN — Wrong Portal
   if (isAuthenticated && user?.role === "INTERN") {
     return (
-      <div className="w-full max-w-md rounded-2xl border border-border/80 bg-card p-8 shadow-sm text-center space-y-6">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/30">
+      <div className="w-full max-w-md rounded-3xl border border-border/80 bg-card p-8 shadow-xl text-center space-y-6">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
           <AlertCircle className="h-7 w-7" />
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight text-foreground">
-            Staff Portal Access Restricted
+            Staff Portal Restricted
           </h2>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            You are logged in as{" "}
-            <span className="font-semibold text-foreground">{user?.email}</span>.
-            This dashboard is dedicated to HR Administrators and Supervisors.
+            You are currently signed in as an intern (
+            <span className="font-semibold text-foreground">{user?.email}</span>).
+            This portal is exclusively reserved for HR Administrators and Station Supervisors.
           </p>
         </div>
         <Button
@@ -113,39 +114,36 @@ export default function LoginPage() {
           className="w-full h-11 rounded-xl"
           onClick={() => logout()}
         >
-          Sign out and switch account
+          Sign out & switch account
         </Button>
       </div>
     );
   }
 
-  // Form Render
   return (
-    <div className="w-full max-w-[420px] space-y-7">
-      {/* Mobile Top Brand Header */}
-      <div className="flex flex-col items-center lg:hidden space-y-2 mb-2">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
-          <WhippieLogo size={36} />
+    <div className="w-full max-w-[400px] space-y-6">
+      {/* Mobile brand header (visible on smaller screens) */}
+      <div className="flex flex-col items-center lg:hidden space-y-2 text-center mb-4">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+          <WhippieLogo size={28} />
         </div>
-        <h1 className="text-xl font-extrabold tracking-tight">Whippie HR</h1>
-        <p className="text-xs text-muted-foreground">DAAR Communications Staff Portal</p>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">Whippie HR</h1>
+          <p className="text-xs text-muted-foreground">DAAR Communications Administration</p>
+        </div>
       </div>
 
-      {/* Main Title & Subtitle */}
-      <div>
-        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-muted/60 text-muted-foreground text-xs font-medium mb-3">
-          <Building2 className="h-3.5 w-3.5" />
-          <span>Internal HR Portal</span>
-        </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-          Welcome back
+      {/* Header section */}
+      <div className="space-y-1.5 text-center lg:text-left">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          Sign in
         </h2>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          Please enter your credentials to access staff operations.
+        <p className="text-sm text-muted-foreground">
+          Enter your official work credentials to access the administrative dashboard.
         </p>
       </div>
 
-      {/* Login Card */}
+      {/* Main card */}
       <div className="rounded-2xl border border-border/80 bg-card p-6 sm:p-7 shadow-sm">
         <form
           onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
@@ -154,7 +152,7 @@ export default function LoginPage() {
         >
           {/* Email Field */}
           <div className="space-y-1.5">
-            <Label htmlFor="email" className="text-xs font-semibold text-foreground/90">
+            <Label htmlFor="email" className="text-xs font-medium text-foreground">
               Work Email
             </Label>
             <div className="relative">
@@ -165,12 +163,12 @@ export default function LoginPage() {
                 placeholder="name@daarcomms.tv"
                 autoComplete="email"
                 disabled={mutation.isPending}
-                className="h-11 rounded-xl border-input/80 pl-10 text-sm placeholder:text-muted-foreground/60 transition-colors focus-visible:ring-1 focus-visible:ring-primary"
+                className="h-10 rounded-lg pl-10 text-sm"
                 {...form.register("email")}
               />
             </div>
             {form.formState.errors.email && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-xs text-destructive">
                 {form.formState.errors.email.message}
               </p>
             )}
@@ -179,7 +177,7 @@ export default function LoginPage() {
           {/* Password Field */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-xs font-semibold text-foreground/90">
+              <Label htmlFor="password" className="text-xs font-medium text-foreground">
                 Password
               </Label>
             </div>
@@ -188,17 +186,17 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••••••"
+                placeholder="••••••••"
                 autoComplete="current-password"
                 disabled={mutation.isPending}
-                className="h-11 rounded-xl border-input/80 pl-10 pr-10 text-sm placeholder:text-muted-foreground/60 transition-colors focus-visible:ring-1 focus-visible:ring-primary"
+                className="h-10 rounded-lg pl-10 pr-10 text-sm"
                 {...form.register("password")}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -209,7 +207,7 @@ export default function LoginPage() {
               </button>
             </div>
             {form.formState.errors.password && (
-              <p className="text-xs font-medium text-destructive">
+              <p className="text-xs text-destructive">
                 {form.formState.errors.password.message}
               </p>
             )}
@@ -219,16 +217,16 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={mutation.isPending}
-            className="w-full h-11 rounded-xl text-sm font-semibold shadow-md shadow-primary/20 transition-all hover:shadow-lg hover:shadow-primary/25 cursor-pointer mt-2"
+            className="w-full h-10 rounded-lg text-sm font-medium mt-2"
           >
             {mutation.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Authenticating…
+                Signing in…
               </>
             ) : (
               <>
-                Sign in to Dashboard
+                Sign in
                 <ArrowRight className="ml-2 h-4 w-4" />
               </>
             )}
@@ -236,11 +234,10 @@ export default function LoginPage() {
         </form>
       </div>
 
-      {/* Security notice footer */}
-      <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-        <span>Authorized Personnel & Supervisor Access Only</span>
-      </div>
+      {/* Subtle footnote */}
+      <p className="text-center text-xs text-muted-foreground">
+        DAAR Communications Plc &middot; For authorized staff and supervisors
+      </p>
     </div>
   );
 }

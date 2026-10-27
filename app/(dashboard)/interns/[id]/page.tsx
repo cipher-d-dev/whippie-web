@@ -17,6 +17,8 @@ import {
   Clock,
   AlertTriangle,
   FileText,
+  Upload,
+  Download,
   ClipboardList,
   Phone,
   MapPin,
@@ -38,7 +40,10 @@ import { useDepartments } from "@/features/departments/hooks";
 import { useSupervisors } from "@/features/supervisors/hooks";
 import { useTasks } from "@/features/tasks/hooks";
 import { useAttendance } from "@/features/attendance/hooks";
-import { useChecklist } from "@/features/documents/hooks";
+import { useChecklist, documentKeys } from "@/features/documents/hooks";
+import { createDocument, getUploadInfo, uploadDocumentFileToAppwrite, confirmUpload, getDownloadUrl } from "@/features/documents/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useReports } from "@/features/reports/hooks";
 import { useEvaluations } from "@/features/evaluations/hooks";
 import { Button } from "@/components/ui/button";
@@ -117,6 +122,43 @@ export default function InternDetailPage({
   const [deptDialogOpen, setDeptDialogOpen] = useState(false);
   const [supervisorDialogOpen, setSvDialogOpen] = useState(false);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const qc = useQueryClient();
+  const [uploadingDocReqId, setUploadingDocReqId] = useState<string | null>(null);
+
+  const handleHRDocumentUpload = async (requirementId: string, existingDocId?: string, e?: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e?.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error('File size must be under 20MB.');
+      return;
+    }
+    setUploadingDocReqId(requirementId);
+    try {
+      let docId = existingDocId;
+      if (!docId) {
+        const created = await createDocument({ internId: id, requirementId });
+        if (!created.data?.document?._id) throw new Error("Failed to create document record");
+        docId = created.data.document._id;
+      }
+      const infoRes = await getUploadInfo(docId);
+      if (!infoRes.data?.uploadInfo) throw new Error("Failed to obtain upload ticket");
+      const info = infoRes.data.uploadInfo;
+      await uploadDocumentFileToAppwrite(info, file);
+      await confirmUpload(docId, {
+        storageKey: info.fileId,
+        originalFilename: file.name,
+        contentType: file.type || 'application/octet-stream',
+        fileSizeBytes: file.size,
+      });
+      qc.invalidateQueries({ queryKey: documentKeys.checklist(id) });
+      toast.success('Document uploaded successfully');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to upload document');
+    } finally {
+      setUploadingDocReqId(null);
+      if (e?.target) e.target.value = '';
+    }
+  };
   const [selectedDept, setSelectedDept] = useState("");
   const [selectedSv, setSelectedSv] = useState("");
 
@@ -706,13 +748,62 @@ export default function InternDetailPage({
                       </div>
                       <p className="text-xs text-muted-foreground">{item.requirement.type}</p>
                     </div>
-                    <div>
+                    <div className="flex items-center gap-2">
                       <Badge
                         variant={item.document?.status === "VERIFIED" ? "default" : item.document?.status === "REJECTED" ? "destructive" : "secondary"}
                         className="text-xs"
                       >
                         {item.document?.status ?? "NOT UPLOADED"}
                       </Badge>
+
+                      {/* Download link if document file exists */}
+                      {item.document && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 px-2 text-xs"
+                          asChild
+                        >
+                          <a
+                            href={getDownloadUrl(item.document._id)}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Download document"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </a>
+                        </Button>
+                      )}
+
+                      {/* HR Upload / Replace document button */}
+                      {isHR && (
+                        <label className="cursor-pointer">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-xs cursor-pointer"
+                            disabled={uploadingDocReqId === item.requirement._id}
+                            asChild
+                          >
+                            <span>
+                              {uploadingDocReqId === item.requirement._id ? (
+                                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Upload className="mr-1 h-3.5 w-3.5" />
+                              )}
+                              {item.document ? "Replace" : "Upload"}
+                            </span>
+                          </Button>
+                          <input
+                            type="file"
+                            className="sr-only"
+                            disabled={uploadingDocReqId === item.requirement._id}
+                            onChange={(e) =>
+                              handleHRDocumentUpload(item.requirement._id, item.document?._id, e)
+                            }
+                          />
+                        </label>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useSupervisors, useCreateSupervisor } from "@/features/supervisors/hooks";
 import { useDepartments } from "@/features/departments/hooks";
-import { useUsers } from "@/features/users/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,7 +38,7 @@ import {
 // ─── Create form schema ───────────────────────────────────────────────────────
 
 const schema = z.object({
-  userId:     z.string().min(1, "User ID is required"),
+  email:      z.string().email("Enter a valid official email address"),
   firstName:  z.string().min(1, "First name is required"),
   lastName:   z.string().min(1, "Last name is required"),
   phone:      z.string().optional(),
@@ -66,10 +65,8 @@ export default function SupervisorsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const { data, isLoading } = useSupervisors({ limit: 100 });
   const { data: deptData } = useDepartments({ limit: 100 });
-  const { data: userData } = useUsers({ role: "SUPERVISOR", limit: 100 });
   const supervisors = data?.data ?? [];
   const departments = deptData?.data ?? [];
-  const supervisorUsers = userData?.data ?? [];
 
   const createMut = useCreateSupervisor(() => setCreateOpen(false));
 
@@ -166,34 +163,6 @@ export default function SupervisorsPage() {
             <DialogTitle>Add supervisor</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Field label="Staff Account" required error={errors.userId?.message}>
-              {supervisorUsers.length > 0 ? (
-                <Select
-                  value={watch("userId") ?? ""}
-                  onValueChange={(val) => {
-                    setValue("userId", val, { shouldValidate: true });
-                    const matched = supervisorUsers.find((u) => u._id === val);
-                    if (matched) {
-                      if (!watch("firstName")) setValue("firstName", matched.firstName);
-                      if (!watch("lastName")) setValue("lastName", matched.lastName);
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an active supervisor account" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {supervisorUsers.map((u) => (
-                      <SelectItem key={u._id} value={u._id}>
-                        {u.firstName} {u.lastName} ({u.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input placeholder="Enter supervisor User ID" {...register("userId")} />
-              )}
-            </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="First name" required error={errors.firstName?.message}>
                 <Input placeholder="Emeka" {...register("firstName")} />
@@ -202,10 +171,20 @@ export default function SupervisorsPage() {
                 <Input placeholder="Eze" {...register("lastName")} />
               </Field>
             </div>
+            <Field label="Work Email" required error={errors.email?.message}>
+              <Input
+                type="email"
+                placeholder="supervisor@daarcomms.tv"
+                {...register("email")}
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                An invite with their login credentials will be sent to this email.
+              </p>
+            </Field>
             <Field label="Phone" error={errors.phone?.message}>
               <Input placeholder="08098765432" {...register("phone")} />
             </Field>
-            <Field label="Department" error={errors.department?.message}>
+            <Field label="Department / SBU" error={errors.department?.message}>
               <Select
                 value={watch("department") ?? ""}
                 onValueChange={(v) => setValue("department", v)}
@@ -224,7 +203,7 @@ export default function SupervisorsPage() {
             </Field>
             <DialogFooter className="pt-2">
               <Button type="submit" disabled={createMut.isPending} className="w-full">
-                {createMut.isPending ? "Creating…" : "Create supervisor"}
+                {createMut.isPending ? "Creating…" : "Create supervisor & send invite"}
               </Button>
             </DialogFooter>
           </form>

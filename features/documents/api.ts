@@ -98,3 +98,23 @@ export function getDownloadUrl(id: string): string {
   const base = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:5000";
   return `${base}/api/v1/documents/${id}/download`;
 }
+
+export async function uploadDocumentFileToAppwrite(info: UploadInfo, file: File): Promise<void> {
+  const formData = new FormData();
+  formData.append("fileId", info.fileId);
+  formData.append("file", file);
+
+  const url = `${info.endpoint}/storage/buckets/${info.bucketId}/files`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "X-Appwrite-Project": info.projectId,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(body.message ?? `Upload failed (${res.status})`);
+  }
+}

@@ -47,7 +47,7 @@ type FormValues = z.infer<typeof schema>;
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({ label, error, children }: { label: React.ReactNode; error?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>
@@ -91,7 +91,14 @@ function DepartmentForm({
         <Input placeholder="e.g. News & Current Affairs" {...register("name")} />
       </Field>
 
-      <Field label="Subsidiary" error={errors.subsidiary?.message}>
+      <Field
+        label={
+          <span>
+            Subsidiary (<strong className="font-bold text-foreground">SBU</strong>)
+          </span>
+        }
+        error={errors.subsidiary?.message}
+      >
         <Select
           value={watch("subsidiary") ?? ""}
           onValueChange={(v) => setValue("subsidiary", v as Subsidiary)}

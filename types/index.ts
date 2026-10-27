@@ -354,7 +354,9 @@ export interface SupervisorObject {
 }
 
 export interface CreateSupervisorInput {
-  userId: string;
+  userId?: string;
+  email?: string;
+  password?: string;
   firstName: string;
   lastName: string;
   phone?: string;
