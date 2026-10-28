@@ -1,4 +1,4 @@
-import { apiGet, apiPatch } from "@/lib/api/client";
+import { apiGet, apiPatch, apiPost } from "@/lib/api/client";
 import type { ApiResponse, ApiPaginatedResponse } from "@/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -108,4 +108,11 @@ export async function uploadAvatarFile(info: AvatarUploadInfo, file: File): Prom
 
 export async function updateUserAvatar(avatarUrl: string): Promise<ApiResponse<{ user: unknown }>> {
   return apiPatch<ApiResponse<{ user: unknown }>>("/api/v1/users/me/avatar", { avatarUrl });
+}
+
+export async function changePassword(payload: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<ApiResponse<unknown>> {
+  return apiPost<ApiResponse<unknown>>('/api/v1/auth/change-password', payload);
 }

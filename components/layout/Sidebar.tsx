@@ -17,6 +17,7 @@ import {
   Building2,
   Bell,
   UserCheck,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/context";
@@ -43,7 +44,7 @@ const hrNav: NavItem[] = [
   { label: "Tasks",         href: "/tasks",         icon: CheckSquare },
   { label: "Reports",       href: "/reports",       icon: FileText },
   { label: "Supervisors",   href: "/supervisors",   icon: UserCog },
-  { label: "Documents",     href: "/documents",     icon: FolderOpen },
+  { label: "Settings", href: "/settings", icon: Settings },
   { label: "Evaluations",   href: "/evaluations",   icon: Star },
   { label: "Exit",          href: "/exit",          icon: DoorOpen },
   { label: "Notifications", href: "/notifications", icon: Bell },

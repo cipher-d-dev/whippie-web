@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { ProfileSettingsModal } from "@/components/shared/ProfileSettingsModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -258,6 +259,7 @@ function NotificationBell() {
 // ─── Header ───────────────────────────────────────────────────────────────────
 
 export function Header() {
+  const [isPwdModalOpen, setPwdModalOpen] = useState(false);
   const pathname = usePathname();
   const { user }  = useAuth();
 
@@ -282,6 +284,17 @@ export function Header() {
         <NotificationBell />
 
         <UserAvatarUpload />
+          {/* Change Password Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setPwdModalOpen(true)}
+            className="h-8 px-2"
+          >
+            Change Password
+          </Button>
+          {/* Password Modal */}
+          <ProfileSettingsModal open={isPwdModalOpen} onOpenChange={setPwdModalOpen} />
       </div>
     </div>
   );
