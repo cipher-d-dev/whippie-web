@@ -59,3 +59,20 @@ export function useMarkAllRead(onSuccess?: () => void) {
     onError: (err: Error) => toast.error(err.message ?? "Failed to mark notifications."),
   });
 }
+
+export function useBroadcastNotification(onSuccess?: () => void) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { target: "INTERNS" | "SUPERVISORS" | "BOTH"; title: string; body: string }) =>
+      import("./api").then((m) => m.broadcastNotification(input)),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: notificationKeys.all() });
+      toast.success(res.message ?? "Broadcast notification sent successfully.");
+      onSuccess?.();
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Failed to send broadcast.";
+      toast.error(msg);
+    },
+  });
+}

@@ -28,3 +28,15 @@ export async function markRead(
 export async function markAllRead(): Promise<ApiResponse<{ count: number }>> {
   return apiPatch<ApiResponse<{ count: number }>>(`${BASE}/read-all`, {});
 }
+
+export interface BroadcastNotificationInput {
+  target: "INTERNS" | "SUPERVISORS" | "BOTH";
+  title: string;
+  body: string;
+}
+
+export async function broadcastNotification(
+  input: BroadcastNotificationInput
+): Promise<ApiResponse<{ count: number }>> {
+  return apiPost<ApiResponse<{ count: number }>>(`${BASE}/broadcast`, input);
+}

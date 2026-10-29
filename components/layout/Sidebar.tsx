@@ -57,6 +57,7 @@ const supervisorNav: NavItem[] = [
   { label: "Reports",       href: "/reports",       icon: FileText },
   { label: "Evaluations",   href: "/evaluations",   icon: Star },
   { label: "Notifications", href: "/notifications", icon: Bell },
+  { label: "Settings",      href: "/settings",      icon: Settings },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────

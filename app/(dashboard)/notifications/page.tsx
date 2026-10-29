@@ -2,13 +2,26 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell, CheckCheck, ExternalLink } from "lucide-react";
-import { useNotifications, useMarkRead, useMarkAllRead } from "@/features/notifications/hooks";
+import { Bell, CheckCheck, ExternalLink, Send, Radio } from "lucide-react";
+import { useNotifications, useMarkRead, useMarkAllRead, useBroadcastNotification } from "@/features/notifications/hooks";
+import { useAuth } from "@/lib/auth/context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import type { NotificationObject, NotificationType } from "@/types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -25,6 +38,7 @@ const ENTITY_HREF: Partial<Record<NotificationType, (id: string) => string>> = {
   ATTENDANCE_FLAGGED:           (id) => `/attendance/${id}`,
   DOCUMENT_UPLOADED:            (id) => `/documents/${id}`,
   REPORT_SUBMITTED:             (id) => `/reports/${id}`,
+  BROADCAST:                    () => `/notifications`,
 };
 
 function getEntityHref(n: NotificationObject): string | null {
@@ -60,6 +74,7 @@ const TYPE_LABELS: Partial<Record<NotificationType, string>> = {
   ATTENDANCE_FLAGGED:           "Attendance flagged",
   DOCUMENT_UPLOADED:            "Document uploaded",
   REPORT_SUBMITTED:             "Report submitted",
+  BROADCAST:                    "Broadcast",
 };
 
 // ─── Single notification row ──────────────────────────────────────────────────
@@ -99,46 +114,155 @@ function NotificationRow({
             {TYPE_LABELS[notification.type] ?? notification.type}
           </Badge>
         </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {notification.body}
-        </p>
-        <p className="text-xs text-muted-foreground/60">
-          {fmtRelative(notification.createdAt)}
-        </p>
+        <p className="text-xs text-muted-foreground line-clamp-2">{notification.body}</p>
+        <p className="text-[11px] text-muted-foreground/60">{fmtRelative(notification.createdAt)}</p>
       </div>
 
-      {/* Link arrow */}
       {href && (
-        <ExternalLink className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+        <ExternalLink className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-primary" />
       )}
     </div>
   );
 
-  return href ? <Link href={href} className="block">{inner}</Link> : inner;
+  return href ? (
+    <Link href={href} className="block">{inner}</Link>
+  ) : (
+    <div>{inner}</div>
+  );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Broadcast Dialog (HR only) ───────────────────────────────────────────────
+
+function BroadcastDialog() {
+  const [open, setOpen] = useState(false);
+  const [target, setTarget] = useState<"INTERNS" | "SUPERVISORS" | "BOTH">("BOTH");
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+
+  const broadcastMut = useBroadcastNotification(() => {
+    setTitle("");
+    setBody("");
+    setOpen(false);
+  });
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !body.trim()) return;
+    broadcastMut.mutate({ target, title: title.trim(), body: body.trim() });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="gap-2 cursor-pointer">
+          <Radio className="h-4 w-4" />
+          Broadcast Announcement
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-base font-bold">
+            <Radio className="h-4 w-4 text-primary" />
+            Send Broadcast Notification
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            Instantly dispatch an official notification and push alert to selected audiences.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSend} className="space-y-4 pt-2">
+          {/* Target Audience */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Target Audience</Label>
+            <Select value={target} onValueChange={(v) => setTarget(v as typeof target)}>
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BOTH">All Users (Interns &amp; Supervisors)</SelectItem>
+                <SelectItem value="INTERNS">Interns Only</SelectItem>
+                <SelectItem value="SUPERVISORS">Supervisors Only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Title */}
+          <div className="space-y-1.5">
+            <Label htmlFor="broadcast-title" className="text-xs font-semibold">Notification Title</Label>
+            <Input
+              id="broadcast-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Monthly Review Meeting Schedule"
+              className="h-9 text-sm"
+              maxLength={120}
+              required
+            />
+          </div>
+
+          {/* Message Body */}
+          <div className="space-y-1.5">
+            <Label htmlFor="broadcast-body" className="text-xs font-semibold">Message Body</Label>
+            <Textarea
+              id="broadcast-body"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Type your message details here..."
+              rows={4}
+              className="text-sm"
+              maxLength={1000}
+              required
+            />
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={broadcastMut.isPending}
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={broadcastMut.isPending || !title.trim() || !body.trim()}
+              className="gap-1.5"
+            >
+              <Send className="h-4 w-4" />
+              {broadcastMut.isPending ? "Sending…" : "Send Broadcast"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 
 type ReadFilter = "ALL" | "UNREAD" | "READ";
 
 export default function NotificationsPage() {
+  const { user } = useAuth();
+  const isHR = user?.role === "HR";
   const [filter, setFilter] = useState<ReadFilter>("ALL");
-  const [page, setPage]     = useState(1);
+  const [page,   setPage]   = useState(1);
 
-  const params = {
-    page, limit: 20,
-    ...(filter === "UNREAD" && { read: false }),
-    ...(filter === "READ"   && { read: true  }),
+  const queryParams = {
+    page,
+    limit: 20,
+    ...(filter === "UNREAD" ? { read: false } : {}),
+    ...(filter === "READ"   ? { read: true }  : {}),
   };
 
-  const { data, isLoading } = useNotifications(params);
-  const markReadMut  = useMarkRead();
-  const markAllMut   = useMarkAllRead(() => setFilter("ALL"));
+  const { data, isLoading } = useNotifications(queryParams);
+  const markReadMut         = useMarkRead();
+  const markAllMut          = useMarkAllRead();
 
   const notifications = data?.data ?? [];
   const total         = data?.total ?? 0;
   const totalPages    = data?.totalPages ?? 1;
-  const unreadTotal   = filter === "ALL" ? (data?.data ?? []).filter((n) => !n.read).length : 0;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -150,15 +274,18 @@ export default function NotificationsPage() {
             {!isLoading && `${total} notification${total !== 1 ? "s" : ""}`}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={markAllMut.isPending}
-          onClick={() => markAllMut.mutate()}
-        >
-          <CheckCheck className="mr-2 h-4 w-4" />
-          Mark all read
-        </Button>
+        <div className="flex items-center gap-2">
+          {isHR && <BroadcastDialog />}
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={markAllMut.isPending}
+            onClick={() => markAllMut.mutate()}
+          >
+            <CheckCheck className="mr-2 h-4 w-4" />
+            Mark all read
+          </Button>
+        </div>
       </div>
 
       {/* Filter */}
