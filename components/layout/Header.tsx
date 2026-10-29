@@ -4,17 +4,14 @@ import Link from "next/link";
 import { Bell, CheckCheck, ExternalLink, Sun, Moon, Camera, Loader2 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth/context";
 import { getAvatarUploadInfo, uploadAvatarFile, updateUserAvatar } from "@/features/users/api";
 import { toast } from "sonner";
-import { useRef } from "react";
 import { useBellNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from "@/features/notifications/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ProfileSettingsModal } from "@/components/shared/ProfileSettingsModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +33,6 @@ function ThemeToggle() {
   const isDark = theme === "dark";
 
   const toggle = () => {
-    // Add transitioning class to trigger smooth CSS crossfade
     const html = document.documentElement;
     html.classList.add("transitioning");
     setTheme(isDark ? "light" : "dark");
@@ -82,6 +78,8 @@ function getPageTitle(pathname: string): string {
     evaluations:   "Evaluations",
     exit:          "Exit & Completion",
     notifications: "Notifications",
+    settings:      "Settings",
+    verification:  "Verification",
   };
   return titles[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1);
 }
@@ -134,7 +132,6 @@ function NotifItem({
       )}
       onClick={() => { if (!notification.read) onRead(notification._id); }}
     >
-      {/* Unread dot */}
       <div className="mt-1.5 flex h-2 w-2 shrink-0">
         {!notification.read && (
           <span className="h-2 w-2 rounded-full bg-primary animate-pulse-dot" />
@@ -196,7 +193,6 @@ function NotificationBell() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-80 p-0 rounded-2xl shadow-xl" sideOffset={8}>
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold">Notifications</p>
@@ -259,11 +255,8 @@ function NotificationBell() {
 // ─── Header ───────────────────────────────────────────────────────────────────
 
 export function Header() {
-  const [isPwdModalOpen, setPwdModalOpen] = useState(false);
-  const pathname = usePathname();
+  const pathname  = usePathname();
   const { user }  = useAuth();
-
-  const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "?";
 
   const roleLabel = user?.role === "HR" ? "HR" : user?.role === "SUPERVISOR" ? "Supervisor" : "";
 
@@ -279,26 +272,15 @@ export function Header() {
             {roleLabel}
           </span>
         )}
-
         <ThemeToggle />
         <NotificationBell />
-
         <UserAvatarUpload />
-          {/* Change Password Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setPwdModalOpen(true)}
-            className="h-8 px-2"
-          >
-            Change Password
-          </Button>
-          {/* Password Modal */}
-          <ProfileSettingsModal open={isPwdModalOpen} onOpenChange={setPwdModalOpen} />
       </div>
     </div>
   );
 }
+
+// ─── Avatar upload ────────────────────────────────────────────────────────────
 
 function UserAvatarUpload() {
   const { user, refreshUser } = useAuth();
@@ -352,7 +334,6 @@ function UserAvatarUpload() {
         <span>{initials}</span>
       )}
 
-      {/* Overlay with camera icon */}
       <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity">
         {uploading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />

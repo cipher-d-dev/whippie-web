@@ -2,9 +2,7 @@
 
 import { WhippieLogo } from "@/components/shared/WhippieLogo";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -14,8 +12,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/context";
 import { ApiError, applyApiErrors } from "@/lib/api/client";
 import { useRouter } from "next/navigation";
-
-// Design system for HR login page (overrides) – see design-system/whippie-hr/pages/login.md
+import { cn } from "@/lib/utils/cn";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid official email address"),
@@ -24,150 +21,165 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+const inputCls = (err?: boolean) =>
+  cn(
+    "w-full rounded-2xl border bg-muted/40 pl-10 pr-4 py-3 text-sm font-medium outline-none",
+    "placeholder:text-muted-foreground/40 transition-all duration-150",
+    err
+      ? "border-destructive/50 bg-destructive/5"
+      : "border-transparent hover:border-border focus:border-primary/60 focus:bg-background focus:ring-2 focus:ring-primary/15"
+  );
+
 export function HRLoginPage() {
-  const { login, isLoading, logout, user, isAuthenticated } = useAuth();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  const router = useRouter();
   const mutation = useMutation({
     mutationFn: (values: LoginFormValues) => login(values),
     onSuccess: () => {
       toast.success("Welcome back!");
-      router.replace('/dashboard');
+      router.replace("/dashboard");
     },
     onError: (err) => {
       if (err instanceof ApiError) {
-        applyApiErrors(err, (field, error) => form.setError(field as keyof LoginFormValues, error));
+        applyApiErrors(err, (field, error) =>
+          form.setError(field as keyof LoginFormValues, error)
+        );
       }
-      toast.error(err instanceof ApiError ? err.message : "Authentication failed.");
+      toast.error(
+        err instanceof ApiError ? err.message : "Authentication failed."
+      );
     },
   });
 
+  const { errors, isSubmitting } = form.formState;
+  const busy = isSubmitting || mutation.isPending;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-100 flex flex-col">
-      {/* Hero section – per design overrides */}
-      <section className="py-12 bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center gap-8">
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold text-gray-800 mb-4">Welcome to Whippie HR</h1>
-            <p className="text-lg text-gray-600 mb-6">
-              Empower your staff portal with secure authentication and streamlined HR workflows.
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm space-y-8">
+        {/* Logo + heading */}
+        <div className="flex flex-col items-center space-y-3 text-center">
+          <WhippieLogo size={44} />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              HR Portal
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Sign in to manage your interns
             </p>
-            <Button variant="default" asChild>
-              <a href="/contact" className="inline-flex items-center">
-                Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
-          </div>
-          <div className="flex-1 flex justify-center">
-            {/* Placeholder for hero illustration or video */}
-            <div className="w-64 h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-              <span className="text-gray-500">[Hero Media]</span>
-            </div>
           </div>
         </div>
-      </section>
 
-      {/* Login form section – retains existing functionality */}
-      <section className="flex-1 flex items-center justify-center py-12">
-        <div className="w-full max-w-md space-y-8">
-          <div className="flex flex-col items-center space-y-3">
-            <WhippieLogo size={48} />
-            <h2 className="text-2xl font-semibold text-gray-800">HR Sign In</h2>
-          </div>
+        {/* Card */}
+        <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm space-y-5">
           <form
             onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
-            className="space-y-6"
             noValidate
+            className="space-y-4"
           >
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+            {/* Email */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="email"
+                className="block text-[13px] font-semibold text-foreground"
+              >
                 Official Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@daarcomms.tv"
-                disabled={mutation.isPending}
-                className="h-10"
-                {...form.register("email")}
-              />
-              {form.formState.errors.email && (
-                <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+              </label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="name@daarcomms.tv"
+                  disabled={busy}
+                  className={inputCls(!!errors.email)}
+                  {...form.register("email")}
+                />
+              </div>
+              {errors.email && (
+                <p className="text-[11px] font-medium text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Password
-              </Label>
+
+            {/* Password */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="password"
+                  className="block text-[13px] font-semibold text-foreground"
+                >
+                  Password
+                </label>
+                <a
+                  href="/forgot-password"
+                  className="text-[11px] font-semibold text-primary hover:underline underline-offset-4"
+                >
+                  Forgot password?
+                </a>
+              </div>
               <div className="relative">
-                <Input
+                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+                <input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
                   placeholder="••••••••"
-                  disabled={mutation.isPending}
-                  className="h-10 pr-10"
+                  disabled={busy}
+                  className={cn(inputCls(!!errors.password), "pr-11")}
                   {...form.register("password")}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
-              {form.formState.errors.password && (
-                <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+              {errors.password && (
+                <p className="text-[11px] font-medium text-destructive">
+                  {errors.password.message}
+                </p>
               )}
             </div>
-            <Button type="submit" className="w-full" disabled={mutation.isPending}>
-              Sign In
+
+            {/* Submit */}
+            <Button
+              type="submit"
+              className="group w-full h-11 rounded-2xl text-[15px] font-bold"
+              disabled={busy}
+            >
+              {busy ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </>
+              )}
             </Button>
           </form>
         </div>
-      </section>
 
-      {/* Solutions by Role – placeholder section as per design overrides */}
-      <section className="py-12 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h3 className="text-2xl font-bold text-center text-gray-800 mb-8">Solutions for HR</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { title: "Recruitment", desc: "Streamlined candidate tracking and onboarding.", icon: "UserCheck" },
-              { title: "Attendance", desc: "Real‑time check‑in/out and reports.", icon: "CalendarDays" },
-              { title: "Performance", desc: "Evaluations and growth plans.", icon: "Star" },
-            ].map((item, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-6 shadow-sm text-center">
-                {/* Simple icon placeholder */}
-                <div className="flex justify-center mb-4 text-primary">
-                  <span className="text-3xl">🔹</span>
-                </div>
-                <h4 className="text-lg font-semibold mb-2">{item.title}</h4>
-                <p className="text-sm text-gray-600">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer with contact sales CTA */}
-      <footer className="py-8 bg-white border-t border-gray-200">
-        <div className="container mx-auto px-4 text-center">
-          <Button variant="outline" asChild>
-            <a href="/contact" className="inline-flex items-center">
-              Get in touch <ArrowRight className="ml-2 h-4 w-4" />
-            </a>
-          </Button>
-          <p className="mt-4 text-sm text-gray-500">© {new Date().getFullYear()} Whippie HR. All rights reserved.</p>
-        </div>
-      </footer>
+        <p className="text-center text-xs text-muted-foreground">
+          Whippie HR Portal · Restricted Access
+        </p>
+      </div>
     </div>
   );
 }
