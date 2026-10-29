@@ -103,7 +103,8 @@ export type NotificationType =
   | "NEW_INTERN_PENDING"
   | "ATTENDANCE_FLAGGED"
   | "DOCUMENT_UPLOADED"
-  | "REPORT_SUBMITTED";
+  | "REPORT_SUBMITTED"
+  | "BROADCAST";
 
 export interface NotificationObject {
   _id: string;

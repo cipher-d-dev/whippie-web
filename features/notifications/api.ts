@@ -1,4 +1,4 @@
-import { apiGet, apiPatch } from "@/lib/api/client";
+import { apiGet, apiPatch, apiPost } from "@/lib/api/client";
 import type { NotificationObject, ApiResponse, ApiPaginatedResponse } from "@/types";
 
 const BASE = "/api/v1/notifications";
