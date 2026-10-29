@@ -1,6 +1,5 @@
 "use client";
 
-import { WhippieLogo } from "@/components/shared/WhippieLogo";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, ArrowRight, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
@@ -13,6 +12,7 @@ import { useAuth } from "@/lib/auth/context";
 import { ApiError, applyApiErrors } from "@/lib/api/client";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
+import Link from "next/link";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid official email address"),
@@ -62,124 +62,105 @@ export function HRLoginPage() {
   const busy = isSubmitting || mutation.isPending;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-8">
-        {/* Logo + heading */}
-        <div className="flex flex-col items-center space-y-3 text-center">
-          <WhippieLogo size={44} />
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              HR Portal
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Sign in to manage your interns
-            </p>
-          </div>
-        </div>
-
-        {/* Card */}
-        <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm space-y-5">
-          <form
-            onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
-            noValidate
-            className="space-y-4"
-          >
-            {/* Email */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="email"
-                className="block text-[13px] font-semibold text-foreground"
-              >
-                Official Email
-              </label>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
-                <input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="name@daarcomms.tv"
-                  disabled={busy}
-                  className={inputCls(!!errors.email)}
-                  {...form.register("email")}
-                />
-              </div>
-              {errors.email && (
-                <p className="text-[11px] font-medium text-destructive">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="block text-[13px] font-semibold text-foreground"
-                >
-                  Password
-                </label>
-                <a
-                  href="/forgot-password"
-                  className="text-[11px] font-semibold text-primary hover:underline underline-offset-4"
-                >
-                  Forgot password?
-                </a>
-              </div>
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  disabled={busy}
-                  className={cn(inputCls(!!errors.password), "pr-11")}
-                  {...form.register("password")}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-[11px] font-medium text-destructive">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            {/* Submit */}
-            <Button
-              type="submit"
-              className="group w-full h-11 rounded-2xl text-[15px] font-bold"
-              disabled={busy}
-            >
-              {busy ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <>
-                  <span>Sign In</span>
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </>
-              )}
-            </Button>
-          </form>
-        </div>
-
-        <p className="text-center text-xs text-muted-foreground">
-          Whippie HR Portal · Restricted Access
-        </p>
+    <form
+      onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
+      noValidate
+      className="space-y-4"
+    >
+      <div className="mb-2">
+        <h2 className="text-base font-bold text-foreground">Sign In</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">Enter your official credentials to access HR administration</p>
       </div>
-    </div>
+
+      {/* Email */}
+      <div className="space-y-1.5">
+        <label
+          htmlFor="email"
+          className="block text-[13px] font-semibold text-foreground"
+        >
+          Official Email
+        </label>
+        <div className="relative">
+          <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="name@daarcomms.tv"
+            disabled={busy}
+            className={inputCls(!!errors.email)}
+            {...form.register("email")}
+          />
+        </div>
+        {errors.email && (
+          <p className="text-[11px] font-medium text-destructive">
+            {errors.email.message}
+          </p>
+        )}
+      </div>
+
+      {/* Password */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="password"
+            className="block text-[13px] font-semibold text-foreground"
+          >
+            Password
+          </label>
+          <Link
+            href="/forgot-password"
+            className="text-[11px] font-semibold text-primary hover:underline underline-offset-4"
+          >
+            Forgot password?
+          </Link>
+        </div>
+        <div className="relative">
+          <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+          <input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            placeholder="••••••••"
+            disabled={busy}
+            className={cn(inputCls(!!errors.password), "pr-11")}
+            {...form.register("password")}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+        {errors.password && (
+          <p className="text-[11px] font-medium text-destructive">
+            {errors.password.message}
+          </p>
+        )}
+      </div>
+
+      {/* Submit Button */}
+      <Button
+        type="submit"
+        className="group w-full h-12 rounded-2xl text-[15px] font-bold shadow-md shadow-primary/20 cursor-pointer"
+        disabled={busy}
+      >
+        {busy ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <>
+            <span>Sign In</span>
+            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </>
+        )}
+      </Button>
+    </form>
   );
 }
