@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Plus, Search, MoreHorizontal, Pencil, Eye } from "lucide-react";
 import { useInterns } from "@/features/interns/hooks";
+import { useSupervisorMe } from "@/features/supervisors/hooks";
 import { useAuth } from "@/lib/auth/context";
 import { EditInternSheet } from "@/features/interns/components/EditInternSheet";
 import { TableSkeleton } from "@/components/shared/Skeletons";
@@ -59,6 +60,9 @@ function fmt(iso?: string) {
 export default function InternsPage() {
   const { user } = useAuth();
   const isHR = user?.role === "HR";
+  const { data: supervisorMeData } = useSupervisorMe();
+  const supervisorId = !isHR ? supervisorMeData?.data?.supervisor?._id : undefined;
+
   const [search, setSearch]             = useState("");
   const [debouncedSearch, setDebounced] = useState("");
   const [status, setStatus]             = useState<InternshipStatus | "ALL">("ALL");
@@ -82,6 +86,7 @@ export default function InternsPage() {
     ...(debouncedSearch          && { search: debouncedSearch }),
     ...(status !== "ALL"         && { status }),
     ...(internshipType !== "ALL" && { internshipType }),
+    ...(!isHR && supervisorId    && { supervisor: supervisorId }),
   });
 
   const interns    = data?.data ?? [];
