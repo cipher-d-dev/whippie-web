@@ -285,4 +285,23 @@
   .bg-card-blue    { background-color: hsl(var(--card-blue)); }
   .bg-card-orange  { background-color: hsl(var(--card-orange)); }
   .bg-card-rose    { background-color: hsl(var(--card-rose)); }
+
+  /* ── Print Styles for Official Documents ── */
+  @media print {
+    body {
+      background: white !important;
+      color: black !important;
+    }
+    .no-print, header, aside, nav, button {
+      display: none !important;
+    }
+    .print-sheet {
+      box-shadow: none !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+      min-height: auto !important;
+    }
+  }
 }
