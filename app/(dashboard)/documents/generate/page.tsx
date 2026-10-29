@@ -7,15 +7,10 @@ import {
   FileText,
   Printer,
   ChevronLeft,
-  Building2,
-  Calendar,
   Sparkles,
-  Award,
-  Send,
-  CheckCircle,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -35,52 +30,39 @@ export type LetterTemplateType =
   | "IT_COMPLETION_LETTER"
   | "NYSC_INTERNAL_POSTING"
   | "NYSC_MONTHLY_CLEARANCE"
-  | "NYSC_FINAL_CLEARANCE"
-  | "INTERN_RECORD";
+  | "NYSC_FINAL_CLEARANCE";
 
 interface TemplateConfig {
   label: string;
-  category: "STUDENT" | "NYSC" | "GENERAL";
+  category: "STUDENT" | "NYSC";
   description: string;
-  refCode: string;
 }
 
 const TEMPLATES: Record<LetterTemplateType, TemplateConfig> = {
   ACCEPTANCE_LETTER: {
     label: "Student Acceptance Letter",
     category: "STUDENT",
-    description: "Official Letter of Acceptance for IT / SIWES students onto company letterhead.",
-    refCode: "DAAR/HRD/IT/ACC",
+    description: "Official Letter of Acceptance for IT / SIWES students to submit to their institution.",
   },
   IT_COMPLETION_LETTER: {
     label: "IT Completion Letter",
     category: "STUDENT",
     description: "Official confirmation of completed industrial training, department, and conduct.",
-    refCode: "DAAR/HRD/IT/COMP",
   },
   NYSC_INTERNAL_POSTING: {
     label: "NYSC Internal Posting Memo",
     category: "NYSC",
     description: "Internal memo posting a corps member to a specific operational unit/department.",
-    refCode: "DAAR/HRD/NYSC/POST",
   },
   NYSC_MONTHLY_CLEARANCE: {
     label: "NYSC Monthly Clearance Letter",
     category: "NYSC",
     description: "Addressed to NYSC State Coordinator authorizing the member's monthly allowance.",
-    refCode: "DAAR/HRD/NYSC/MC",
   },
   NYSC_FINAL_CLEARANCE: {
     label: "NYSC Final Clearance Letter",
     category: "NYSC",
     description: "Final clearance letter confirming completed service year & recommending discharge.",
-    refCode: "DAAR/HRD/NYSC/FC",
-  },
-  INTERN_RECORD: {
-    label: "Intern Profile Record",
-    category: "GENERAL",
-    description: "Comprehensive institutional record summary of personal, academic and placement data.",
-    refCode: "DAAR/HRD/REC",
   },
 };
 
@@ -100,7 +82,7 @@ function fmtDate(iso?: string | Date): string {
       : "TH";
   const month = d.toLocaleDateString("en-GB", { month: "long" }).toUpperCase();
   const year = d.getFullYear();
-  return `${day}${suffix} ${month}, ${year}`;
+  return `${day}${suffix} ${month}, ${year}.`;
 }
 
 function fmtDateSimple(iso?: string | Date): string {
@@ -113,42 +95,26 @@ function fmtDateSimple(iso?: string | Date): string {
   });
 }
 
-// ─── Company Letterhead Wrapper ───────────────────────────────────────────────
+// ─── Physical Letterhead Wrapper ──────────────────────────────────────────────
+// Accurately calibrated for pre-printed company stationery paper:
+// Top margin: 38mm (reserves space for pre-printed corporate banner & logos)
+// Bottom margin: 34mm (reserves space for pre-printed registered office footer)
+// Left & Right: 25mm
 
-function LetterheadWrapper({
-  children,
-  hideHeader = false,
-}: {
-  children: React.ReactNode;
-  hideHeader?: boolean;
-}) {
+function PhysicalLetterheadPage({ children }: { children: React.ReactNode }) {
   return (
-    <div className="print-sheet mx-auto max-w-[800px] bg-white text-gray-900 shadow-xl rounded-sm p-10 font-serif leading-relaxed relative min-h-[1050px] flex flex-col justify-between border border-gray-200">
-      <div>
-        {/* Official Header */}
-        {!hideHeader && (
-          <div className="border-b border-gray-200 pb-4 mb-6">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/letterhead-header.png"
-              alt="DAAR Communications Plc Letterhead"
-              className="w-full h-auto object-contain max-h-[140px]"
-            />
-          </div>
-        )}
-
-        {/* Document Content */}
-        <div className="px-3">{children}</div>
+    <div className="print-a4-page mx-auto bg-white text-gray-900 shadow-xl rounded-sm p-[38mm_25mm_34mm_25mm] font-comic leading-relaxed relative min-h-[1122px] max-w-[794px] border border-gray-200">
+      {/* On-screen visual guide showing where physical letterhead will sit */}
+      <div className="no-print absolute top-3 left-6 right-6 border border-dashed border-primary/20 rounded p-2 text-center text-[11px] text-primary/70 bg-primary/5 select-none">
+        [ Physical Letterhead Area &bull; Pre-printed DAAR Communications Banner sits here ]
       </div>
 
-      {/* Official Footer */}
-      <div className="border-t border-gray-200 pt-3 mt-10">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/letterhead-footer.png"
-          alt="DAAR Communications Registered Office Footer"
-          className="w-full h-auto object-contain max-h-[80px]"
-        />
+      {/* Actual document text */}
+      <div className="document-body pt-4">{children}</div>
+
+      {/* On-screen footer guide */}
+      <div className="no-print absolute bottom-3 left-6 right-6 border border-dashed border-gray-300 rounded p-1.5 text-center text-[10px] text-gray-400 select-none">
+        [ Physical Pre-printed Registered Office Footer Area ]
       </div>
     </div>
   );
@@ -168,22 +134,22 @@ function StudentAcceptanceLetter({
   const endDateStr = intern.endDate ? fmtDateSimple(intern.endDate) : "Thursday 31st December, 2026";
 
   return (
-    <LetterheadWrapper>
+    <PhysicalLetterheadPage>
       <div className="space-y-6 text-[14px]">
         {/* Date */}
-        <div className="text-right font-sans font-bold text-xs tracking-wider">
+        <div className="text-left font-bold text-sm tracking-wide">
           {customDate || fmtDate(new Date())}
         </div>
 
         {/* Recipient */}
-        <div className="space-y-0.5">
-          <p className="font-bold">THE COORDINATOR,</p>
-          <p className="font-bold">INTERNSHIP UNIT / SIWES,</p>
-          <p className="font-bold uppercase">{intern.institution || "LAGOS STATE UNIVERSITY"},</p>
-          <p className="font-bold">NIGERIA.</p>
+        <div className="space-y-0.5 font-bold leading-tight">
+          <p>THE COORDINATOR,</p>
+          <p>INTERNSHIP UNIT / SIWES,</p>
+          <p className="uppercase">{intern.institution || "LAGOS STATE UNIVERSITY"},</p>
+          <p>NIGERIA.</p>
         </div>
 
-        <p>Dear Sir/Ma,</p>
+        <p className="font-medium">Dear Sir/Ma,</p>
 
         {/* Title */}
         <div className="text-center py-1">
@@ -197,26 +163,25 @@ function StudentAcceptanceLetter({
           We write to inform you that, <span className="font-bold">{internName}</span> has been
           accepted to undergo Industrial Training with <span className="font-bold">DAAR Communications PLC, Lagos</span>,
           from <span className="font-semibold">{startDateStr}</span> to{" "}
-          <span className="font-semibold">{endDateStr}</span> in the{" "}
-          <span className="font-semibold">{intern.department?.name ?? "Assigned"}</span> department.
+          <span className="font-semibold">{endDateStr}</span>.
         </p>
 
         <p className="text-justify leading-7">
-          We shall do our best to have them fully engaged so that they can acquire all the necessary practical
-          work experience, professional ethics, and operational exposure.
+          We shall do our best to have them fully engaged so that they can acquire all the necessary work
+          experience and professional exposure.
         </p>
 
-        <p>Yours Faithfully,</p>
+        <p className="font-bold">Yours Faithfully,</p>
 
         {/* Signoff block */}
-        <div className="pt-8 space-y-1 text-xs">
+        <div className="pt-10 space-y-1 text-xs">
           <p className="font-bold">FOR: DAAR COMMUNICATIONS PLC</p>
-          <div className="h-10" />
+          <div className="h-12" />
           <p className="font-bold text-sm tracking-wide">CINDY CHINYERE UDUMA (08037184458)</p>
-          <p className="font-medium text-gray-700">HEAD, ADMIN. / HUMAN RESOURCES DEVELOPMENT</p>
+          <p className="font-bold text-gray-700 uppercase">HEAD, ADMIN. / HUMAN RESOURCES DEVELOPMENT</p>
         </div>
       </div>
-    </LetterheadWrapper>
+    </PhysicalLetterheadPage>
   );
 }
 
@@ -230,26 +195,27 @@ function ITCompletionLetter({
   customDate: string;
 }) {
   const internName = `${intern.lastName.toUpperCase()}, ${intern.firstName.toUpperCase()}`;
-  const startDateStr = intern.startDate ? fmtDate(intern.startDate) : "15th July, 2026";
-  const endDateStr = intern.endDate ? fmtDate(intern.endDate) : "15th October, 2026";
+  const startDateStr = intern.startDate ? fmtDate(intern.startDate).replace(".", "") : "15TH JULY, 2026";
+  const endDateStr = intern.endDate ? fmtDate(intern.endDate).replace(".", "") : "15TH OCTOBER, 2026";
+  const departmentName = intern.department?.name ? `${intern.department.name} department` : "Operations department";
 
   return (
-    <LetterheadWrapper>
+    <PhysicalLetterheadPage>
       <div className="space-y-6 text-[14px]">
         {/* Date */}
-        <div className="text-right font-sans font-bold text-xs tracking-wider">
+        <div className="text-left font-bold text-sm tracking-wide">
           {customDate || fmtDate(new Date())}
         </div>
 
         {/* Recipient */}
-        <div className="space-y-0.5">
-          <p className="font-bold">THE COORDINATOR,</p>
-          <p className="font-bold">SIWES / INDUSTRIAL TRAINING UNIT,</p>
-          <p className="font-bold uppercase">{intern.institution || "LEAD CITY UNIVERSITY"},</p>
-          <p className="font-bold">NIGERIA.</p>
+        <div className="space-y-0.5 font-bold leading-tight">
+          <p>THE COORDINATOR,</p>
+          <p>SIWES / INDUSTRIAL TRAINING UNIT,</p>
+          <p className="uppercase">{intern.institution || "LEAD CITY UNIVERSITY"},</p>
+          <p>NIGERIA.</p>
         </div>
 
-        <p>Dear Sir/Ma,</p>
+        <p className="font-medium">Dear Sir/Ma,</p>
 
         {/* Title */}
         <div className="text-center py-1">
@@ -263,29 +229,27 @@ function ITCompletionLetter({
           This is to certify that the above named intern, <span className="font-bold">{internName}</span>, a
           student in your Institution from the Department of{" "}
           <span className="font-bold">{intern.course || "Mass Communication & Media Technology"}</span>, has
-          successfully completed their Industrial Training program in the{" "}
-          <span className="font-bold">{intern.department?.name ?? "Operations"}</span> department at{" "}
+          successfully completed their Industrial Training from {departmentName} in{" "}
           <span className="font-bold">DAAR Communications PLC, Lagos</span> from{" "}
           <span className="font-semibold">{startDateStr}</span> to{" "}
           <span className="font-semibold">{endDateStr}</span>.
         </p>
 
         <p className="text-justify leading-7">
-          During their stay with us, they were hardworking, disciplined, punctual, and resourceful in executing assigned
-          operational tasks and responsibilities.
+          During their stay, they were hardworking, punctual, and resourceful.
         </p>
 
-        <p>Yours Faithfully,</p>
+        <p className="font-bold">Yours Faithfully,</p>
 
         {/* Signoff block */}
-        <div className="pt-8 space-y-1 text-xs">
+        <div className="pt-10 space-y-1 text-xs">
           <p className="font-bold">FOR: DAAR COMMUNICATIONS PLC</p>
-          <div className="h-10" />
+          <div className="h-12" />
           <p className="font-bold text-sm tracking-wide">CINDY CHINYERE UDUMA (08037184458)</p>
-          <p className="font-medium text-gray-700">HEAD, ADMIN. / HUMAN RESOURCES DEVELOPMENT</p>
+          <p className="font-bold text-gray-700 uppercase">HEAD, ADMIN. / HUMAN RESOURCES DEVELOPMENT</p>
         </div>
       </div>
-    </LetterheadWrapper>
+    </PhysicalLetterheadPage>
   );
 }
 
@@ -304,58 +268,56 @@ function NYSCInternalPostingTemplate({
   const departmentName = intern.department?.name ? `${intern.department.name.toUpperCase()} (RAYPOWER / AIT)` : "ONLINE UNIT (RAYPOWER)";
 
   return (
-    <LetterheadWrapper hideHeader={false}>
+    <PhysicalLetterheadPage>
       <div className="space-y-6 text-[14px]">
-        {/* Internal Memo Title */}
+        {/* Internal Memo Header */}
         <div className="text-center border-b-2 border-gray-900 pb-2 mb-4">
-          <h2 className="text-xl font-bold tracking-widest uppercase">INTERNAL MEMO</h2>
+          <h2 className="text-2xl font-bold tracking-widest uppercase">INTERNAL MEMO</h2>
         </div>
 
         {/* Memo Meta */}
-        <div className="grid grid-cols-6 gap-y-2 border-b border-gray-300 pb-4 font-sans text-xs">
-          <div className="font-bold col-span-1">TO:</div>
-          <div className="col-span-5 font-bold uppercase">{departmentName}</div>
+        <div className="grid grid-cols-6 gap-y-2 border-b border-gray-300 pb-4 text-xs font-bold leading-normal">
+          <div className="col-span-1">TO:</div>
+          <div className="col-span-5 uppercase">{departmentName}</div>
 
-          <div className="font-bold col-span-1">FROM:</div>
-          <div className="col-span-5 font-semibold">HEAD ADMIN / HRD</div>
+          <div className="col-span-1">FROM:</div>
+          <div className="col-span-5">HEAD ADMIN / HRD</div>
 
-          <div className="font-bold col-span-1">DATE:</div>
+          <div className="col-span-1">DATE:</div>
           <div className="col-span-5">{customDate || fmtDate(new Date())}</div>
 
-          <div className="font-bold col-span-1">SUBJECT:</div>
-          <div className="col-span-5 font-bold uppercase text-primary">POSTING OF A CORPS MEMBER</div>
+          <div className="col-span-1">SUBJECT:</div>
+          <div className="col-span-5 uppercase">POSTING OF A CORPS MEMBER</div>
         </div>
 
         {/* Body */}
         <p className="text-justify leading-7 pt-2">
           We are pleased to inform you that, <span className="font-bold">{internName}</span> is hereby
           posted to the <span className="font-bold">{departmentName}</span> for his/her National Youth Service
-          Corps (NYSC) primary assignment, from <span className="font-semibold">{startDateStr}</span> to{" "}
+          Corps (NYSC), from <span className="font-semibold">{startDateStr}</span> to{" "}
           <span className="font-semibold">{endDateStr}</span>.
         </p>
 
         <p className="text-justify leading-7">
-          During the period of their assignment, they are expected to abide strictly with the rules, operational
-          protocols, and regulations of the Organisation and work towards the actualization of the common goals
-          of the department and the Organisation.
+          During the period of his/her assignment, he/she would abide with the rules and regulations of the
+          Organisation and work to the actualization of the common goal of the department and the Organisation.
         </p>
 
         <p className="text-justify leading-7">
-          Kindly accord them the necessary orientation, facilities, and guidance needed to settle down and operate
-          efficiently.
+          Kindly give him/her the necessary orientation that he/she needs to settle down and operate efficiently.
         </p>
 
-        <p className="pt-2">Thank You.</p>
+        <p className="pt-2 font-bold">Thank You,</p>
 
         {/* Signoff */}
         <div className="pt-8 space-y-1 text-xs">
           <div className="h-10" />
           <p className="font-bold text-sm tracking-wide">Cindy Chinyere Uduma</p>
-          <p className="text-gray-600">Head, Admin / Human Resources Development</p>
-          <p className="text-gray-500 pt-3 italic font-sans text-[11px]">Cc: GMRS, ADMIN/HRD OFFICER, SUPERVISOR</p>
+          <p className="font-bold text-gray-700">HEAD ADMIN / HRD</p>
+          <p className="text-gray-500 pt-4 font-bold text-[11px]">Cc: GMRS, ADMIN/HRD OFFICER</p>
         </div>
       </div>
-    </LetterheadWrapper>
+    </PhysicalLetterheadPage>
   );
 }
 
@@ -371,24 +333,25 @@ function NYSCMonthlyClearanceTemplate({
   clearanceMonth: string;
 }) {
   const internName = `${intern.lastName.toUpperCase()}, ${intern.firstName.toUpperCase()}`;
-  const month = clearanceMonth.toUpperCase() || "DECEMBER 2025";
+  const month = clearanceMonth.toUpperCase() || "JANUARY 2026";
+  const currentMonth = "DECEMBER 2025";
 
   return (
-    <LetterheadWrapper>
+    <PhysicalLetterheadPage>
       <div className="space-y-6 text-[14px]">
         {/* Date */}
-        <div className="text-right font-sans font-bold text-xs tracking-wider">
+        <div className="text-left font-bold text-sm tracking-wide">
           {customDate || fmtDate(new Date())}
         </div>
 
         {/* Recipient */}
-        <div className="space-y-0.5">
-          <p className="font-bold">THE STATE COORDINATOR,</p>
-          <p className="font-bold">N.Y.S.C. SECRETARIAT,</p>
-          <p className="font-bold">BABS ANIMASHAUN STREET, SURULERE, LAGOS.</p>
+        <div className="space-y-0.5 font-bold leading-tight uppercase">
+          <p>THE STATE COORDINATOR,</p>
+          <p>N.Y.S.C. SECRETARIAT,</p>
+          <p>SURULERE, LAGOS.</p>
         </div>
 
-        <p>Dear Sir/Madam,</p>
+        <p className="font-medium">Dear Sir/Madam</p>
 
         {/* Title */}
         <div className="text-center py-1">
@@ -399,31 +362,25 @@ function NYSCMonthlyClearanceTemplate({
 
         {/* Body text */}
         <p className="text-justify leading-7">
-          This is to inform you that, <span className="font-bold">{internName}</span> is a serving Corps
-          Member with <span className="font-bold">DAAR Communications PLC</span>.
+          This is to inform you that, <span className="font-bold">{internName}</span> is a Corp Member
+          with <span className="font-bold">DAAR Communications PLC</span>. He/She has performed his/her duty
+          diligently in the month of <span className="font-bold">{currentMonth}</span>.
         </p>
 
         <p className="text-justify leading-7">
-          They have performed their duties diligently, punctually, and satisfactorily in the month of{" "}
-          <span className="font-bold">{month}</span>.
+          Kindly pay his/her allowance for the month of <span className="font-bold">{currentMonth}</span>.
         </p>
 
-        <p className="text-justify leading-7">
-          Kindly process and pay their monthly allowance for the month of{" "}
-          <span className="font-bold">{month}</span> accordingly.
-        </p>
-
-        <p>Yours faithfully,</p>
+        <p className="font-bold">Yours faithfully,</p>
 
         {/* Signoff block */}
-        <div className="pt-8 space-y-1 text-xs">
-          <p className="font-bold">FOR: DAAR COMMUNICATIONS PLC</p>
+        <div className="pt-10 space-y-1 text-xs">
           <div className="h-10" />
           <p className="font-bold text-sm tracking-wide">CINDY CHINYERE UDUMA (08037184458)</p>
-          <p className="font-medium text-gray-700">HEAD ADMIN. / HUMAN RESOURCES DEVELOPMENT</p>
+          <p className="font-bold text-gray-700 uppercase">HEAD ADMIN. / HUMAN RESOURCES DEVELOPMENT</p>
         </div>
       </div>
-    </LetterheadWrapper>
+    </PhysicalLetterheadPage>
   );
 }
 
@@ -439,21 +396,22 @@ function NYSCFinalClearanceTemplate({
   const internName = `${intern.lastName.toUpperCase()}, ${intern.firstName.toUpperCase()}`;
 
   return (
-    <LetterheadWrapper>
+    <PhysicalLetterheadPage>
       <div className="space-y-6 text-[14px]">
         {/* Date */}
-        <div className="text-right font-sans font-bold text-xs tracking-wider">
+        <div className="text-left font-bold text-sm tracking-wide">
           {customDate || fmtDate(new Date())}
         </div>
 
         {/* Recipient */}
-        <div className="space-y-0.5">
-          <p className="font-bold">THE STATE COORDINATOR,</p>
-          <p className="font-bold">NATIONAL YOUTH SERVICE CORPS,</p>
-          <p className="font-bold">BABS ANIMASHAUN STREET, SURULERE, LAGOS.</p>
+        <div className="space-y-0.5 font-bold leading-tight">
+          <p>The State Coordinator,</p>
+          <p>National Youth Service Corps,</p>
+          <p>Babs Animashaun Street,</p>
+          <p>Surulere, Lagos.</p>
         </div>
 
-        <p>Dear Sir/Madam,</p>
+        <p className="font-medium">Dear Sir/Madam,</p>
 
         {/* Title */}
         <div className="text-center py-1">
@@ -464,89 +422,27 @@ function NYSCFinalClearanceTemplate({
 
         {/* Body text */}
         <p className="text-justify leading-7">
-          This is to certify that <span className="font-bold">{internName}</span>, a National Youth Corps Member
-          serving at <span className="font-bold">DAAR Communications PLC</span>, has satisfactorily done their job
-          for the entire duration of their service year and is <span className="font-bold">not indebted</span> to the organization in
-          any capacity.
+          This is to certify that <span className="font-bold">{internName}</span>, a National Youth Corp Member
+          serving at <span className="font-bold">DAAR Communications PLC</span> has satisfactorily done his/her
+          job for the duration of his/her service year and he/she is <span className="font-bold">not indebted</span> to
+          the organization.
         </p>
 
         <p className="text-justify leading-7">
-          We therefore recommend their full discharge from the National Youth Service Corps programme.
+          We therefore recommend his/her discharge from the NYSC programme.
         </p>
 
-        <p>Yours Faithfully,</p>
+        <p className="font-bold">Yours Faithfully,</p>
 
         {/* Signoff block */}
-        <div className="pt-8 space-y-1 text-xs">
-          <p className="font-bold">FOR: DAAR COMMUNICATIONS PLC</p>
+        <div className="pt-10 space-y-1 text-xs">
+          <p className="font-bold">For: DAAR COMMUNICATIONS PLC</p>
           <div className="h-10" />
           <p className="font-bold text-sm tracking-wide">CINDY CHINYERE UDUMA (08037184458)</p>
-          <p className="font-medium text-gray-700">HEAD ADMIN. / HUMAN RESOURCES DEVELOPMENT, LAGOS</p>
+          <p className="font-bold text-gray-700 uppercase">HEAD ADMIN. / HUMAN RESOURCES DEVELOPMENT, LAGOS</p>
         </div>
       </div>
-    </LetterheadWrapper>
-  );
-}
-
-// ─── 6. Comprehensive Intern Profile Record ───────────────────────────────────
-
-function InternRecordTemplate({ intern }: { intern: InternObject }) {
-  return (
-    <LetterheadWrapper>
-      <div className="space-y-6 text-[13px]">
-        <div className="text-center border-b pb-2">
-          <h2 className="text-lg font-bold tracking-wider uppercase">OFFICIAL INTERN PROFILE RECORD</h2>
-          <p className="text-xs text-gray-500 font-sans">DAAR Communications PLC &bull; HR Management System</p>
-        </div>
-
-        <div className="bg-gray-50 p-4 rounded border border-gray-200 grid grid-cols-2 gap-4 font-sans text-xs">
-          <div>
-            <p className="text-gray-500 uppercase text-[10px] font-bold">Full Name</p>
-            <p className="font-bold text-sm text-gray-900">{intern.firstName} {intern.lastName}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 uppercase text-[10px] font-bold">Program Type</p>
-            <p className="font-semibold text-gray-900">{intern.internshipType === "NYSC_IT" ? "NYSC Corper" : "Industrial Training (IT)"}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 uppercase text-[10px] font-bold">Institution / University</p>
-            <p className="font-semibold text-gray-900">{intern.institution}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 uppercase text-[10px] font-bold">Course of Study</p>
-            <p className="font-semibold text-gray-900">{intern.course}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 uppercase text-[10px] font-bold">Department Assigned</p>
-            <p className="font-semibold text-gray-900">{intern.department?.name ?? "—"}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 uppercase text-[10px] font-bold">Supervisor</p>
-            <p className="font-semibold text-gray-900">
-              {intern.supervisor && typeof intern.supervisor !== "string"
-                ? `${intern.supervisor.firstName} ${intern.supervisor.lastName}`
-                : "—"}
-            </p>
-          </div>
-          <div>
-            <p className="text-gray-500 uppercase text-[10px] font-bold">Commencement Date</p>
-            <p className="font-semibold text-gray-900">{fmtDate(intern.startDate)}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 uppercase text-[10px] font-bold">Expected / Actual End Date</p>
-            <p className="font-semibold text-gray-900">{fmtDate(intern.endDate)}</p>
-          </div>
-        </div>
-
-        <div className="space-y-2 pt-2">
-          <p className="font-bold text-xs uppercase tracking-wide">Current Status &amp; Verification</p>
-          <div className="border border-gray-200 rounded p-3 text-xs flex justify-between items-center">
-            <span>Administrative Status: <strong>{intern.status}</strong></span>
-            <span>Recorded at: {new Date(intern.createdAt).toLocaleDateString("en-GB")}</span>
-          </div>
-        </div>
-      </div>
-    </LetterheadWrapper>
+    </PhysicalLetterheadPage>
   );
 }
 
@@ -559,7 +455,7 @@ export default function DocumentGenerationPage() {
   const [selectedInternId, setSelectedInternId] = useState<string>("");
   const [selectedTemplate, setSelectedTemplate] = useState<LetterTemplateType>("ACCEPTANCE_LETTER");
   const [customDate, setCustomDate] = useState<string>("");
-  const [clearanceMonth, setClearanceMonth] = useState<string>("December 2025");
+  const [clearanceMonth, setClearanceMonth] = useState<string>("January 2026");
 
   const { data: singleInternData } = useIntern(selectedInternId);
   const intern = singleInternData?.data?.intern ?? interns.find((i) => i._id === selectedInternId);
@@ -583,10 +479,10 @@ export default function DocumentGenerationPage() {
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            Official Company Document Generator
+            Official Letterhead Document Generator
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Generate and print authenticated DAAR Communications letterhead documents for interns and NYSC personnel.
+            Format and print clean template letters directly onto company pre-printed letterhead paper.
           </p>
         </div>
 
@@ -597,8 +493,19 @@ export default function DocumentGenerationPage() {
             className="gap-2 rounded-xl shadow-md cursor-pointer"
           >
             <Printer className="h-4 w-4" />
-            Print Document / Save as PDF
+            Print onto Letterhead Paper / Save PDF
           </Button>
+        </div>
+      </div>
+
+      {/* Info notice explaining physical letterhead workflow */}
+      <div className="no-print flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50/60 dark:bg-blue-950/20 dark:border-blue-800/40 px-4 py-3 text-xs text-blue-900 dark:text-blue-300">
+        <Info className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+        <div>
+          <p className="font-semibold">Calibrated for Office Letterhead Stationery</p>
+          <p className="text-blue-800/80 dark:text-blue-300/80 mt-0.5">
+            This template is formatted in the official company font (Comic Sans MS) with exact top and bottom clearance. Load your company's pre-printed physical letterhead sheets into the printer tray and print directly.
+          </p>
         </div>
       </div>
 
@@ -636,16 +543,15 @@ export default function DocumentGenerationPage() {
                   <SelectItem value="NYSC_INTERNAL_POSTING">NYSC Internal Posting Memo</SelectItem>
                   <SelectItem value="NYSC_MONTHLY_CLEARANCE">NYSC Monthly Clearance Letter</SelectItem>
                   <SelectItem value="NYSC_FINAL_CLEARANCE">NYSC Final Clearance Letter</SelectItem>
-                  <SelectItem value="INTERN_RECORD">Intern Profile Record</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* 3. Letter Date */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">Custom Letter Date (Optional)</Label>
+              <Label className="text-xs font-semibold text-foreground">Custom Date (Optional)</Label>
               <Input
-                placeholder="e.g. 15TH OCTOBER, 2026"
+                placeholder="e.g. 23RD DECEMBER, 2025."
                 value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
                 className="h-10 text-xs"
@@ -658,7 +564,7 @@ export default function DocumentGenerationPage() {
             <div className="mt-4 pt-3 border-t border-border/40 max-w-xs">
               <Label className="text-xs font-semibold">Clearance Month</Label>
               <Input
-                placeholder="e.g. December 2025"
+                placeholder="e.g. JANUARY 2026"
                 value={clearanceMonth}
                 onChange={(e) => setClearanceMonth(e.target.value)}
                 className="h-9 text-xs mt-1"
@@ -690,16 +596,13 @@ export default function DocumentGenerationPage() {
           {selectedTemplate === "NYSC_FINAL_CLEARANCE" && (
             <NYSCFinalClearanceTemplate intern={intern} customDate={customDate} />
           )}
-          {selectedTemplate === "INTERN_RECORD" && (
-            <InternRecordTemplate intern={intern} />
-          )}
         </div>
       ) : (
         <div className="py-24 text-center border-2 border-dashed border-border/60 rounded-2xl bg-muted/20">
           <FileText className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-          <h3 className="text-base font-bold text-foreground">Select an intern to generate document</h3>
+          <h3 className="text-base font-bold text-foreground">Select an intern to view &amp; print document</h3>
           <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-            Choose an intern from the dropdown above to load their official records into the authentic DAAR Communications letterhead template.
+            Choose an intern from the dropdown above to auto-fill their official records into the template.
           </p>
         </div>
       )}
