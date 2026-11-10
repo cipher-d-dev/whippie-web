@@ -138,9 +138,14 @@ const NUMBER_WORDS: Record<number, string> = {
   12: "twelve",
 };
 
-function getDurationInMonths(startDate?: string | Date, endDate?: string | Date): { months: number; text: string; numWithParens: string } {
+function getDurationInMonths(startDate?: string | Date, endDate?: string | Date): {
+  months: number;
+  text: string;
+  article: string;
+  numWithParens: string;
+} {
   if (!startDate || !endDate) {
-    return { months: 6, text: "six", numWithParens: "six (6)" };
+    return { months: 6, text: "six", article: "a", numWithParens: "six (6)" };
   }
   const s = new Date(startDate);
   const e = new Date(endDate);
@@ -148,9 +153,13 @@ function getDurationInMonths(startDate?: string | Date, endDate?: string | Date)
   let approxMonths = Math.round(diffDays / 30);
   if (approxMonths < 1) approxMonths = 1;
   const word = NUMBER_WORDS[approxMonths] || String(approxMonths);
+  // Correct English grammar: "an" before vowel sounds (eight, eleven), "a" before consonants (one, two, three, four, five, six, seven, nine, ten, twelve)
+  const startsWithVowel = word.startsWith("e") || word.startsWith("a") || word.startsWith("o") || word.startsWith("i") || word.startsWith("u");
+  const article = startsWithVowel ? "an" : "a";
   return {
     months: approxMonths,
     text: word,
+    article,
     numWithParens: `${word} (${approxMonths})`,
   };
 }
@@ -188,7 +197,7 @@ function PhysicalLetterheadPage({
         width: "210mm",
         minHeight: "297mm",
         boxSizing: "border-box",
-        padding: "100pt 72pt 80pt 72pt",
+        padding: "36mm 25.4mm 30mm 25.4mm",
       }}
     >
       {/* Visual Header Guide (hidden when printed) */}
@@ -234,7 +243,7 @@ function StudentAcceptanceLetter({
     <PhysicalLetterheadPage fontFamilyClass="font-comic">
       <div className="text-[14px] text-black">
         {/* Date — Left aligned (Date of exit / completion) */}
-        <div className="mb-6">
+        <div className="mb-5">
           {customDate ? (
             <span className="font-bold">{customDate}</span>
           ) : (
@@ -245,7 +254,7 @@ function StudentAcceptanceLetter({
         </div>
 
         {/* Recipient Block — Left aligned, NO underlines */}
-        <div className="mb-6 font-bold leading-tight uppercase">
+        <div className="mb-5 font-bold leading-tight uppercase">
           <p>THE COORDINATOR,</p>
           <p>INTERNSHIP UNIT,</p>
           <p>{intern.institution || "LAGOS STATE UNIVERSITY."},</p>
@@ -253,29 +262,29 @@ function StudentAcceptanceLetter({
         </div>
 
         {/* Salutation */}
-        <p className="mb-6 font-normal">Dear Sir/Ma,</p>
+        <p className="mb-5 font-normal">Dear Sir/Ma,</p>
 
         {/* Title — Left aligned, bold, NO underline (matches original template placement) */}
-        <div className="mb-6 text-left">
+        <div className="mb-5 text-left">
           <h2 className="text-[15px] font-bold uppercase tracking-wide">
             LETTER OF ACCEPTANCE
           </h2>
         </div>
 
         {/* Paragraph 1 */}
-        <p className="text-justify mb-5 leading-[1.75]">
+        <p className="text-justify mb-5 leading-[1.65]">
           We write to inform you that, <span className="font-bold">{internName}</span> has been
-          accepted to undergo a {duration.text} month Industrial Training with <span className="font-bold">DAAR
+          accepted to undergo {duration.article} {duration.text} month Industrial Training with <span className="font-bold">DAAR
           Communications PLC, Lagos</span>, from {startDateStr} to {endDateStr}.
         </p>
 
         {/* Paragraph 2 */}
-        <p className="text-justify mb-8 leading-[1.75]">
+        <p className="text-justify mb-6 leading-[1.65]">
           We shall do our best to have {p.himHer} fully engaged so that {p.heShe} can acquire all the necessary work experience.
         </p>
 
         {/* Signoff */}
-        <p className="mb-14 font-normal">Yours Faithfully,</p>
+        <p className="mb-10 font-normal">Yours Faithfully,</p>
 
         {/* Signatory details */}
         <div className="space-y-1">
@@ -316,7 +325,7 @@ function ITCompletionLetter({
     <PhysicalLetterheadPage fontFamilyClass="font-comic">
       <div className="text-[14px] text-black">
         {/* Date — Left aligned */}
-        <div className="mb-6">
+        <div className="mb-5">
           {customDate ? (
             <span className="font-bold">{customDate}</span>
           ) : (
@@ -327,7 +336,7 @@ function ITCompletionLetter({
         </div>
 
         {/* Recipient Block — Left aligned, NO underlines */}
-        <div className="mb-6 font-bold leading-tight uppercase">
+        <div className="mb-5 font-bold leading-tight uppercase">
           <p>THE CORDINATOR,</p>
           <p>SIWES UNIT,</p>
           <p>{intern.institution || "LEAD CITY UNIVERSITY,"}</p>
@@ -335,17 +344,17 @@ function ITCompletionLetter({
         </div>
 
         {/* Salutation */}
-        <p className="mb-6 font-normal">Dear Sir/Ma,</p>
+        <p className="mb-5 font-normal">Dear Sir/Ma,</p>
 
         {/* Title — Left aligned, bold, NO underline */}
-        <div className="mb-6 text-left">
+        <div className="mb-5 text-left">
           <h2 className="text-[15px] font-bold uppercase tracking-wide">
             COMPLETION OF INDUSTRIAL TRAINING
           </h2>
         </div>
 
         {/* Paragraph 1 */}
-        <p className="text-justify mb-5 leading-[1.75]">
+        <p className="text-justify mb-5 leading-[1.65]">
           This is to certify that the above named intern, <span className="font-bold">{internName}</span> a
           student in your Institution from the Department of {intern.course || "Mass communication and Media technology"} has
           successfully completed {p.hisHer} {duration.numWithParens} month Industrial Training from {departmentName} in <span className="font-bold">DAAR
@@ -353,12 +362,12 @@ function ITCompletionLetter({
         </p>
 
         {/* Paragraph 2 */}
-        <p className="text-justify mb-8 leading-[1.75]">
+        <p className="text-justify mb-6 leading-[1.65]">
           During {p.hisHer} stay, {p.heShe} was hard working and resourceful.
         </p>
 
         {/* Signoff */}
-        <p className="mb-14 font-normal">Yours Faithfully</p>
+        <p className="mb-10 font-normal">Yours Faithfully</p>
 
         {/* Signatory details */}
         <div className="space-y-1">

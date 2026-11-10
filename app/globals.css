@@ -303,20 +303,25 @@
     .no-print, header, aside, nav, button, footer {
       display: none !important;
     }
-    .print-a4-page {
+    .letterhead-print-page {
       box-shadow: none !important;
       border: none !important;
       border-radius: 0 !important;
       width: 210mm !important;
       max-width: 210mm !important;
-      min-height: 297mm !important;
       height: 297mm !important;
-      padding-top: 38mm !important;
-      padding-bottom: 34mm !important;
-      padding-left: 25mm !important;
-      padding-right: 25mm !important;
+      max-height: 297mm !important;
+      padding-top: 36mm !important;
+      padding-bottom: 30mm !important;
+      padding-left: 25.4mm !important;
+      padding-right: 25.4mm !important;
       margin: 0 auto !important;
-      page-break-after: always;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+      page-break-after: avoid !important;
+      page-break-inside: avoid !important;
+      break-after: avoid !important;
+      break-inside: avoid !important;
     }
   }
 }

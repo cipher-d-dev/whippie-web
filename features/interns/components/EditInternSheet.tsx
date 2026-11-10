@@ -29,15 +29,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Intern } from "@/types";
 
 const schema = z.object({
-  status: z.enum(["SCREENED", "ONBOARDING", "ACTIVE", "COMPLETED"]).optional(),
-  internshipType: z.enum(["INTERNSHIP", "NYSC_IT"]).optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  institution: z.string().optional(),
-  course: z.string().optional(),
-  level: z.string().optional(),
+  status:              z.enum(["SCREENED", "ONBOARDING", "ACTIVE", "COMPLETED"]).optional(),
+  internshipType:      z.enum(["INTERNSHIP", "NYSC_IT"]).optional(),
+  startDate:           z.string().optional(),
+  endDate:             z.string().optional(),
+  gender:              z.enum(["MALE", "FEMALE"]).optional(),
+  phone:               z.string().optional(),
+  address:             z.string().optional(),
+  institution:         z.string().optional(),
+  institutionLocation: z.string().optional(),
+  course:              z.string().optional(),
+  level:               z.string().optional(),
+  stateCode:           z.string().optional(),
+  callUpNumber:        z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -70,15 +74,19 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
   useEffect(() => {
     if (intern) {
       reset({
-        status: intern.status,
-        internshipType: intern.internshipType,
-        startDate: toInputDate(intern.startDate),
-        endDate: toInputDate(intern.endDate),
-        phone: intern.phone ?? "",
-        address: intern.address ?? "",
-        institution: intern.institution ?? "",
-        course: intern.course ?? "",
-        level: intern.level ?? "",
+        status:              intern.status,
+        internshipType:      intern.internshipType,
+        startDate:           toInputDate(intern.startDate),
+        endDate:             toInputDate(intern.endDate),
+        gender:              intern.gender,
+        phone:               intern.phone ?? "",
+        address:             intern.address ?? "",
+        institution:         intern.institution ?? "",
+        institutionLocation: intern.institutionLocation ?? "",
+        course:              intern.course ?? "",
+        level:               intern.level ?? "",
+        stateCode:           intern.stateCode ?? "",
+        callUpNumber:        intern.callUpNumber ?? "",
       });
     }
   }, [intern, reset]);
@@ -91,11 +99,15 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
         ...(values.internshipType && { internshipType: values.internshipType }),
         ...(values.startDate && { startDate: values.startDate }),
         ...(values.endDate && { endDate: values.endDate }),
+        ...(values.gender !== undefined && { gender: values.gender }),
         ...(values.phone !== undefined && { phone: values.phone }),
         ...(values.address !== undefined && { address: values.address }),
         ...(values.institution !== undefined && { institution: values.institution }),
+        ...(values.institutionLocation !== undefined && { institutionLocation: values.institutionLocation }),
         ...(values.course !== undefined && { course: values.course }),
         ...(values.level !== undefined && { level: values.level }),
+        ...(values.stateCode !== undefined && { stateCode: values.stateCode }),
+        ...(values.callUpNumber !== undefined && { callUpNumber: values.callUpNumber }),
       },
       {
         onSuccess: () => {
@@ -185,15 +197,25 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
             {/* Academic Info */}
             <div className="space-y-4 border-t pt-4">
               <h4 className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
-                Academic Information
+                Academic & Placement Information
               </h4>
-              <div className="space-y-1.5">
-                <Label htmlFor="sheet-institution">Institution</Label>
-                <Input
-                  id="sheet-institution"
-                  placeholder="e.g. University of Lagos"
-                  {...register("institution")}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="sheet-institution">Institution</Label>
+                  <Input
+                    id="sheet-institution"
+                    placeholder="e.g. University of Lagos"
+                    {...register("institution")}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sheet-inst-location">University Location</Label>
+                  <Input
+                    id="sheet-inst-location"
+                    placeholder="e.g. OJO, LAGOS STATE"
+                    {...register("institutionLocation")}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -210,16 +232,46 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
                   <Input id="sheet-level" placeholder="e.g. 400L" {...register("level")} />
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="sheet-state-code">NYSC State Code</Label>
+                  <Input id="sheet-state-code" placeholder="e.g. LA/25A/14362" {...register("stateCode")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sheet-callup">NYSC Call-Up No.</Label>
+                  <Input id="sheet-callup" placeholder="e.g. NYSC/CUO/2025/..." {...register("callUpNumber")} />
+                </div>
+              </div>
             </div>
 
-            {/* Contact Info */}
+            {/* Contact & Personal Info */}
             <div className="space-y-4 border-t pt-4">
               <h4 className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
-                Contact Details
+                Personal & Contact Details
               </h4>
-              <div className="space-y-1.5">
-                <Label htmlFor="sheet-phone">Phone Number</Label>
-                <Input id="sheet-phone" placeholder="08012345678" {...register("phone")} />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="sheet-gender">Sex / Gender</Label>
+                  <Select
+                    value={watch("gender") ?? ""}
+                    onValueChange={(val) =>
+                      setValue("gender", val as "MALE" | "FEMALE", { shouldDirty: true })
+                    }
+                  >
+                    <SelectTrigger id="sheet-gender">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FEMALE">Female</SelectItem>
+                      <SelectItem value="MALE">Male</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sheet-phone">Phone Number</Label>
+                  <Input id="sheet-phone" placeholder="08012345678" {...register("phone")} />
+                </div>
               </div>
 
               <div className="space-y-1.5">
