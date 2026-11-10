@@ -25,16 +25,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const schema = z.object({
   // HR fields
-  status:         z.enum(["SCREENED", "ONBOARDING", "ACTIVE", "COMPLETED"]).optional(),
-  internshipType: z.enum(["INTERNSHIP", "NYSC_IT"]).optional(),
-  startDate:      z.string().optional(),
-  endDate:        z.string().optional(),
+  status:              z.enum(["SCREENED", "ONBOARDING", "ACTIVE", "COMPLETED"]).optional(),
+  internshipType:      z.enum(["INTERNSHIP", "NYSC_IT"]).optional(),
+  startDate:           z.string().optional(),
+  endDate:             z.string().optional(),
   // Shared fields
-  phone:          z.string().optional(),
-  address:        z.string().optional(),
-  institution:    z.string().optional(),
-  course:         z.string().optional(),
-  level:          z.string().optional(),
+  gender:              z.enum(["MALE", "FEMALE"]).optional(),
+  phone:               z.string().optional(),
+  address:             z.string().optional(),
+  institution:         z.string().optional(),
+  institutionLocation: z.string().optional(),
+  course:              z.string().optional(),
+  level:               z.string().optional(),
+  stateCode:           z.string().optional(),
+  callUpNumber:        z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -86,15 +90,19 @@ export default function EditInternPage({
   useEffect(() => {
     if (!intern) return;
     reset({
-      status:         intern.status,
-      internshipType: intern.internshipType,
-      startDate:      intern.startDate?.slice(0, 10) ?? "",
-      endDate:        intern.endDate?.slice(0, 10) ?? "",
-      phone:          intern.phone ?? "",
-      address:        intern.address ?? "",
-      institution:    intern.institution,
-      course:         intern.course,
-      level:          intern.level ?? "",
+      status:              intern.status,
+      internshipType:      intern.internshipType,
+      startDate:           intern.startDate?.slice(0, 10) ?? "",
+      endDate:             intern.endDate?.slice(0, 10) ?? "",
+      gender:              intern.gender,
+      phone:               intern.phone ?? "",
+      address:             intern.address ?? "",
+      institution:         intern.institution,
+      institutionLocation: intern.institutionLocation ?? "",
+      course:              intern.course,
+      level:               intern.level ?? "",
+      stateCode:           intern.stateCode ?? "",
+      callUpNumber:        intern.callUpNumber ?? "",
     });
   }, [intern, reset]);
 
@@ -208,14 +216,30 @@ export default function EditInternPage({
             <Field label="Phone" error={errors.phone?.message}>
               <Input placeholder="08012345678" {...register("phone")} />
             </Field>
-            <Field label="Address" error={errors.address?.message}>
-              <Textarea
-                placeholder="12 Marina, Lagos"
-                className="resize-none"
-                rows={2}
-                {...register("address")}
-              />
+            <Field label="Sex / Gender" error={errors.gender?.message}>
+              <Select
+                value={watch("gender") ?? ""}
+                onValueChange={(v) => setValue("gender", v as "MALE" | "FEMALE")}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="FEMALE">Female</SelectItem>
+                  <SelectItem value="MALE">Male</SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
+            <div className="sm:col-span-2">
+              <Field label="Address" error={errors.address?.message}>
+                <Textarea
+                  placeholder="12 Marina, Lagos"
+                  className="resize-none"
+                  rows={2}
+                  {...register("address")}
+                />
+              </Field>
+            </div>
           </CardContent>
         </Card>
 
@@ -230,11 +254,20 @@ export default function EditInternPage({
             <Field label="Institution" error={errors.institution?.message}>
               <Input {...register("institution")} />
             </Field>
+            <Field label="University / School Location" error={errors.institutionLocation?.message}>
+              <Input placeholder="e.g. OJO, LAGOS STATE" {...register("institutionLocation")} />
+            </Field>
             <Field label="Course" error={errors.course?.message}>
               <Input {...register("course")} />
             </Field>
             <Field label="Level / Year" error={errors.level?.message}>
               <Input placeholder="300L" {...register("level")} />
+            </Field>
+            <Field label="NYSC State Code (Optional)" error={errors.stateCode?.message}>
+              <Input placeholder="e.g. LA/25A/14362" {...register("stateCode")} />
+            </Field>
+            <Field label="NYSC Call-Up Number (Optional)" error={errors.callUpNumber?.message}>
+              <Input placeholder="e.g. NYSC/CUO/2025/182518" {...register("callUpNumber")} />
             </Field>
           </CardContent>
         </Card>

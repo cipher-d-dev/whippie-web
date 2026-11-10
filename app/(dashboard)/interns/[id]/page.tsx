@@ -489,6 +489,10 @@ export default function InternDetailPage({
                   <p className="font-medium mt-0.5 text-foreground">{intern.institution || "—"}</p>
                 </div>
                 <div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">School Location</span>
+                  <p className="font-medium mt-0.5 text-foreground">{intern.institutionLocation || "—"}</p>
+                </div>
+                <div>
                   <span className="text-xs text-muted-foreground uppercase tracking-wider">Course of Study</span>
                   <p className="font-medium mt-0.5 text-foreground">{intern.course || "—"}</p>
                 </div>
@@ -497,11 +501,27 @@ export default function InternDetailPage({
                   <p className="font-medium mt-0.5 text-foreground">{intern.level || "—"}</p>
                 </div>
                 <div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Sex / Gender</span>
+                  <p className="font-medium mt-0.5 text-foreground">{intern.gender || "—"}</p>
+                </div>
+                <div>
                   <span className="text-xs text-muted-foreground uppercase tracking-wider">Program Type</span>
                   <p className="font-medium mt-0.5 text-foreground">
                     {intern.internshipType === "NYSC_IT" ? "NYSC / IT Placement" : "Undergraduate Internship"}
                   </p>
                 </div>
+                {intern.stateCode && (
+                  <div>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">NYSC State Code</span>
+                    <p className="font-medium mt-0.5 text-foreground">{intern.stateCode}</p>
+                  </div>
+                )}
+                {intern.callUpNumber && (
+                  <div>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">NYSC Call-Up No.</span>
+                    <p className="font-medium mt-0.5 text-foreground">{intern.callUpNumber}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

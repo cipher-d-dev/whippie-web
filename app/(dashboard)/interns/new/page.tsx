@@ -30,18 +30,22 @@ import {
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const schema = z.object({
-  firstName:      z.string().min(1, "First name is required"),
-  lastName:       z.string().min(1, "Last name is required"),
-  institution:    z.string().min(1, "Institution is required"),
-  course:         z.string().min(1, "Course is required"),
-  internshipType: z.enum(["INTERNSHIP", "NYSC_IT"]),
-  status:         z.enum(["SCREENED", "ONBOARDING", "ACTIVE", "COMPLETED"]).optional(),
-  phone:          z.string().optional(),
-  address:        z.string().optional(),
-  level:          z.string().optional(),
-  startDate:      z.string().optional(),
-  endDate:        z.string().optional(),
-  userId:         z.string().optional(),
+  firstName:           z.string().min(1, "First name is required"),
+  lastName:            z.string().min(1, "Last name is required"),
+  gender:              z.enum(["MALE", "FEMALE"]).optional(),
+  institution:         z.string().min(1, "Institution is required"),
+  institutionLocation: z.string().optional(),
+  course:              z.string().min(1, "Course is required"),
+  level:               z.string().optional(),
+  stateCode:           z.string().optional(),
+  callUpNumber:        z.string().optional(),
+  internshipType:      z.enum(["INTERNSHIP", "NYSC_IT"]),
+  status:              z.enum(["SCREENED", "ONBOARDING", "ACTIVE", "COMPLETED"]).optional(),
+  phone:               z.string().optional(),
+  address:             z.string().optional(),
+  startDate:           z.string().optional(),
+  endDate:             z.string().optional(),
+  userId:              z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -145,14 +149,30 @@ function NewInternForm() {
             <Field label="Phone" error={errors.phone?.message}>
               <Input placeholder="08012345678" {...register("phone")} />
             </Field>
-            <Field label="Address" error={errors.address?.message}>
-              <Textarea
-                placeholder="12 Marina, Lagos"
-                className="resize-none"
-                rows={2}
-                {...register("address")}
-              />
+            <Field label="Sex / Gender" error={errors.gender?.message}>
+              <Select
+                value={watch("gender") ?? ""}
+                onValueChange={(v) => setValue("gender", v as "MALE" | "FEMALE")}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="FEMALE">Female</SelectItem>
+                  <SelectItem value="MALE">Male</SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
+            <div className="sm:col-span-2">
+              <Field label="Address" error={errors.address?.message}>
+                <Textarea
+                  placeholder="12 Marina, Lagos"
+                  className="resize-none"
+                  rows={2}
+                  {...register("address")}
+                />
+              </Field>
+            </div>
           </CardContent>
         </Card>
 
@@ -165,13 +185,22 @@ function NewInternForm() {
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Field label="Institution" required error={errors.institution?.message}>
-              <Input placeholder="University of Lagos" {...register("institution")} />
+              <Input placeholder="Lagos State University" {...register("institution")} />
+            </Field>
+            <Field label="University / School Location" error={errors.institutionLocation?.message}>
+              <Input placeholder="e.g. OJO, LAGOS STATE" {...register("institutionLocation")} />
             </Field>
             <Field label="Course" required error={errors.course?.message}>
               <Input placeholder="Computer Science" {...register("course")} />
             </Field>
             <Field label="Level / Year" error={errors.level?.message}>
               <Input placeholder="300L" {...register("level")} />
+            </Field>
+            <Field label="NYSC State Code (Optional)" error={errors.stateCode?.message}>
+              <Input placeholder="e.g. LA/25A/14362" {...register("stateCode")} />
+            </Field>
+            <Field label="NYSC Call-Up Number (Optional)" error={errors.callUpNumber?.message}>
+              <Input placeholder="e.g. NYSC/CUO/2025/182518" {...register("callUpNumber")} />
             </Field>
           </CardContent>
         </Card>

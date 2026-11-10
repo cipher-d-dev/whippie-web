@@ -121,6 +121,52 @@ function fmtDateWithDay(dInput?: string | Date): string {
   return `${weekday} ${day}${suffix} ${month}, ${year}`;
 }
 
+// ─── Dynamic Duration & Pronoun Helpers ────────────────────────────────────────
+
+const NUMBER_WORDS: Record<number, string> = {
+  1: "one",
+  2: "two",
+  3: "three",
+  4: "four",
+  5: "five",
+  6: "six",
+  7: "seven",
+  8: "eight",
+  9: "nine",
+  10: "ten",
+  11: "eleven",
+  12: "twelve",
+};
+
+function getDurationInMonths(startDate?: string | Date, endDate?: string | Date): { months: number; text: string; numWithParens: string } {
+  if (!startDate || !endDate) {
+    return { months: 6, text: "six", numWithParens: "six (6)" };
+  }
+  const s = new Date(startDate);
+  const e = new Date(endDate);
+  const diffDays = Math.max(1, Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)));
+  let approxMonths = Math.round(diffDays / 30);
+  if (approxMonths < 1) approxMonths = 1;
+  const word = NUMBER_WORDS[approxMonths] || String(approxMonths);
+  return {
+    months: approxMonths,
+    text: word,
+    numWithParens: `${word} (${approxMonths})`,
+  };
+}
+
+function getPronouns(gender?: string) {
+  const isMale = gender === "MALE";
+  return {
+    heShe: isMale ? "he" : "she",
+    HeShe: isMale ? "He" : "She",
+    himHer: isMale ? "him" : "her",
+    HimHer: isMale ? "Him" : "Her",
+    hisHer: isMale ? "his" : "her",
+    HisHer: isMale ? "His" : "Her",
+  };
+}
+
 // ─── Physical Letterhead Wrapper ──────────────────────────────────────────────
 // Exact physical calibration:
 // Left margin: 72pt (1 inch / 25.4mm)
@@ -137,16 +183,21 @@ function PhysicalLetterheadPage({
 }) {
   return (
     <div
-      className={`print-a4-page mx-auto bg-white text-black shadow-xl rounded-sm p-[35mm_25.4mm_28mm_25.4mm] ${fontFamilyClass} leading-[1.6] relative min-h-[1122px] max-w-[794px] border border-gray-200 select-text`}
-      style={{ boxSizing: "border-box" }}
+      className={`letterhead-print-page bg-white shadow-2xl mx-auto rounded-sm relative text-black ${fontFamilyClass}`}
+      style={{
+        width: "210mm",
+        minHeight: "297mm",
+        boxSizing: "border-box",
+        padding: "100pt 72pt 80pt 72pt",
+      }}
     >
-      {/* Visual guide (hidden when printed) */}
-      <div className="no-print absolute top-3 left-6 right-6 border border-dashed border-primary/25 rounded py-1.5 px-3 text-center text-[11px] text-primary/80 bg-primary/5 select-none font-sans">
+      {/* Visual Header Guide (hidden when printed) */}
+      <div className="no-print absolute top-3 left-6 right-6 border border-dashed border-gray-300 rounded py-1 px-3 text-center text-[10px] text-gray-400 select-none font-sans">
         [ Physical Letterhead Area &bull; Company banner &amp; logo pre-printed on physical paper sits above this line ]
       </div>
 
-      {/* Actual document body text */}
-      <div className="document-body">{children}</div>
+      {/* Actual printable letter body */}
+      <div className="letterhead-content leading-relaxed">{children}</div>
 
       {/* Footer guide (hidden when printed) */}
       <div className="no-print absolute bottom-3 left-6 right-6 border border-dashed border-gray-300 rounded py-1 px-3 text-center text-[10px] text-gray-400 select-none font-sans">
@@ -168,12 +219,21 @@ function StudentAcceptanceLetter({
   const internName = `${intern.lastName.toUpperCase()}, ${intern.firstName.toUpperCase()}`;
   const startDateStr = intern.startDate ? fmtDateWithDay(intern.startDate) : "Wednesday 1st July, 2026";
   const endDateStr = intern.endDate ? fmtDateWithDay(intern.endDate) : "Thursday 31st December, 2026";
-  const dateObj = fmtDateWithSup();
+  // Rule 1: The date at top is the intern's exit / end date (or custom date)
+  const exitDate = intern.endDate ? new Date(intern.endDate) : new Date();
+  const dateObj = fmtDateWithSup(exitDate);
+
+  // Rule 2: Dynamic location & duration
+  const institutionLocation = intern.institutionLocation?.toUpperCase() || "OJO, LAGOS STATE.";
+  const duration = getDurationInMonths(intern.startDate, intern.endDate);
+
+  // Rule 3: Dynamic pronouns based on sex
+  const p = getPronouns(intern.gender);
 
   return (
     <PhysicalLetterheadPage fontFamilyClass="font-comic">
       <div className="text-[14px] text-black">
-        {/* Date — Left aligned */}
+        {/* Date — Left aligned (Date of exit / completion) */}
         <div className="mb-6">
           {customDate ? (
             <span className="font-bold">{customDate}</span>
@@ -189,14 +249,14 @@ function StudentAcceptanceLetter({
           <p>THE COORDINATOR,</p>
           <p>INTERNSHIP UNIT,</p>
           <p>{intern.institution || "LAGOS STATE UNIVERSITY."},</p>
-          <p>OJO, LAGOS STATE.</p>
+          <p>{institutionLocation}</p>
         </div>
 
         {/* Salutation */}
         <p className="mb-6 font-normal">Dear Sir/Ma,</p>
 
-        {/* Title — Center aligned, bold, NO underline (matches original scan) */}
-        <div className="text-center mb-6">
+        {/* Title — Left aligned, bold, NO underline (matches original template placement) */}
+        <div className="mb-6 text-left">
           <h2 className="text-[15px] font-bold uppercase tracking-wide">
             LETTER OF ACCEPTANCE
           </h2>
@@ -205,13 +265,13 @@ function StudentAcceptanceLetter({
         {/* Paragraph 1 */}
         <p className="text-justify mb-5 leading-[1.75]">
           We write to inform you that, <span className="font-bold">{internName}</span> has been
-          accepted to undergo a six month Industrial Training with <span className="font-bold">DAAR
+          accepted to undergo a {duration.text} month Industrial Training with <span className="font-bold">DAAR
           Communications PLC, Lagos</span>, from {startDateStr} to {endDateStr}.
         </p>
 
         {/* Paragraph 2 */}
         <p className="text-justify mb-8 leading-[1.75]">
-          We shall do our best to have her fully engaged so that she can acquire all the necessary work experience.
+          We shall do our best to have {p.himHer} fully engaged so that {p.heShe} can acquire all the necessary work experience.
         </p>
 
         {/* Signoff */}
@@ -240,7 +300,17 @@ function ITCompletionLetter({
   const startDateStr = intern.startDate ? fmtDatePlain(intern.startDate) : "15th July, 2026";
   const endDateStr = intern.endDate ? fmtDatePlain(intern.endDate) : "15th October, 2026";
   const departmentName = intern.department?.name ? `${intern.department.name} department` : "Marketing department";
-  const dateObj = fmtDateWithSup();
+
+  // Rule 1: The date at top is the intern's exit / end date (or custom date)
+  const exitDate = intern.endDate ? new Date(intern.endDate) : new Date();
+  const dateObj = fmtDateWithSup(exitDate);
+
+  // Rule 2: Dynamic location & duration
+  const institutionLocation = intern.institutionLocation?.toUpperCase() || "TOLL GATE IBADAN, OYO STATE.";
+  const duration = getDurationInMonths(intern.startDate, intern.endDate);
+
+  // Rule 3: Dynamic pronouns
+  const p = getPronouns(intern.gender);
 
   return (
     <PhysicalLetterheadPage fontFamilyClass="font-comic">
@@ -261,15 +331,14 @@ function ITCompletionLetter({
           <p>THE CORDINATOR,</p>
           <p>SIWES UNIT,</p>
           <p>{intern.institution || "LEAD CITY UNIVERSITY,"}</p>
-          <p>TOLL GATE IBADAN,</p>
-          <p>OYO STATE.</p>
+          <p>{institutionLocation}</p>
         </div>
 
         {/* Salutation */}
         <p className="mb-6 font-normal">Dear Sir/Ma,</p>
 
-        {/* Title — Center aligned, bold, NO underline (matches original scan) */}
-        <div className="text-center mb-6">
+        {/* Title — Left aligned, bold, NO underline */}
+        <div className="mb-6 text-left">
           <h2 className="text-[15px] font-bold uppercase tracking-wide">
             COMPLETION OF INDUSTRIAL TRAINING
           </h2>
@@ -279,13 +348,13 @@ function ITCompletionLetter({
         <p className="text-justify mb-5 leading-[1.75]">
           This is to certify that the above named intern, <span className="font-bold">{internName}</span> a
           student in your Institution from the Department of {intern.course || "Mass communication and Media technology"} has
-          successfully completed her three (3) month Industrial Training from {departmentName} in <span className="font-bold">DAAR
+          successfully completed {p.hisHer} {duration.numWithParens} month Industrial Training from {departmentName} in <span className="font-bold">DAAR
           Communications PLC, Lagos</span> from {startDateStr} to {endDateStr}.
         </p>
 
         {/* Paragraph 2 */}
         <p className="text-justify mb-8 leading-[1.75]">
-          During her stay, she was hard working and resourceful.
+          During {p.hisHer} stay, {p.heShe} was hard working and resourceful.
         </p>
 
         {/* Signoff */}
@@ -314,13 +383,19 @@ function NYSCInternalPostingTemplate({
   const startDateStr = intern.startDate ? fmtDateWithDay(intern.startDate) : "Monday 17th November, 2025";
   const endDateStr = intern.endDate ? fmtDateWithDay(intern.endDate) : "Tuesday 17th November, 2026";
   const departmentName = intern.department?.name ? `${intern.department.name.toUpperCase()} (RAYPOWER)` : "ONLINE UNIT (RAYPOWER)";
-  const dateObj = fmtDateWithSup();
+
+  // Exit date for memo or current posting date
+  const exitDate = intern.endDate ? new Date(intern.endDate) : new Date();
+  const dateObj = fmtDateWithSup(exitDate);
+
+  // Dynamic pronouns
+  const p = getPronouns(intern.gender);
 
   return (
     <PhysicalLetterheadPage fontFamilyClass="font-comic">
       <div className="text-[14px] text-black">
         {/* Title — Left aligned, 24pt, bold, NO line underneath (matches original file) */}
-        <h1 className="text-[24px] font-bold uppercase tracking-wider mb-8">
+        <h1 className="text-[24px] font-bold uppercase tracking-wider mb-8 text-left">
           INTERNAL MEMO
         </h1>
 
@@ -344,19 +419,19 @@ function NYSCInternalPostingTemplate({
         {/* Paragraph 1 */}
         <p className="text-justify mb-5 leading-[1.75]">
           We are pleased to inform you that, <span className="font-bold">{internName}</span> is
-          hereby posted to the <span className="font-bold">{departmentName}</span> for his
-          NYSC, from {startDateStr} to {endDateStr}.
+          hereby posted to the <span className="font-bold">{departmentName}</span> for {p.hisHer}
+          {" "}NYSC, from {startDateStr} to {endDateStr}.
         </p>
 
         {/* Paragraph 2 */}
         <p className="text-justify mb-5 leading-[1.75]">
-          During the period of his assignment, he would abide with the rules and regulations of the
+          During the period of {p.hisHer} assignment, {p.heShe} would abide with the rules and regulations of the
           Organisation and work to the actualization of the common goal of the department and the Organisation.
         </p>
 
         {/* Paragraph 3 */}
         <p className="text-justify mb-8 leading-[1.75]">
-          Kindly give him the necessary orientation that he needs to settle down and operate efficiently.
+          Kindly give {p.himHer} the necessary orientation that {p.heShe} needs to settle down and operate efficiently.
         </p>
 
         {/* Signoff */}
@@ -386,8 +461,14 @@ function NYSCMonthlyClearanceTemplate({
   const internName = `${intern.lastName.toUpperCase()}, ${intern.firstName.toUpperCase()}`;
   const forMonth = clearanceMonth.toUpperCase() || "JANUARY 2026";
   const dutyMonth = servingMonth.toUpperCase() || "DECEMBER 2025";
-  const stateCode = "LA/25A/14362"; // Can be configured or stored on intern profile
-  const dateObj = fmtDateWithSup();
+  const stateCode = intern.stateCode || "LA/25A/14362";
+
+  // Rule 1: The date at top is the intern's exit / end date (or custom date)
+  const exitDate = intern.endDate ? new Date(intern.endDate) : new Date();
+  const dateObj = fmtDateWithSup(exitDate);
+
+  // Rule 3: Dynamic pronouns
+  const p = getPronouns(intern.gender);
 
   return (
     <PhysicalLetterheadPage fontFamilyClass="font-comic">
@@ -413,8 +494,8 @@ function NYSCMonthlyClearanceTemplate({
         {/* Salutation — Normal weight */}
         <p className="mb-6 font-normal">Dear Sir/Madam</p>
 
-        {/* Title — Center indented (x=119.5), bold, NO underline */}
-        <div className="text-center mb-6">
+        {/* Title — Left aligned, bold, NO underline */}
+        <div className="mb-6 text-left">
           <h2 className="text-[14px] font-bold uppercase tracking-wide inline-block">
             CLEARANCE FOR THE MONTH OF {forMonth}
           </h2>
@@ -424,13 +505,13 @@ function NYSCMonthlyClearanceTemplate({
         <p className="text-justify mb-5 leading-[1.75]">
           This is to inform you that, <span className="font-bold">{internName}</span> with
           state code <span className="font-bold">{stateCode}</span> is a Corp Member with DAAR
-          Communications PLC. He has performed his duty diligently in the
+          Communications PLC. {p.HeShe} has performed {p.hisHer} duty diligently in the
           month of <span className="font-bold">{dutyMonth}</span>.
         </p>
 
         {/* Paragraph 2 */}
         <p className="text-justify mb-8 leading-[1.75]">
-          Kindly pay his allowance for the month of <span className="font-bold">{dutyMonth}</span>.
+          Kindly pay {p.hisHer} allowance for the month of <span className="font-bold">{dutyMonth}</span>.
         </p>
 
         {/* Signoff */}
@@ -456,9 +537,15 @@ function NYSCFinalClearanceTemplate({
   customDate: string;
 }) {
   const internName = `${intern.lastName.toUpperCase()}, ${intern.firstName.toUpperCase()}`;
-  const callUpNumber = "NYSC/CUO/2025/182518";
-  const stateCode = "LA/25B/0739";
-  const dateObj = fmtDateWithSup();
+  const callUpNumber = intern.callUpNumber || "NYSC/CUO/2025/182518";
+  const stateCode = intern.stateCode || "LA/25B/0739";
+
+  // Rule 1: The date at top is the intern's exit / end date (or custom date)
+  const exitDate = intern.endDate ? new Date(intern.endDate) : new Date();
+  const dateObj = fmtDateWithSup(exitDate);
+
+  // Rule 3: Dynamic pronouns
+  const p = getPronouns(intern.gender);
 
   return (
     <PhysicalLetterheadPage fontFamilyClass="font-serif">
@@ -485,8 +572,8 @@ function NYSCFinalClearanceTemplate({
         {/* Salutation */}
         <p className="mb-6 font-normal">Dear Sir/Madam,</p>
 
-        {/* Title — Center aligned, bold, NO underline (matches original PDF) */}
-        <div className="text-center mb-6">
+        {/* Title — Left aligned, bold, NO underline */}
+        <div className="mb-6 text-left">
           <h2 className="text-[14px] font-bold uppercase tracking-wide inline-block">
             FINAL CLEARANCE LETTER
           </h2>
@@ -497,13 +584,13 @@ function NYSCFinalClearanceTemplate({
           This is to certify that <span className="font-bold">{internName}</span>, a National Youth Corp
           Member serving at DAAR Communications PLC with call up number{" "}
           <span className="font-bold">{callUpNumber}</span>, and state code{" "}
-          <span className="font-bold">{stateCode}</span> has satisfactorily done his job for the
-          duration of his service year and he is not indebted to the organization.
+          <span className="font-bold">{stateCode}</span> has satisfactorily done {p.hisHer} job for the
+          duration of {p.hisHer} service year and {p.heShe} is not indebted to the organization.
         </p>
 
         {/* Paragraph 2 */}
         <p className="text-justify mb-8 leading-[1.75]">
-          We therefore recommend his discharge from the NYSC programme.
+          We therefore recommend {p.hisHer} discharge from the NYSC programme.
         </p>
 
         {/* Signoff */}
@@ -628,7 +715,7 @@ export default function DocumentGenerationPage() {
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-foreground">Custom Date (Optional)</Label>
               <Input
-                placeholder="Leave blank to use current date"
+                placeholder="Leave blank to use intern exit date"
                 value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
                 className="h-10 text-xs"

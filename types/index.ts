@@ -29,11 +29,15 @@ export interface InternObject {
   userId?: string;
   firstName: string;
   lastName: string;
+  gender?: "MALE" | "FEMALE";
   phone?: string;
   address?: string;
   institution: string;
+  institutionLocation?: string;
   course: string;
   level?: string;
+  stateCode?: string;
+  callUpNumber?: string;
   internshipType: InternshipType;
   status: InternshipStatus;
   startDate?: string; // ISO date string
@@ -52,11 +56,15 @@ export interface CreateInternInput {
   userId?: string;
   firstName: string;
   lastName: string;
+  gender?: "MALE" | "FEMALE";
   phone?: string;
   address?: string;
   institution: string;
+  institutionLocation?: string;
   course: string;
   level?: string;
+  stateCode?: string;
+  callUpNumber?: string;
   internshipType: InternshipType;
   status?: InternshipStatus;
   startDate?: string;
@@ -70,11 +78,15 @@ export interface UpdateInternInput {
   endDate?: string;
   internshipType?: InternshipType;
   // Shared fields (intern can also update these)
+  gender?: "MALE" | "FEMALE";
   phone?: string;
   address?: string;
   institution?: string;
+  institutionLocation?: string;
   course?: string;
   level?: string;
+  stateCode?: string;
+  callUpNumber?: string;
 }
 
 export interface InternsListParams {
