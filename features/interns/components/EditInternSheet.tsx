@@ -33,6 +33,9 @@ const schema = z.object({
   internshipType:      z.enum(["INTERNSHIP", "NYSC_IT"]).optional(),
   startDate:           z.string().optional(),
   endDate:             z.string().optional(),
+  firstName:           z.string().optional(),
+  middleName:          z.string().optional(),
+  lastName:            z.string().optional(),
   gender:              z.enum(["MALE", "FEMALE"]).optional(),
   phone:               z.string().optional(),
   address:             z.string().optional(),
@@ -78,6 +81,9 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
         internshipType:      intern.internshipType,
         startDate:           toInputDate(intern.startDate),
         endDate:             toInputDate(intern.endDate),
+        firstName:           intern.firstName ?? "",
+        middleName:          intern.middleName ?? "",
+        lastName:            intern.lastName ?? "",
         gender:              intern.gender,
         phone:               intern.phone ?? "",
         address:             intern.address ?? "",
@@ -99,6 +105,9 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
         ...(values.internshipType && { internshipType: values.internshipType }),
         ...(values.startDate && { startDate: values.startDate }),
         ...(values.endDate && { endDate: values.endDate }),
+        ...(values.firstName !== undefined && { firstName: values.firstName }),
+        ...(values.middleName !== undefined && { middleName: values.middleName }),
+        ...(values.lastName !== undefined && { lastName: values.lastName }),
         ...(values.gender !== undefined && { gender: values.gender }),
         ...(values.phone !== undefined && { phone: values.phone }),
         ...(values.address !== undefined && { address: values.address }),
@@ -250,6 +259,20 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
               <h4 className="text-xs font-semibold tracking-wider uppercase text-muted-foreground">
                 Personal & Contact Details
               </h4>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="sheet-lastname">Surname / Last Name</Label>
+                  <Input id="sheet-lastname" placeholder="UDUKA" {...register("lastName")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sheet-firstname">First Name</Label>
+                  <Input id="sheet-firstname" placeholder="GRACE" {...register("firstName")} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="sheet-middlename">Middle Name</Label>
+                  <Input id="sheet-middlename" placeholder="EZINNE" {...register("middleName")} />
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="sheet-gender">Sex / Gender</Label>

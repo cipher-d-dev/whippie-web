@@ -31,6 +31,7 @@ import {
 
 const schema = z.object({
   firstName:           z.string().min(1, "First name is required"),
+  middleName:          z.string().optional(),
   lastName:            z.string().min(1, "Last name is required"),
   gender:              z.enum(["MALE", "FEMALE"]).optional(),
   institution:         z.string().min(1, "Institution is required"),
@@ -140,14 +141,14 @@ function NewInternForm() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Field label="Surname / Last name" required error={errors.lastName?.message}>
+              <Input placeholder="e.g. Okafor" {...register("lastName")} />
+            </Field>
             <Field label="First name" required error={errors.firstName?.message}>
-              <Input placeholder="Ada" {...register("firstName")} />
+              <Input placeholder="e.g. Ada" {...register("firstName")} />
             </Field>
-            <Field label="Last name" required error={errors.lastName?.message}>
-              <Input placeholder="Okafor" {...register("lastName")} />
-            </Field>
-            <Field label="Phone" error={errors.phone?.message}>
-              <Input placeholder="08012345678" {...register("phone")} />
+            <Field label="Middle name (Optional)" error={errors.middleName?.message}>
+              <Input placeholder="e.g. Chinyere" {...register("middleName")} />
             </Field>
             <Field label="Sex / Gender" error={errors.gender?.message}>
               <Select
@@ -162,6 +163,9 @@ function NewInternForm() {
                   <SelectItem value="MALE">Male</SelectItem>
                 </SelectContent>
               </Select>
+            </Field>
+            <Field label="Phone" error={errors.phone?.message}>
+              <Input placeholder="08012345678" {...register("phone")} />
             </Field>
             <div className="sm:col-span-2">
               <Field label="Address" error={errors.address?.message}>

@@ -292,7 +292,10 @@
     margin: 0;
   }
   @media print {
-    html, body {
+    html, body, #__next, main, div[class*="min-h-"] {
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
       background: white !important;
       color: black !important;
       margin: 0 !important;

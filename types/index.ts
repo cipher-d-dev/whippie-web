@@ -28,6 +28,7 @@ export interface InternObject {
   _id: string;
   userId?: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
   gender?: "MALE" | "FEMALE";
   phone?: string;
@@ -55,6 +56,7 @@ export type Intern = InternObject;
 export interface CreateInternInput {
   userId?: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
   gender?: "MALE" | "FEMALE";
   phone?: string;
@@ -78,6 +80,9 @@ export interface UpdateInternInput {
   endDate?: string;
   internshipType?: InternshipType;
   // Shared fields (intern can also update these)
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   gender?: "MALE" | "FEMALE";
   phone?: string;
   address?: string;

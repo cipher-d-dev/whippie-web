@@ -176,6 +176,16 @@ function getPronouns(gender?: string) {
   };
 }
 
+function getInternFullName(intern: InternObject): string {
+  const last = (intern.lastName ?? "").trim().toUpperCase();
+  const first = (intern.firstName ?? "").trim().toUpperCase();
+  const middle = (intern.middleName ?? "").trim().toUpperCase();
+  if (middle) {
+    return `${last}, ${first} ${middle}`;
+  }
+  return `${last}, ${first}`;
+}
+
 // ─── Physical Letterhead Wrapper ──────────────────────────────────────────────
 // Exact physical calibration:
 // Left margin: 72pt (1 inch / 25.4mm)
@@ -225,7 +235,7 @@ function StudentAcceptanceLetter({
   intern: InternObject;
   customDate: string;
 }) {
-  const internName = `${intern.lastName.toUpperCase()}, ${intern.firstName.toUpperCase()}`;
+  const internName = getInternFullName(intern);
   const startDateStr = intern.startDate ? fmtDateWithDay(intern.startDate) : "Wednesday 1st July, 2026";
   const endDateStr = intern.endDate ? fmtDateWithDay(intern.endDate) : "Thursday 31st December, 2026";
   // Rule 1: The date at top is the intern's exit / end date (or custom date)
@@ -305,7 +315,7 @@ function ITCompletionLetter({
   intern: InternObject;
   customDate: string;
 }) {
-  const internName = `${intern.lastName.toUpperCase()}, ${intern.firstName.toUpperCase()}`;
+  const internName = getInternFullName(intern);
   const startDateStr = intern.startDate ? fmtDatePlain(intern.startDate) : "15th July, 2026";
   const endDateStr = intern.endDate ? fmtDatePlain(intern.endDate) : "15th October, 2026";
   const departmentName = intern.department?.name ? `${intern.department.name} department` : "Marketing department";
@@ -357,7 +367,7 @@ function ITCompletionLetter({
         <p className="text-justify mb-5 leading-[1.65]">
           This is to certify that the above named intern, <span className="font-bold">{internName}</span> a
           student in your Institution from the Department of {intern.course || "Mass communication and Media technology"} has
-          successfully completed {p.hisHer} {duration.numWithParens} month Industrial Training from {departmentName} in <span className="font-bold">DAAR
+          successfully completed {p.hisHer} <span className="font-bold">{duration.numWithParens} month</span> Industrial Training from {departmentName} in <span className="font-bold">DAAR
           Communications PLC, Lagos</span> from {startDateStr} to {endDateStr}.
         </p>
 
@@ -367,7 +377,7 @@ function ITCompletionLetter({
         </p>
 
         {/* Signoff */}
-        <p className="mb-10 font-normal">Yours Faithfully</p>
+        <p className="mb-24 font-normal">Yours Faithfully</p>
 
         {/* Signatory details */}
         <div className="space-y-1">
@@ -388,7 +398,7 @@ function NYSCInternalPostingTemplate({
   intern: InternObject;
   customDate: string;
 }) {
-  const internName = `${intern.lastName.toUpperCase()}, ${intern.firstName.toUpperCase()}`;
+  const internName = getInternFullName(intern);
   const startDateStr = intern.startDate ? fmtDateWithDay(intern.startDate) : "Monday 17th November, 2025";
   const endDateStr = intern.endDate ? fmtDateWithDay(intern.endDate) : "Tuesday 17th November, 2026";
   const departmentName = intern.department?.name ? `${intern.department.name.toUpperCase()} (RAYPOWER)` : "ONLINE UNIT (RAYPOWER)";
@@ -467,7 +477,7 @@ function NYSCMonthlyClearanceTemplate({
   clearanceMonth: string;
   servingMonth: string;
 }) {
-  const internName = `${intern.lastName.toUpperCase()}, ${intern.firstName.toUpperCase()}`;
+  const internName = getInternFullName(intern);
   const forMonth = clearanceMonth.toUpperCase() || "JANUARY 2026";
   const dutyMonth = servingMonth.toUpperCase() || "DECEMBER 2025";
   const stateCode = intern.stateCode || "LA/25A/14362";
@@ -545,7 +555,7 @@ function NYSCFinalClearanceTemplate({
   intern: InternObject;
   customDate: string;
 }) {
-  const internName = `${intern.lastName.toUpperCase()}, ${intern.firstName.toUpperCase()}`;
+  const internName = getInternFullName(intern);
   const callUpNumber = intern.callUpNumber || "NYSC/CUO/2025/182518";
   const stateCode = intern.stateCode || "LA/25B/0739";
 
@@ -760,7 +770,7 @@ export default function DocumentGenerationPage() {
 
       {/* Document View Area */}
       {intern ? (
-        <div className="pb-12 animate-fade-up">
+        <div className="pb-12 print:p-0 print:m-0 animate-fade-up">
           {selectedTemplate === "ACCEPTANCE_LETTER" && (
             <StudentAcceptanceLetter intern={intern} customDate={customDate} />
           )}

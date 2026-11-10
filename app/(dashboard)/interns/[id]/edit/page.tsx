@@ -30,6 +30,9 @@ const schema = z.object({
   startDate:           z.string().optional(),
   endDate:             z.string().optional(),
   // Shared fields
+  firstName:           z.string().optional(),
+  middleName:          z.string().optional(),
+  lastName:            z.string().optional(),
   gender:              z.enum(["MALE", "FEMALE"]).optional(),
   phone:               z.string().optional(),
   address:             z.string().optional(),
@@ -94,6 +97,9 @@ export default function EditInternPage({
       internshipType:      intern.internshipType,
       startDate:           intern.startDate?.slice(0, 10) ?? "",
       endDate:             intern.endDate?.slice(0, 10) ?? "",
+      firstName:           intern.firstName,
+      middleName:          intern.middleName ?? "",
+      lastName:            intern.lastName,
       gender:              intern.gender,
       phone:               intern.phone ?? "",
       address:             intern.address ?? "",
@@ -213,8 +219,14 @@ export default function EditInternPage({
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Field label="Phone" error={errors.phone?.message}>
-              <Input placeholder="08012345678" {...register("phone")} />
+            <Field label="Surname / Last name" error={errors.lastName?.message}>
+              <Input placeholder="e.g. Okafor" {...register("lastName")} />
+            </Field>
+            <Field label="First name" error={errors.firstName?.message}>
+              <Input placeholder="e.g. Ada" {...register("firstName")} />
+            </Field>
+            <Field label="Middle name" error={errors.middleName?.message}>
+              <Input placeholder="e.g. Chinyere" {...register("middleName")} />
             </Field>
             <Field label="Sex / Gender" error={errors.gender?.message}>
               <Select
@@ -229,6 +241,9 @@ export default function EditInternPage({
                   <SelectItem value="MALE">Male</SelectItem>
                 </SelectContent>
               </Select>
+            </Field>
+            <Field label="Phone" error={errors.phone?.message}>
+              <Input placeholder="08012345678" {...register("phone")} />
             </Field>
             <div className="sm:col-span-2">
               <Field label="Address" error={errors.address?.message}>
