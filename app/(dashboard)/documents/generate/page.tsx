@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
+import { useReactToPrint } from "react-to-print";
+import { toast } from "sonner";
 import { useInterns, useIntern } from "@/features/interns/hooks";
 import {
   FileText,
   Printer,
+  Download,
   ChevronLeft,
   Sparkles,
   Info,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -639,12 +643,86 @@ export default function DocumentGenerationPage() {
   const [customDate, setCustomDate] = useState<string>("");
   const [clearanceMonth, setClearanceMonth] = useState<string>("JANUARY 2026");
   const [servingMonth, setServingMonth] = useState<string>("DECEMBER 2025");
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const printComponentRef = useRef<HTMLDivElement>(null);
 
   const { data: singleInternData } = useIntern(selectedInternId);
   const intern = singleInternData?.data?.intern ?? interns.find((i) => i._id === selectedInternId);
 
-  const handlePrint = () => {
-    window.print();
+  // 1. Direct isolated iframe printing (react-to-print)
+  const handlePrint = useReactToPrint({
+    contentRef: printComponentRef,
+    documentTitle: intern
+      ? `${intern.lastName}_${intern.firstName}_${selectedTemplate}`
+      : "Official_Document",
+    pageStyle: `
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+      @media print {
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: white !important;
+          color: black !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .letterhead-print-page {
+          box-shadow: none !important;
+          border: none !important;
+          border-radius: 0 !important;
+          width: 210mm !important;
+          max-width: 210mm !important;
+          min-height: 297mm !important;
+          height: 297mm !important;
+          max-height: 297mm !important;
+          padding-top: 36mm !important;
+          padding-bottom: 30mm !important;
+          padding-left: 25.4mm !important;
+          padding-right: 25.4mm !important;
+          margin: 0 auto !important;
+          box-sizing: border-box !important;
+          page-break-after: avoid !important;
+          break-after: avoid !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+        .no-print {
+          display: none !important;
+        }
+      }
+    `,
+  });
+
+  // 2. Direct client-side PDF download file generation (html2pdf.js)
+  const handleDownloadPdf = async () => {
+    if (!printComponentRef.current || !intern) return;
+    try {
+      setIsExportingPdf(true);
+      toast.info("Generating PDF file...");
+      const html2pdf = (await import("html2pdf.js")).default;
+      const element = printComponentRef.current.querySelector(".letterhead-print-page") as HTMLElement || printComponentRef.current;
+      
+      const filename = `${intern.lastName}_${intern.firstName}_${selectedTemplate}.pdf`.replace(/\s+/g, "_");
+      const opt = {
+        margin: 0,
+        filename,
+        image: { type: "jpeg" as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: "mm" as const, format: "a4" as const, orientation: "portrait" as const },
+      };
+
+      await html2pdf().set(opt).from(element).save();
+      toast.success("PDF downloaded successfully!");
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      toast.error("Failed to generate PDF. You can also use the Print button to Save as PDF.");
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   return (
@@ -671,12 +749,26 @@ export default function DocumentGenerationPage() {
 
         <div className="flex items-center gap-2">
           <Button
-            onClick={handlePrint}
+            onClick={() => handlePrint()}
             disabled={!intern}
             className="gap-2 rounded-xl shadow-md cursor-pointer"
           >
             <Printer className="h-4 w-4" />
-            Print onto Letterhead Paper / Save PDF
+            Print Letterhead
+          </Button>
+
+          <Button
+            onClick={handleDownloadPdf}
+            disabled={!intern || isExportingPdf}
+            variant="outline"
+            className="gap-2 rounded-xl shadow-sm cursor-pointer"
+          >
+            {isExportingPdf ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 text-primary" />
+            )}
+            Download PDF
           </Button>
         </div>
       </div>
@@ -770,7 +862,7 @@ export default function DocumentGenerationPage() {
 
       {/* Document View Area */}
       {intern ? (
-        <div className="pb-12 print:p-0 print:m-0 animate-fade-up">
+        <div ref={printComponentRef} className="pb-12 print:p-0 print:m-0 animate-fade-up">
           {selectedTemplate === "ACCEPTANCE_LETTER" && (
             <StudentAcceptanceLetter intern={intern} customDate={customDate} />
           )}
