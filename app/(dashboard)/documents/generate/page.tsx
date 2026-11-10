@@ -715,8 +715,20 @@ export default function DocumentGenerationPage() {
         jsPDF: { unit: "mm" as const, format: "a4" as const, orientation: "portrait" as const },
       };
 
-      await html2pdf().set(opt).from(element).save();
-      toast.success("PDF downloaded successfully!");
+      // Temporarily hide .no-print elements so html2canvas doesn't capture visual guides
+      const noPrintElements = element.querySelectorAll<HTMLElement>(".no-print");
+      noPrintElements.forEach((el) => {
+        el.style.display = "none";
+      });
+
+      try {
+        await html2pdf().set(opt).from(element).save();
+        toast.success("PDF downloaded successfully!");
+      } finally {
+        noPrintElements.forEach((el) => {
+          el.style.display = "";
+        });
+      }
     } catch (err) {
       console.error("PDF export failed:", err);
       toast.error("Failed to generate PDF. You can also use the Print button to Save as PDF.");
