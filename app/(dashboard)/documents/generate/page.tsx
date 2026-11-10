@@ -214,16 +214,22 @@ function PhysicalLetterheadPage({
         padding: "36mm 25.4mm 30mm 25.4mm",
       }}
     >
-      {/* Visual Header Guide (hidden when printed) */}
-      <div className="no-print absolute top-3 left-6 right-6 border border-dashed border-gray-300 rounded py-1 px-3 text-center text-[10px] text-gray-400 select-none font-sans">
+      {/* Visual Header Guide (hidden when printed / exported) */}
+      <div
+        data-html2canvas-ignore="true"
+        className="no-print absolute top-3 left-6 right-6 border border-dashed border-gray-300 rounded py-1 px-3 text-center text-[10px] text-gray-400 select-none font-sans"
+      >
         [ Physical Letterhead Area &bull; Company banner &amp; logo pre-printed on physical paper sits above this line ]
       </div>
 
       {/* Actual printable letter body */}
       <div className="letterhead-content leading-relaxed">{children}</div>
 
-      {/* Footer guide (hidden when printed) */}
-      <div className="no-print absolute bottom-3 left-6 right-6 border border-dashed border-gray-300 rounded py-1 px-3 text-center text-[10px] text-gray-400 select-none font-sans">
+      {/* Footer guide (hidden when printed / exported) */}
+      <div
+        data-html2canvas-ignore="true"
+        className="no-print absolute bottom-3 left-6 right-6 border border-dashed border-gray-300 rounded py-1 px-3 text-center text-[10px] text-gray-400 select-none font-sans"
+      >
         [ Physical Registered Office Address Footer Area &bull; Pre-printed on paper ]
       </div>
     </div>
@@ -711,24 +717,19 @@ export default function DocumentGenerationPage() {
         margin: 0,
         filename,
         image: { type: "jpeg" as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          ignoreElements: (element: Element) =>
+            element.classList?.contains("no-print") ||
+            element.getAttribute("data-html2canvas-ignore") === "true",
+        },
         jsPDF: { unit: "mm" as const, format: "a4" as const, orientation: "portrait" as const },
       };
 
-      // Temporarily hide .no-print elements so html2canvas doesn't capture visual guides
-      const noPrintElements = element.querySelectorAll<HTMLElement>(".no-print");
-      noPrintElements.forEach((el) => {
-        el.style.display = "none";
-      });
-
-      try {
-        await html2pdf().set(opt).from(element).save();
-        toast.success("PDF downloaded successfully!");
-      } finally {
-        noPrintElements.forEach((el) => {
-          el.style.display = "";
-        });
-      }
+      await html2pdf().set(opt).from(element).save();
+      toast.success("PDF downloaded successfully!");
     } catch (err) {
       console.error("PDF export failed:", err);
       toast.error("Failed to generate PDF. You can also use the Print button to Save as PDF.");
