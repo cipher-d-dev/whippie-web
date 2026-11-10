@@ -212,7 +212,7 @@ function PhysicalLetterheadPage({
         width: "210mm",
         minHeight: "297mm",
         boxSizing: "border-box",
-        padding: "80mm 25.4mm 35mm 25.4mm",
+        padding: "92mm 20mm 30mm 20mm",
       }}
     >
       {/* Visual Header Guide (hidden when printed / exported) */}
@@ -220,7 +220,7 @@ function PhysicalLetterheadPage({
         data-html2canvas-ignore="true"
         className="no-print absolute top-3 left-6 right-6 border border-dashed border-gray-300 rounded py-2 px-3 text-center text-[10px] text-gray-400 select-none font-sans"
       >
-        [ Physical Letterhead Area &bull; ~7.5cm reserved for DAAR Communications banner &amp; logo pre-printed on stationery ]
+        [ Physical Letterhead Area &bull; ~8.5cm reserved for DAAR Communications banner &amp; logo pre-printed on stationery ]
       </div>
 
       {/* Actual printable letter body */}
@@ -262,20 +262,20 @@ function StudentAcceptanceLetter({
 
   return (
     <PhysicalLetterheadPage fontFamilyClass="font-comic">
-      <div className="text-[14px] text-black">
+      <div className="text-[16px] text-black leading-[1.85]">
         {/* Date — Left aligned (Date of exit / completion) */}
-        <div className="mb-5">
+        <div className="mb-6 font-bold">
           {customDate ? (
-            <span className="font-bold">{customDate}</span>
+            customDate
           ) : (
-            <span className="font-bold">
+            <>
               {dateObj.dayNum}<sup>{dateObj.daySuffix}</sup> {dateObj.rest}
-            </span>
+            </>
           )}
         </div>
 
-        {/* Recipient Block — Left aligned, NO underlines */}
-        <div className="mb-5 font-bold leading-tight uppercase">
+        {/* Recipient Block — Left aligned, normal weight (not bold), uppercase */}
+        <div className="mb-6 font-normal leading-snug uppercase">
           <p>THE COORDINATOR,</p>
           <p>INTERNSHIP UNIT,</p>
           <p>{intern.institution || "LAGOS STATE UNIVERSITY."},</p>
@@ -283,34 +283,34 @@ function StudentAcceptanceLetter({
         </div>
 
         {/* Salutation */}
-        <p className="mb-5 font-normal">Dear Sir/Ma,</p>
+        <p className="mb-6 font-normal">Dear Sir/Ma,</p>
 
         {/* Title — Left aligned, bold, NO underline (matches original template placement) */}
-        <div className="mb-5 text-left">
-          <h2 className="text-[15px] font-bold uppercase tracking-wide">
+        <div className="mb-6 text-left">
+          <h2 className="text-[17px] font-bold uppercase tracking-wide">
             LETTER OF ACCEPTANCE
           </h2>
         </div>
 
         {/* Paragraph 1 */}
-        <p className="text-justify mb-5 leading-[1.65]">
+        <p className="text-justify mb-6 leading-[1.85]">
           We write to inform you that, <span className="font-bold">{internName}</span> has been
           accepted to undergo {duration.article} {duration.text} month Industrial Training with <span className="font-bold">DAAR
           Communications PLC, Lagos</span>, from {startDateStr} to {endDateStr}.
         </p>
 
         {/* Paragraph 2 */}
-        <p className="text-justify mb-6 leading-[1.65]">
+        <p className="text-justify mb-8 leading-[1.85]">
           We shall do our best to have {p.himHer} fully engaged so that {p.heShe} can acquire all the necessary work experience.
         </p>
 
         {/* Signoff */}
-        <p className="mb-10 font-normal">Yours Faithfully,</p>
+        <p className="mb-28 font-normal">Yours Faithfully,</p>
 
         {/* Signatory details */}
         <div className="space-y-1">
-          <p className="font-bold text-[14px]">CINDY CHINYERE UDUMA (08037184458)</p>
-          <p className="font-normal text-[13px] uppercase">HEAD, ADMIN. / HUMAN RESOURCES DEVELOPMENT</p>
+          <p className="font-bold text-[16px]">CINDY CHINYERE UDUMA (08037184458)</p>
+          <p className="font-normal text-[15px] uppercase">HEAD, ADMIN. / HUMAN RESOURCES DEVELOPMENT</p>
         </div>
       </div>
     </PhysicalLetterheadPage>
@@ -344,20 +344,20 @@ function ITCompletionLetter({
 
   return (
     <PhysicalLetterheadPage fontFamilyClass="font-comic">
-      <div className="text-[14px] text-black">
+      <div className="text-[16px] text-black leading-[1.85]">
         {/* Date — Left aligned */}
-        <div className="mb-5">
+        <div className="mb-6 font-bold">
           {customDate ? (
-            <span className="font-bold">{customDate}</span>
+            customDate
           ) : (
-            <span className="font-bold">
+            <>
               {dateObj.dayNum}<sup>{dateObj.daySuffix}</sup> {dateObj.rest}
-            </span>
+            </>
           )}
         </div>
 
-        {/* Recipient Block — Left aligned, NO underlines */}
-        <div className="mb-5 font-bold leading-tight uppercase">
+        {/* Recipient Block — Left aligned, normal weight (not bold), uppercase */}
+        <div className="mb-6 font-normal leading-snug uppercase">
           <p>THE CORDINATOR,</p>
           <p>SIWES UNIT,</p>
           <p>{intern.institution || "LEAD CITY UNIVERSITY,"}</p>
@@ -365,17 +365,17 @@ function ITCompletionLetter({
         </div>
 
         {/* Salutation */}
-        <p className="mb-5 font-normal">Dear Sir/Ma,</p>
+        <p className="mb-6 font-normal">Dear Sir/Ma,</p>
 
         {/* Title — Left aligned, bold, NO underline */}
-        <div className="mb-5 text-left">
-          <h2 className="text-[15px] font-bold uppercase tracking-wide">
+        <div className="mb-6 text-left">
+          <h2 className="text-[17px] font-bold uppercase tracking-wide">
             COMPLETION OF INDUSTRIAL TRAINING
           </h2>
         </div>
 
         {/* Paragraph 1 */}
-        <p className="text-justify mb-5 leading-[1.65]">
+        <p className="text-justify mb-6 leading-[1.85]">
           This is to certify that the above named intern, <span className="font-bold">{internName}</span> a
           student in your Institution from the Department of {intern.course || "Mass communication and Media technology"} has
           successfully completed {p.hisHer} <span className="font-bold">{duration.numWithParens} month</span> Industrial Training from {departmentName} in <span className="font-bold">DAAR
@@ -383,17 +383,17 @@ function ITCompletionLetter({
         </p>
 
         {/* Paragraph 2 */}
-        <p className="text-justify mb-6 leading-[1.65]">
+        <p className="text-justify mb-8 leading-[1.85]">
           During {p.hisHer} stay, {p.heShe} was hard working and resourceful.
         </p>
 
-        {/* Signoff */}
-        <p className="mb-24 font-normal">Yours Faithfully</p>
+        {/* Signoff — 50-55mm blank space for stamp and signature */}
+        <p className="mb-28 font-normal">Yours Faithfully</p>
 
         {/* Signatory details */}
         <div className="space-y-1">
-          <p className="font-bold text-[14px]">CINDY CHINYERE UDUMA (08037184458)</p>
-          <p className="font-normal text-[13px] uppercase">HEAD, ADMIN. / HUMAN RESOURCES DEVELOPMENT</p>
+          <p className="font-bold text-[16px]">CINDY CHINYERE UDUMA (08037184458)</p>
+          <p className="font-normal text-[15px] uppercase">HEAD, ADMIN. / HUMAN RESOURCES DEVELOPMENT</p>
         </div>
       </div>
     </PhysicalLetterheadPage>
@@ -423,14 +423,14 @@ function NYSCInternalPostingTemplate({
 
   return (
     <PhysicalLetterheadPage fontFamilyClass="font-comic">
-      <div className="text-[14px] text-black">
+      <div className="text-[16px] text-black leading-[1.85]">
         {/* Title — Left aligned, 24pt, bold, NO line underneath (matches original file) */}
         <h1 className="text-[24px] font-bold uppercase tracking-wider mb-8 text-left">
           INTERNAL MEMO
         </h1>
 
-        {/* Memo Meta Block — Left aligned, bold, Comic Sans 14pt */}
-        <div className="space-y-1.5 mb-8 font-bold leading-relaxed text-[14px]">
+        {/* Memo Meta Block — Left aligned, bold, Comic Sans 15pt */}
+        <div className="space-y-2 mb-8 font-bold leading-relaxed text-[15px]">
           <p>TO: {departmentName}</p>
           <p>FROM: HEAD ADMIN/HRD</p>
           <p>
@@ -447,29 +447,29 @@ function NYSCInternalPostingTemplate({
         </div>
 
         {/* Paragraph 1 */}
-        <p className="text-justify mb-5 leading-[1.75]">
+        <p className="text-justify mb-6 leading-[1.85]">
           We are pleased to inform you that, <span className="font-bold">{internName}</span> is
           hereby posted to the <span className="font-bold">{departmentName}</span> for {p.hisHer}
           {" "}NYSC, from {startDateStr} to {endDateStr}.
         </p>
 
         {/* Paragraph 2 */}
-        <p className="text-justify mb-5 leading-[1.75]">
+        <p className="text-justify mb-6 leading-[1.85]">
           During the period of {p.hisHer} assignment, {p.heShe} would abide with the rules and regulations of the
           Organisation and work to the actualization of the common goal of the department and the Organisation.
         </p>
 
         {/* Paragraph 3 */}
-        <p className="text-justify mb-8 leading-[1.75]">
+        <p className="text-justify mb-8 leading-[1.85]">
           Kindly give {p.himHer} the necessary orientation that {p.heShe} needs to settle down and operate efficiently.
         </p>
 
         {/* Signoff */}
         <p className="font-bold mb-4">Thank You,</p>
-        <p className="font-bold mb-10">Cindy Chinyere Uduma</p>
+        <p className="font-bold mb-14">Cindy Chinyere Uduma</p>
 
         {/* Copies */}
-        <p className="text-[11px] text-black">Cc: GMRS, ADMIN/HRD OFFICER</p>
+        <p className="text-[13px] text-black">Cc: GMRS, ADMIN/HRD OFFICER</p>
       </div>
     </PhysicalLetterheadPage>
   );
@@ -502,9 +502,9 @@ function NYSCMonthlyClearanceTemplate({
 
   return (
     <PhysicalLetterheadPage fontFamilyClass="font-comic">
-      <div className="text-[14px] text-black">
-        {/* Date — Left aligned, 14pt bold with superscript */}
-        <div className="mb-6 font-bold text-[14px]">
+      <div className="text-[16px] text-black leading-[1.85]">
+        {/* Date — Left aligned, bold with superscript */}
+        <div className="mb-6 font-bold text-[16px]">
           {customDate ? (
             customDate
           ) : (
@@ -514,8 +514,8 @@ function NYSCMonthlyClearanceTemplate({
           )}
         </div>
 
-        {/* Recipient Block — Left aligned, bold, NO underlines */}
-        <div className="mb-6 font-bold leading-tight uppercase">
+        {/* Recipient Block — Left aligned, normal weight (not bold), uppercase */}
+        <div className="mb-6 font-normal leading-snug uppercase">
           <p>THE STATE COORDINATOR,</p>
           <p>N.Y.S.C. SECRETARIAT,</p>
           <p>SURULERE, LAGOS.</p>
@@ -526,13 +526,13 @@ function NYSCMonthlyClearanceTemplate({
 
         {/* Title — Left aligned, bold, NO underline */}
         <div className="mb-6 text-left">
-          <h2 className="text-[14px] font-bold uppercase tracking-wide inline-block">
+          <h2 className="text-[17px] font-bold uppercase tracking-wide inline-block">
             CLEARANCE FOR THE MONTH OF {forMonth}
           </h2>
         </div>
 
         {/* Paragraph 1 */}
-        <p className="text-justify mb-5 leading-[1.75]">
+        <p className="text-justify mb-6 leading-[1.85]">
           This is to inform you that, <span className="font-bold">{internName}</span> with
           state code <span className="font-bold">{stateCode}</span> is a Corp Member with DAAR
           Communications PLC. {p.HeShe} has performed {p.hisHer} duty diligently in the
@@ -540,17 +540,17 @@ function NYSCMonthlyClearanceTemplate({
         </p>
 
         {/* Paragraph 2 */}
-        <p className="text-justify mb-8 leading-[1.75]">
+        <p className="text-justify mb-8 leading-[1.85]">
           Kindly pay {p.hisHer} allowance for the month of <span className="font-bold">{dutyMonth}</span>.
         </p>
 
-        {/* Signoff */}
-        <p className="mb-14 font-normal">Yours faithfully,</p>
+        {/* Signoff — 50-55mm blank space for stamp and signature */}
+        <p className="mb-28 font-normal">Yours faithfully,</p>
 
         {/* Signatory details */}
         <div className="space-y-1">
-          <p className="font-bold text-[14px]">CINDY CHINYERE UDUMA (08037184458)</p>
-          <p className="font-normal text-[14px] uppercase">HEAD ADMIN. /HUMAN RESOURCES DEVELOPMENT</p>
+          <p className="font-bold text-[16px]">CINDY CHINYERE UDUMA (08037184458)</p>
+          <p className="font-normal text-[15px] uppercase">HEAD ADMIN. /HUMAN RESOURCES DEVELOPMENT</p>
         </div>
       </div>
     </PhysicalLetterheadPage>
@@ -579,9 +579,9 @@ function NYSCFinalClearanceTemplate({
 
   return (
     <PhysicalLetterheadPage fontFamilyClass="font-serif">
-      <div className="text-[14px] text-black font-serif">
-        {/* Date — Left aligned, 14pt bold with superscript */}
-        <div className="mb-6 font-bold text-[14px]">
+      <div className="text-[16px] text-black font-serif leading-[1.85]">
+        {/* Date — Left aligned, bold with superscript */}
+        <div className="mb-6 font-bold text-[16px]">
           {customDate ? (
             customDate
           ) : (
@@ -591,8 +591,8 @@ function NYSCFinalClearanceTemplate({
           )}
         </div>
 
-        {/* Recipient Block — Left aligned, bold, Title Case (matches original) */}
-        <div className="mb-6 font-bold leading-tight">
+        {/* Recipient Block — Left aligned, normal weight (not bold), Title Case */}
+        <div className="mb-6 font-normal leading-snug">
           <p>The State Coordinator,</p>
           <p>National Youth Service Corps,</p>
           <p>Babs Animashaun Street,</p>
@@ -604,13 +604,13 @@ function NYSCFinalClearanceTemplate({
 
         {/* Title — Left aligned, bold, NO underline */}
         <div className="mb-6 text-left">
-          <h2 className="text-[14px] font-bold uppercase tracking-wide inline-block">
+          <h2 className="text-[17px] font-bold uppercase tracking-wide inline-block">
             FINAL CLEARANCE LETTER
           </h2>
         </div>
 
         {/* Paragraph 1 */}
-        <p className="text-justify mb-5 leading-[1.75]">
+        <p className="text-justify mb-6 leading-[1.85]">
           This is to certify that <span className="font-bold">{internName}</span>, a National Youth Corp
           Member serving at DAAR Communications PLC with call up number{" "}
           <span className="font-bold">{callUpNumber}</span>, and state code{" "}
@@ -619,20 +619,20 @@ function NYSCFinalClearanceTemplate({
         </p>
 
         {/* Paragraph 2 */}
-        <p className="text-justify mb-8 leading-[1.75]">
+        <p className="text-justify mb-8 leading-[1.85]">
           We therefore recommend {p.hisHer} discharge from the NYSC programme.
         </p>
 
-        {/* Signoff */}
-        <div className="mb-14 space-y-1">
+        {/* Signoff — 50-55mm blank space for stamp and signature */}
+        <div className="mb-28 space-y-1">
           <p className="font-bold">Yours Faithfully,</p>
           <p className="font-bold">For: DAAR COMMUNICATIONS PLC</p>
         </div>
 
         {/* Signatory details */}
         <div className="space-y-1">
-          <p className="font-bold text-[14px]">CINDY CHINYERE UDUMA (08037184458)</p>
-          <p className="font-bold text-[13px] uppercase">HEAD ADMIN./ HUMAN RESOURCES DEVELOPMENT, LAGOS</p>
+          <p className="font-bold text-[16px]">CINDY CHINYERE UDUMA (08037184458)</p>
+          <p className="font-bold text-[15px] uppercase">HEAD ADMIN./ HUMAN RESOURCES DEVELOPMENT, LAGOS</p>
         </div>
       </div>
     </PhysicalLetterheadPage>
@@ -686,10 +686,10 @@ export default function DocumentGenerationPage() {
           min-height: 297mm !important;
           height: 297mm !important;
           max-height: 297mm !important;
-          padding-top: 80mm !important;
-          padding-bottom: 35mm !important;
-          padding-left: 25.4mm !important;
-          padding-right: 25.4mm !important;
+          padding-top: 92mm !important;
+          padding-bottom: 30mm !important;
+          padding-left: 20mm !important;
+          padding-right: 20mm !important;
           margin: 0 auto !important;
           box-sizing: border-box !important;
           page-break-after: avoid !important;
