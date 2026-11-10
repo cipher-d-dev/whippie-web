@@ -191,11 +191,12 @@ function getInternFullName(intern: InternObject): string {
 }
 
 // ─── Physical Letterhead Wrapper ──────────────────────────────────────────────
-// Exact physical calibration:
-// Left margin: 72pt (1 inch / 25.4mm)
-// Right margin: 72pt (1 inch / 25.4mm)
-// Top margin: 100pt (~35mm) to clear the physical DAAR header
-// Bottom margin: 80pt (~28mm) to clear the physical DAAR footer
+// Exact physical calibration based on DAAR Communications letterhead stationery:
+// - Physical banner ends at 72.5mm (~2.85 inches) from top of paper.
+// - Date line starts at ~80mm (approx 4.5 to 5 cm below the banner/logo, or 3.15 inches from paper top).
+// - Left & Right margins: 25.4mm (1 inch)
+// - Top clearance padding: 80mm
+// - Bottom clearance padding: 35mm (clears registered office address footer)
 
 function PhysicalLetterheadPage({
   children,
@@ -211,15 +212,15 @@ function PhysicalLetterheadPage({
         width: "210mm",
         minHeight: "297mm",
         boxSizing: "border-box",
-        padding: "36mm 25.4mm 30mm 25.4mm",
+        padding: "80mm 25.4mm 35mm 25.4mm",
       }}
     >
       {/* Visual Header Guide (hidden when printed / exported) */}
       <div
         data-html2canvas-ignore="true"
-        className="no-print absolute top-3 left-6 right-6 border border-dashed border-gray-300 rounded py-1 px-3 text-center text-[10px] text-gray-400 select-none font-sans"
+        className="no-print absolute top-3 left-6 right-6 border border-dashed border-gray-300 rounded py-2 px-3 text-center text-[10px] text-gray-400 select-none font-sans"
       >
-        [ Physical Letterhead Area &bull; Company banner &amp; logo pre-printed on physical paper sits above this line ]
+        [ Physical Letterhead Area &bull; ~7.5cm reserved for DAAR Communications banner &amp; logo pre-printed on stationery ]
       </div>
 
       {/* Actual printable letter body */}
@@ -685,8 +686,8 @@ export default function DocumentGenerationPage() {
           min-height: 297mm !important;
           height: 297mm !important;
           max-height: 297mm !important;
-          padding-top: 36mm !important;
-          padding-bottom: 30mm !important;
+          padding-top: 80mm !important;
+          padding-bottom: 35mm !important;
           padding-left: 25.4mm !important;
           padding-right: 25.4mm !important;
           margin: 0 auto !important;
