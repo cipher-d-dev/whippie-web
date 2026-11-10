@@ -99,24 +99,32 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
 
   const onSubmit = (values: FormValues) => {
     if (!intern) return;
+
+    // Helper to sanitize values: omit empty strings for optional fields or trim them
+    const cleanString = (val?: string) => {
+      if (val === undefined) return undefined;
+      const trimmed = val.trim();
+      return trimmed === "" ? undefined : trimmed;
+    };
+
     updateIntern.mutate(
       {
         ...(values.status && { status: values.status }),
         ...(values.internshipType && { internshipType: values.internshipType }),
-        ...(values.startDate && { startDate: values.startDate }),
-        ...(values.endDate && { endDate: values.endDate }),
-        ...(values.firstName !== undefined && { firstName: values.firstName }),
-        ...(values.middleName !== undefined && { middleName: values.middleName }),
-        ...(values.lastName !== undefined && { lastName: values.lastName }),
-        ...(values.gender !== undefined && { gender: values.gender }),
-        ...(values.phone !== undefined && { phone: values.phone }),
-        ...(values.address !== undefined && { address: values.address }),
-        ...(values.institution !== undefined && { institution: values.institution }),
-        ...(values.institutionLocation !== undefined && { institutionLocation: values.institutionLocation }),
-        ...(values.course !== undefined && { course: values.course }),
-        ...(values.level !== undefined && { level: values.level }),
-        ...(values.stateCode !== undefined && { stateCode: values.stateCode }),
-        ...(values.callUpNumber !== undefined && { callUpNumber: values.callUpNumber }),
+        ...(cleanString(values.startDate) && { startDate: values.startDate }),
+        ...(cleanString(values.endDate) && { endDate: values.endDate }),
+        ...(cleanString(values.firstName) && { firstName: cleanString(values.firstName) }),
+        ...(values.middleName !== undefined && { middleName: values.middleName.trim() }),
+        ...(cleanString(values.lastName) && { lastName: cleanString(values.lastName) }),
+        ...(values.gender && { gender: values.gender }),
+        ...(values.phone !== undefined && { phone: values.phone.trim() }),
+        ...(values.address !== undefined && { address: values.address.trim() }),
+        ...(cleanString(values.institution) && { institution: cleanString(values.institution) }),
+        ...(values.institutionLocation !== undefined && { institutionLocation: values.institutionLocation.trim() }),
+        ...(cleanString(values.course) && { course: cleanString(values.course) }),
+        ...(values.level !== undefined && { level: values.level.trim() }),
+        ...(values.stateCode !== undefined && { stateCode: values.stateCode.trim() }),
+        ...(values.callUpNumber !== undefined && { callUpNumber: values.callUpNumber.trim() }),
       },
       {
         onSuccess: () => {
