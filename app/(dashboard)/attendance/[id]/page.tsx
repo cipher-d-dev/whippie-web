@@ -96,9 +96,11 @@ export default function AttendanceDetailPage({ params }: { params: Promise<{ id:
     </div>
   );
 
-  const cfg        = STATUS_CONFIG[record.status];
-  const internName = typeof record.intern !== "string"
-    ? `${record.intern.firstName} ${record.intern.lastName}` : "—";
+  const cfg        = STATUS_CONFIG[record.status] ?? STATUS_CONFIG.ACCEPTED;
+  const internName =
+    record.intern && typeof record.intern !== "string"
+      ? `${record.intern.firstName || ""} ${record.intern.lastName || ""}`.trim() || "—"
+      : "—";
 
   return (
     <div className="mx-auto max-w-xl space-y-6">

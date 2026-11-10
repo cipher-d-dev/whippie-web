@@ -48,9 +48,12 @@ const STATUS_CONFIG: Record<
   },
 };
 
-function getInternName(r: { intern: { _id: string; firstName: string; lastName: string } | string }): string {
-  if (typeof r.intern === "string") return "—";
-  return `${r.intern.firstName} ${r.intern.lastName}`;
+function getInternName(r: { intern?: { _id?: string; firstName?: string; lastName?: string } | string | null }): string {
+  if (!r || !r.intern || typeof r.intern === "string") return "—";
+  const first = r.intern.firstName || "";
+  const last = r.intern.lastName || "";
+  const full = `${first} ${last}`.trim();
+  return full || "—";
 }
 
 function fmtDate(iso: string) {
