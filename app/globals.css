@@ -292,16 +292,20 @@
     margin: 0;
   }
   @media print {
-    html, body, #__next, main, div[class*="min-h-"] {
+    html, body, #__next, main, div, section, article {
       height: auto !important;
       min-height: 0 !important;
+      max-height: none !important;
       overflow: visible !important;
+      position: static !important;
       background: white !important;
       color: black !important;
-      margin: 0 !important;
-      padding: 0 !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
+    }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
     }
     .no-print, header, aside, nav, button, footer {
       display: none !important;
@@ -312,6 +316,7 @@
       border-radius: 0 !important;
       width: 210mm !important;
       max-width: 210mm !important;
+      min-height: 297mm !important;
       height: 297mm !important;
       max-height: 297mm !important;
       padding-top: 36mm !important;
@@ -320,7 +325,6 @@
       padding-right: 25.4mm !important;
       margin: 0 auto !important;
       box-sizing: border-box !important;
-      overflow: hidden !important;
       page-break-after: avoid !important;
       page-break-inside: avoid !important;
       break-after: avoid !important;
