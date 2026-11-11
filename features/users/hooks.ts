@@ -7,6 +7,7 @@ import {
   approveUser,
   rejectUser,
   listUsers,
+  getUnlinkedInternUsers,
 } from "./api";
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ export function useApproveUser() {
     onSuccess: (_data, userId) => {
       qc.invalidateQueries({ queryKey: VERIFICATION_QUEUE_KEY });
       qc.invalidateQueries({ queryKey: ["users", "pending-count"] });
+      qc.invalidateQueries({ queryKey: ["users", "unlinked-interns"] });
       qc.invalidateQueries({ queryKey: ["interns"] });
       toast.success("Account approved. Welcome email sent.");
       // Return the userId so the page can offer "Add intern record"
@@ -85,5 +87,17 @@ export function useUsers(params: { role?: string; status?: string; page?: number
     queryKey: ["users", "list", params],
     queryFn: () => listUsers(params),
     staleTime: 60 * 1000,
+  });
+}
+
+// ─── useUnlinkedInternUsers ───────────────────────────────────────────────────
+// Returns approved INTERN-role users who have no Intern document yet.
+// Used by the verification page and /interns/new to surface stranded accounts.
+
+export function useUnlinkedInternUsers() {
+  return useQuery({
+    queryKey: ["users", "unlinked-interns"],
+    queryFn: getUnlinkedInternUsers,
+    staleTime: 30 * 1000,
   });
 }

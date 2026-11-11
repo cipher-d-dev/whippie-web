@@ -6,9 +6,10 @@ import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { useCreateIntern } from "@/features/interns/hooks";
+import { useUnlinkedInternUsers } from "@/features/users/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -103,13 +104,30 @@ function NewInternForm() {
   });
 
   const mutation = useCreateIntern(() => router.push("/interns"), setError as (field: string, error: { type: string; message: string }) => void);
+  const { data: unlinkedData, isLoading: isLoadingUnlinked } = useUnlinkedInternUsers();
+  const unlinkedUsers = unlinkedData?.data?.users ?? [];
 
   // Pre-fill userId from query param (e.g. /interns/new?userId=abc123)
   // Used by the verification queue's "Add intern record" link after approval
   const userIdFromQuery = searchParams.get("userId");
+  const selectedUserId = watch("userId");
+
   useEffect(() => {
-    if (userIdFromQuery) setValue("userId", userIdFromQuery);
+    if (userIdFromQuery) {
+      setValue("userId", userIdFromQuery);
+    }
   }, [userIdFromQuery, setValue]);
+
+  // When selected user changes, auto-fill name fields if not already populated
+  useEffect(() => {
+    if (selectedUserId && unlinkedUsers.length > 0) {
+      const matched = unlinkedUsers.find((u) => u._id === selectedUserId);
+      if (matched) {
+        if (!watch("firstName")) setValue("firstName", matched.firstName);
+        if (!watch("lastName")) setValue("lastName", matched.lastName);
+      }
+    }
+  }, [selectedUserId, unlinkedUsers, setValue, watch]);
 
   const onSubmit = (values: FormValues) => {
     // Strip empty optional strings so the API doesn't receive ""
@@ -272,15 +290,58 @@ function NewInternForm() {
               Linked account (optional)
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <Field label="User ID" error={errors.userId?.message}>
+          <CardContent className="space-y-4">
+            <Field label="Approved Intern Account" error={errors.userId?.message}>
+              {unlinkedUsers.length > 0 ? (
+                <Select
+                  value={selectedUserId ?? "none"}
+                  onValueChange={(val) => {
+                    const finalVal = val === "none" ? "" : val;
+                    setValue("userId", finalVal);
+                    if (finalVal) {
+                      const found = unlinkedUsers.find((u) => u._id === finalVal);
+                      if (found) {
+                        setValue("firstName", found.firstName);
+                        setValue("lastName", found.lastName);
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an approved user account..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">-- Standalone (No user account) --</SelectItem>
+                    {unlinkedUsers.map((u) => (
+                      <SelectItem key={u._id} value={u._id}>
+                        {u.firstName} {u.lastName} ({u.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : isLoadingUnlinked ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Loading approved accounts...
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+                  No unlinked approved accounts found. You can enter an account ID manually below or leave empty.
+                </div>
+              )}
+            </Field>
+
+            <div className="pt-2">
+              <Label className="text-xs text-muted-foreground">Or Enter User ID Manually</Label>
               <Input
-                placeholder="Paste approved intern account ID"
+                placeholder="MongoDB User ID (optional)"
+                className="mt-1.5 text-xs font-mono"
                 {...register("userId")}
               />
-            </Field>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Leave blank to create a standalone record without linking to a user account.
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Linking an account associates this intern profile with their verified login credentials.
             </p>
           </CardContent>
         </Card>

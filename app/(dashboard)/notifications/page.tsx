@@ -34,7 +34,7 @@ const ENTITY_HREF: Partial<Record<NotificationType, (id: string) => string>> = {
   EVALUATION_SUBMITTED:         (id) => `/evaluations/${id}`,
   DOCUMENT_STATUS_CHANGED:      (id) => `/documents/${id}`,
   REPORT_REVIEWED:              (id) => `/reports/${id}`,
-  NEW_INTERN_PENDING:           (id) => `/interns/${id}`,
+  NEW_INTERN_PENDING:           () => `/verification`,
   ATTENDANCE_FLAGGED:           (id) => `/attendance/${id}`,
   DOCUMENT_UPLOADED:            (id) => `/documents/${id}`,
   REPORT_SUBMITTED:             (id) => `/reports/${id}`,

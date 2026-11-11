@@ -116,3 +116,7 @@ export async function changePassword(payload: {
 }): Promise<ApiResponse<unknown>> {
   return apiPost<ApiResponse<unknown>>('/api/v1/auth/change-password', payload);
 }
+
+export async function getUnlinkedInternUsers(): Promise<ApiResponse<{ users: PendingUser[] }>> {
+  return apiGet<ApiResponse<{ users: PendingUser[] }>>(`/api/v1/users/unlinked-interns`);
+}

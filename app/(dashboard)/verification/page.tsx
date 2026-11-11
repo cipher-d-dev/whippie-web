@@ -13,7 +13,7 @@ import {
   UserPlus,
   AlertTriangle,
 } from "lucide-react";
-import { useVerificationQueue, useApproveUser, useRejectUser } from "@/features/users/hooks";
+import { useVerificationQueue, useApproveUser, useRejectUser, useUnlinkedInternUsers } from "@/features/users/hooks";
 import type { PendingUser } from "@/features/users/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -240,6 +240,7 @@ function ApprovedBanner({
 
 export default function VerificationQueuePage() {
   const { data, isLoading, isError } = useVerificationQueue();
+  const { data: unlinkedData, isLoading: isLoadingUnlinked } = useUnlinkedInternUsers();
   const approve = useApproveUser();
 
   const [rejectUser_, setRejectUser] = useState<PendingUser | null>(null);
@@ -249,6 +250,7 @@ export default function VerificationQueuePage() {
 
   const users = data?.data ?? [];
   const total = data?.total ?? 0;
+  const unlinkedUsers = unlinkedData?.data?.users ?? [];
 
   const handleApprove = (user: PendingUser) => {
     approve.mutate(user._id, {
@@ -319,6 +321,64 @@ export default function VerificationQueuePage() {
               approving={approve.isPending && approve.variables === user._id}
             />
           ))}
+        </div>
+      )}
+
+      {/* Unlinked Interns Section */}
+      {!isLoadingUnlinked && unlinkedUsers.length > 0 && (
+        <div className="mt-10 space-y-4 pt-6 border-t border-border/60">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-semibold text-foreground">
+                  Approved – Awaiting Onboarding
+                </h3>
+                <Badge variant="secondary" className="px-2 py-0.5 text-xs font-semibold">
+                  {unlinkedUsers.length}
+                </Badge>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                These users have approved accounts but do not yet have an intern profile created.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {unlinkedUsers.map((unlinkedUser) => (
+              <div
+                key={unlinkedUser._id}
+                className="flex items-center justify-between gap-4 rounded-xl border border-amber-200/60 bg-amber-50/30 dark:border-amber-900/40 dark:bg-amber-950/10 p-4 transition-all hover:shadow-sm"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30 text-sm font-bold text-amber-700 dark:text-amber-400">
+                    {initials(unlinkedUser.firstName, unlinkedUser.lastName)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {unlinkedUser.firstName} {unlinkedUser.lastName}
+                    </p>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        {unlinkedUser.email}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {fmtDate(unlinkedUser.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <Button size="sm" asChild className="shrink-0 gap-1.5">
+                  <Link href={`/interns/new?userId=${unlinkedUser._id}`}>
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Complete Onboarding
+                  </Link>
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
