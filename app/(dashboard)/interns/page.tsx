@@ -161,7 +161,7 @@ export default function InternsPage() {
           <SelectContent>
             <SelectItem value="ALL">All types</SelectItem>
             <SelectItem value="INTERNSHIP">Internship</SelectItem>
-            <SelectItem value="NYSC_IT">NYSC IT</SelectItem>
+            <SelectItem value="NYSC_IT">Corps Member (NYSC)</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -209,7 +209,7 @@ export default function InternsPage() {
                     <TableCell className="text-sm">{intern.institution}</TableCell>
                     <TableCell className="text-sm">{intern.course}</TableCell>
                     <TableCell className="text-sm">
-                      {intern.internshipType === "NYSC_IT" ? "NYSC IT" : "Internship"}
+                      {intern.internshipType === "NYSC_IT" ? "Corps Member" : "Internship"}
                     </TableCell>
                     <TableCell>
                       <Badge variant={STATUS_VARIANT[intern.status]}>

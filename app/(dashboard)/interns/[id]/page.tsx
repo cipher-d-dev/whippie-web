@@ -279,7 +279,7 @@ export default function InternDetailPage({
                   {statusConfig.label}
                 </Badge>
                 <Badge variant="secondary" className="text-xs font-normal">
-                  {intern.internshipType === "NYSC_IT" ? "NYSC / IT" : "Standard Internship"}
+                  {intern.internshipType === "NYSC_IT" ? "Corps Member" : "Standard Internship"}
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1">
@@ -507,7 +507,7 @@ export default function InternDetailPage({
                 <div>
                   <span className="text-xs text-muted-foreground uppercase tracking-wider">Program Type</span>
                   <p className="font-medium mt-0.5 text-foreground">
-                    {intern.internshipType === "NYSC_IT" ? "NYSC / IT Placement" : "Undergraduate Internship"}
+                    {intern.internshipType === "NYSC_IT" ? "Corps Member (NYSC)" : "Undergraduate Internship"}
                   </p>
                 </div>
                 {intern.stateCode && (

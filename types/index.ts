@@ -33,7 +33,7 @@ export interface InternObject {
   gender?: "MALE" | "FEMALE";
   phone?: string;
   address?: string;
-  institution: string;
+  institution?: string;
   institutionLocation?: string;
   course: string;
   level?: string;
@@ -61,7 +61,7 @@ export interface CreateInternInput {
   gender?: "MALE" | "FEMALE";
   phone?: string;
   address?: string;
-  institution: string;
+  institution?: string;
   institutionLocation?: string;
   course: string;
   level?: string;

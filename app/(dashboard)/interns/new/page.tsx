@@ -35,7 +35,7 @@ const schema = z.object({
   middleName:          z.string().optional(),
   lastName:            z.string().min(1, "Last name is required"),
   gender:              z.enum(["MALE", "FEMALE"]).optional(),
-  institution:         z.string().min(1, "Institution is required"),
+  institution:         z.string().optional(),
   institutionLocation: z.string().optional(),
   course:              z.string().min(1, "Course is required"),
   level:               z.string().optional(),
@@ -48,7 +48,18 @@ const schema = z.object({
   startDate:           z.string().optional(),
   endDate:             z.string().optional(),
   userId:              z.string().optional(),
-});
+}).refine(
+  (data) => {
+    if (data.internshipType === "INTERNSHIP") {
+      return !!data.institution && data.institution.trim().length > 0;
+    }
+    return true;
+  },
+  {
+    message: "Institution is required for standard interns",
+    path: ["institution"],
+  }
+);
 
 type FormValues = z.infer<typeof schema>;
 
@@ -206,8 +217,19 @@ function NewInternForm() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Field label="Institution" required error={errors.institution?.message}>
-              <Input placeholder="Lagos State University" {...register("institution")} />
+            <Field
+              label="Institution"
+              required={watch("internshipType") !== "NYSC_IT"}
+              error={errors.institution?.message}
+            >
+              <Input
+                placeholder={
+                  watch("internshipType") === "NYSC_IT"
+                    ? "Optional for Corps members"
+                    : "Lagos State University"
+                }
+                {...register("institution")}
+              />
             </Field>
             <Field label="University / School Location" error={errors.institutionLocation?.message}>
               <Input placeholder="e.g. OJO, LAGOS STATE" {...register("institutionLocation")} />
@@ -215,8 +237,18 @@ function NewInternForm() {
             <Field label="Course" required error={errors.course?.message}>
               <Input placeholder="Computer Science" {...register("course")} />
             </Field>
-            <Field label="Level / Year" error={errors.level?.message}>
-              <Input placeholder="300L" {...register("level")} />
+            <Field
+              label={watch("internshipType") === "NYSC_IT" ? "Level / Year (Optional)" : "Level / Year"}
+              error={errors.level?.message}
+            >
+              <Input
+                placeholder={
+                  watch("internshipType") === "NYSC_IT"
+                    ? "Optional (e.g. Batch A)"
+                    : "300L"
+                }
+                {...register("level")}
+              />
             </Field>
             <Field label="NYSC State Code (Optional)" error={errors.stateCode?.message}>
               <Input placeholder="e.g. LA/25A/14362" {...register("stateCode")} />
@@ -247,7 +279,7 @@ function NewInternForm() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="INTERNSHIP">Internship</SelectItem>
-                  <SelectItem value="NYSC_IT">NYSC IT</SelectItem>
+                  <SelectItem value="NYSC_IT">Corps Member (NYSC)</SelectItem>
                 </SelectContent>
               </Select>
             </Field>

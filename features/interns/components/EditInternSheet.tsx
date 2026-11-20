@@ -193,7 +193,7 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="INTERNSHIP">Internship</SelectItem>
-                      <SelectItem value="NYSC_IT">NYSC IT</SelectItem>
+                      <SelectItem value="NYSC_IT">Corps Member (NYSC)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
