@@ -3,84 +3,55 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Star } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCreateEvaluation } from "@/features/evaluations/hooks";
 import { useSupervisorMe, useSupervisorInterns } from "@/features/supervisors/hooks";
+import { useAttendance } from "@/features/attendance/hooks";
+import { useTasks } from "@/features/tasks/hooks";
+import { useReports } from "@/features/reports/hooks";
+import { SCORE_CATEGORIES, ScoreInput } from "@/features/evaluations/components/Scores";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-
-// ─── Schema ───────────────────────────────────────────────────────────────────
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageHeader, Section } from "@/components/shared/PageHeader";
+import { PersonAvatar } from "@/components/shared/PersonAvatar";
+import { INTERNSHIP_TYPE_LABEL } from "@/lib/utils/format";
+import type { EvaluationScores } from "@/types";
 
 const schema = z.object({
-  internId:  z.string().min(1, "Select an intern"),
-  comments:  z.string().min(1, "Comments are required"),
+  internId: z.string().min(1, "Choose an intern"),
+  comments: z.string().trim().min(1, "Add a short comment"),
 });
-
 type FormValues = z.infer<typeof schema>;
 
-// ─── Score categories ─────────────────────────────────────────────────────────
-
-const CATEGORIES = [
-  { key: "workQuality",      label: "Work quality",      description: "Quality and accuracy of work produced" },
-  { key: "reliability",      label: "Reliability",       description: "Punctuality, consistency, dependability" },
-  { key: "communication",    label: "Communication",     description: "Written and verbal communication skills" },
-  { key: "learningProgress", label: "Learning progress", description: "Rate of skill development and improvement" },
-  { key: "professionalism",  label: "Professionalism",   description: "Attitude, conduct, and workplace behaviour" },
-] as const;
-
-type ScoreKey = (typeof CATEGORIES)[number]["key"];
-
-const SCORE_LABELS: Record<number, string> = {
-  1: "Poor", 2: "Below average", 3: "Average", 4: "Good", 5: "Excellent",
-};
-
-// ─── Score slider component ───────────────────────────────────────────────────
-
-function ScoreSlider({ label, description, value, onChange }: {
-  label: string; description: string; value: number; onChange: (v: number) => void;
-}) {
+/** What the intern has done so far, to ground the scores. */
+function Evidence({ internId }: { internId: string }) {
+  const att = useAttendance({ intern: internId, checkType: "CHECK_IN", limit: 1 });
+  const tasks = useTasks({ intern: internId, limit: 1 });
+  const done = useTasks({ intern: internId, status: "COMPLETED", limit: 1 });
+  const changes = useTasks({ intern: internId, status: "CHANGES_REQUESTED", limit: 1 });
+  const reports = useReports({ intern: internId, limit: 1 });
+  const rows = [
+    ["Check-ins recorded", att.data?.total],
+    ["Tasks completed", done.data !== undefined && tasks.data !== undefined ? `${done.data.total} of ${tasks.data.total}` : undefined],
+    ["Changes requested", changes.data?.total],
+    ["Reports submitted", reports.data?.total],
+  ] as const;
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium">{label}</p>
-          <p className="text-xs text-muted-foreground">{description}</p>
+    <dl className="px-5 py-1">
+      {rows.map(([k, v]) => (
+        <div key={k} className="flex justify-between border-t py-3 text-[13px] first:border-t-0">
+          <dt className="text-muted-foreground">{k}</dt>
+          <dd className="font-mono font-medium tabular">{v ?? "…"}</dd>
         </div>
-        <div className="flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5">
-          <Star className={`h-3.5 w-3.5 ${value >= 1 ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
-          <span className="text-sm font-bold text-primary">{value}</span>
-          <span className="text-xs text-muted-foreground">· {SCORE_LABELS[value]}</span>
-        </div>
-      </div>
-      <div className="px-1">
-        <Slider
-          min={1} max={5} step={1}
-          value={[value]}
-          onValueChange={([v]) => onChange(v)}
-          className="w-full"
-        />
-        <div className="mt-1 flex justify-between">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <span key={n} className={`text-[10px] ${value === n ? "font-semibold text-primary" : "text-muted-foreground"}`}>
-              {n}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
+      ))}
+    </dl>
   );
 }
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function NewEvaluationPage() {
   const router = useRouter();
@@ -89,72 +60,50 @@ export default function NewEvaluationPage() {
   const { data: internsData } = useSupervisorInterns(supervisorId);
   const interns = internsData?.data?.interns ?? [];
 
-  const [scores, setScores] = useState<Record<ScoreKey, number>>({
+  const [scores, setScores] = useState<EvaluationScores>({
     workQuality: 3, reliability: 3, communication: 3, learningProgress: 3, professionalism: 3,
   });
 
   const { register, handleSubmit, setValue, watch, formState: { errors }, setError } =
     useForm<FormValues>({ resolver: zodResolver(schema) });
+  const internId = watch("internId") ?? "";
+  const intern = interns.find((i) => i._id === internId);
 
-  const createMut = useCreateEvaluation((id) => router.push(`/evaluations/${id}`), setError as (field: string, error: { type: string; message: string }) => void);
-
-  const onSubmit = (values: FormValues) => {
-    createMut.mutate({ internId: values.internId, scores, comments: values.comments });
-  };
-
-  const avgScore = (Object.values(scores).reduce((a, b) => a + b, 0) / 5).toFixed(1);
+  const createMut = useCreateEvaluation(
+    (id) => router.push(`/evaluations/${id}`),
+    setError as (field: string, error: { type: string; message: string }) => void
+  );
+  const onSubmit = (values: FormValues) => createMut.mutate({ internId: values.internId, scores, comments: values.comments });
+  const avg = (Object.values(scores).reduce((a, b) => a + b, 0) / 5).toFixed(1);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <Button variant="ghost" size="sm" asChild className="-ml-2">
-          <Link href="/evaluations"><ArrowLeft className="mr-2 h-4 w-4" />Back to evaluations</Link>
-        </Button>
-        <h2 className="mt-2 text-xl font-semibold">New evaluation</h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">Score the intern across 5 categories. Saved as draft — submit when ready.</p>
-      </div>
+    <div className="space-y-6">
+      <Link href="/evaluations" className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-3.5 w-3.5" /> Evaluations
+      </Link>
+      <PageHeader
+        title="New evaluation"
+        description="Rate each area from 1 (needs a lot of support) to 5 (excellent). It's saved as a draft; you submit it when you're ready."
+      />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Intern picker */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Intern</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1.5">
-              <Label>Select intern <span className="text-destructive">*</span></Label>
-              <Select value={watch("internId") ?? ""} onValueChange={(v) => setValue("internId", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose an intern to evaluate" />
-                </SelectTrigger>
-                <SelectContent>
-                  {interns.map((i) => (
-                    <SelectItem key={i._id} value={i._id}>
-                      {i.firstName} {i.lastName} · {i.institution}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.internId && <p className="text-xs text-destructive">{errors.internId.message}</p>}
-            </div>
-          </CardContent>
-        </Card>
+      <form onSubmit={handleSubmit(onSubmit)} className="grid items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+        <div className="min-w-0 space-y-5">
+          <div className="space-y-1.5">
+            <Label htmlFor="intern">Intern</Label>
+            <Select value={internId} onValueChange={(v) => setValue("internId", v, { shouldValidate: true })}>
+              <SelectTrigger id="intern" className="max-w-md"><SelectValue placeholder="Choose who you're evaluating" /></SelectTrigger>
+              <SelectContent>
+                {interns.map((i) => (
+                  <SelectItem key={i._id} value={i._id}>{i.firstName} {i.lastName}{i.department ? ` · ${i.department.name}` : ""}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.internId && <p className="text-xs text-danger-foreground">{errors.internId.message}</p>}
+          </div>
 
-        {/* Scores */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Performance scores</CardTitle>
-              <div className="flex items-center gap-1.5">
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                <span className="text-sm font-bold">{avgScore}</span>
-                <span className="text-xs text-muted-foreground">avg</span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {CATEGORIES.map(({ key, label, description }) => (
-              <ScoreSlider
+          <Section bodyClassName="divide-y">
+            {SCORE_CATEGORIES.map(({ key, label, description }) => (
+              <ScoreInput
                 key={key}
                 label={label}
                 description={description}
@@ -162,35 +111,47 @@ export default function NewEvaluationPage() {
                 onChange={(v) => setScores((s) => ({ ...s, [key]: v }))}
               />
             ))}
-          </CardContent>
-        </Card>
+          </Section>
 
-        {/* Comments */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Overall comments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1.5">
-              <Label>Comments <span className="text-destructive">*</span></Label>
-              <Textarea
-                placeholder="Provide an overall assessment of the intern's performance, noting strengths and areas for improvement…"
-                rows={5}
-                className="resize-none"
-                {...register("comments")}
-              />
-              {errors.comments && <p className="text-xs text-destructive">{errors.comments.message}</p>}
-            </div>
-          </CardContent>
-        </Card>
+          <div className="space-y-1.5">
+            <Label htmlFor="comments">Comments</Label>
+            <p className="text-xs text-muted-foreground">Strengths, and what {intern?.firstName ?? "the intern"} should focus on next.</p>
+            <Textarea id="comments" rows={5} {...register("comments")} />
+            {errors.comments && <p className="text-xs text-danger-foreground">{errors.comments.message}</p>}
+          </div>
 
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" asChild><Link href="/evaluations">Cancel</Link></Button>
-          <Button type="submit" disabled={createMut.isPending}>
-            {createMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save as draft
-          </Button>
+          <div className="flex flex-wrap justify-end gap-2 border-t pt-5">
+            <Button variant="outline" asChild><Link href="/evaluations">Cancel</Link></Button>
+            <Button type="submit" disabled={createMut.isPending}>
+              {createMut.isPending && <Loader2 className="animate-spin" />} Save draft
+            </Button>
+          </div>
         </div>
+
+        <aside className="space-y-4 lg:sticky lg:top-24">
+          <Section bodyClassName="space-y-4 p-5">
+            {intern ? (
+              <div className="flex items-center gap-3">
+                <PersonAvatar firstName={intern.firstName} lastName={intern.lastName} size="lg" />
+                <div className="min-w-0">
+                  <p className="font-semibold">{intern.firstName} {intern.lastName}</p>
+                  <p className="truncate text-[13px] text-muted-foreground">{INTERNSHIP_TYPE_LABEL[intern.internshipType]}{intern.department ? ` · ${intern.department.name}` : ""}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Choose an intern to see their record here.</p>
+            )}
+            <div className="flex items-baseline justify-between rounded-lg bg-muted/60 px-4 py-3">
+              <span className="text-[13px] text-muted-foreground">Average score</span>
+              <span className="font-mono text-[28px] font-medium tracking-[-0.02em] tabular">{avg}<span className="text-sm text-muted-foreground">/5</span></span>
+            </div>
+          </Section>
+          {intern && (
+            <Section title="Evidence so far">
+              <Evidence internId={intern._id} />
+            </Section>
+          )}
+        </aside>
       </form>
     </div>
   );
