@@ -201,7 +201,7 @@ function ReviewQueue() {
       ) : rows.length === 0 ? (
         <p className="px-5 py-8 text-center text-sm text-muted-foreground">Nothing waiting for review.</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full min-w-[600px] text-sm">
             <thead>
               <tr className="text-left text-xs text-muted-foreground">

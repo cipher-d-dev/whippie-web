@@ -88,13 +88,13 @@ export default function NewTaskPage() {
             Back to tasks
           </Link>
         </Button>
-        <h2 className="mt-2 text-xl font-semibold">Create task</h2>
+        <h1 className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.02em]">Create task</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
               Task details
             </CardTitle>
           </CardHeader>

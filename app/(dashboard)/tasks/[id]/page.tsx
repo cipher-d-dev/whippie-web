@@ -8,6 +8,7 @@ import { useTaskSubmissions, useReviewSubmission } from "@/features/submissions/
 import { useAuth } from "@/lib/auth/context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,8 +33,8 @@ const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; variant: "default"
 };
 
 const SUB_STATUS_CONFIG: Record<SubmissionStatus, { label: string; icon: React.ReactNode }> = {
-  PENDING_REVIEW:    { label: "Pending review",    icon: <Clock        className="h-4 w-4 text-amber-500" /> },
-  APPROVED:          { label: "Approved",          icon: <CheckCircle2 className="h-4 w-4 text-emerald-500" /> },
+  PENDING_REVIEW:    { label: "Pending review",    icon: <Clock        className="h-4 w-4 text-warning-foreground" /> },
+  APPROVED:          { label: "Approved",          icon: <CheckCircle2 className="h-4 w-4 text-success-foreground" /> },
   CHANGES_REQUESTED: { label: "Changes requested", icon: <XCircle      className="h-4 w-4 text-destructive" /> },
 };
 
@@ -108,11 +109,11 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
           <Button variant="ghost" size="sm" asChild className="-ml-2">
             <Link href="/tasks"><ArrowLeft className="mr-2 h-4 w-4" />Back to tasks</Link>
           </Button>
-          <h2 className="mt-2 text-xl font-semibold leading-snug">{task.title}</h2>
+          <h1 className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.02em]">{task.title}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Badge variant={cfg.variant}>{cfg.label}</Badge>
+            <StatusBadge status={task.status} />
             {isOverdue && (
-              <Badge variant="destructive" className="text-xs">Overdue</Badge>
+              <Badge variant="danger">Overdue</Badge>
             )}
           </div>
         </div>
@@ -121,7 +122,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
       {/* Task info */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Details</CardTitle>
+          <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">Details</CardTitle>
         </CardHeader>
         <CardContent>
           {/* Description */}
@@ -148,7 +149,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
             <div className="flex gap-2">
               <Button
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 h-8"
+                className="bg-success hover:bg-success h-8"
                 onClick={() => openReview("APPROVED")}
               >
                 <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
@@ -177,7 +178,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
             {[...submissions].reverse().map((sub, i) => {
               const subCfg = SUB_STATUS_CONFIG[sub.status];
               return (
-                <Card key={sub._id} className={i === 0 && sub.status === "PENDING_REVIEW" ? "border-amber-300 dark:border-amber-700" : ""}>
+                <Card key={sub._id} className={i === 0 && sub.status === "PENDING_REVIEW" ? "border-warning/30 " : ""}>
                   <CardHeader className="pb-2 flex flex-row items-center justify-between">
                     <div className="flex items-center gap-2">
                       {subCfg.icon}
@@ -239,7 +240,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
           </div>
           <DialogFooter>
             <Button
-              className={`w-full ${reviewAction === "APPROVED" ? "bg-emerald-600 hover:bg-emerald-700" : ""}`}
+              className={`w-full ${reviewAction === "APPROVED" ? "bg-success hover:bg-success" : ""}`}
               variant={reviewAction === "APPROVED" ? "default" : "destructive"}
               disabled={reviewMut.isPending}
               onClick={() => {

@@ -22,7 +22,7 @@ export default function GlobalError({
         <AlertTriangle className="h-8 w-8 text-destructive" />
       </div>
       <div className="space-y-1">
-        <h2 className="text-xl font-semibold">An error occurred</h2>
+        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">An error occurred</h1>
         <p className="text-sm text-muted-foreground max-w-sm">
           {error.message || "Something unexpected went wrong. Please try again or return to the dashboard."}
         </p>

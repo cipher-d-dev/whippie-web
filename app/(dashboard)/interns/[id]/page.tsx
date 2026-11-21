@@ -267,7 +267,7 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Tabs */}
-      <div role="tablist" aria-label="Profile sections" className="flex gap-6 overflow-x-auto border-b">
+      <div role="tablist" aria-label="Profile sections" className="relative flex gap-6 overflow-x-auto border-b">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -288,7 +288,7 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
       {/* ── Overview ─────────────────────────────────────────────────────────── */}
       {tab === "overview" && (
         <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             {intern.completedAt && (
               <div className="rounded-xl border border-success/30 bg-success-soft px-5 py-4 text-sm text-success-foreground">
                 <p className="font-medium">Completed on {fmtDate(intern.completedAt)}</p>
@@ -329,7 +329,7 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
                 <Skeleton className="h-36 w-full" />
               ) : (
                 <>
-                  <div className="flex gap-2.5">
+                  <div className="flex gap-2.5 overflow-x-auto">
                     <div className="grid grid-rows-5 gap-[5px] text-[11px] text-muted-foreground" aria-hidden="true">
                       {["Mon", "Tue", "Wed", "Thu", "Fri"].map((d) => <span key={d} className="flex h-[22px] items-center">{d}</span>)}
                     </div>
@@ -373,7 +373,7 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
             </Section>
           </div>
 
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             {/* Placement */}
             <Section title="Placement" bodyClassName="divide-y">
               {[
@@ -480,7 +480,7 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
       {tab === "attendance" && (
         <Section title="Attendance history" action={<Link href="/attendance" className="text-[13px] font-medium text-primary hover:underline">Full attendance log</Link>}>
           {attendance.length === 0 ? <EmptyRow>No check-ins yet.</EmptyRow> : (
-            <div className="overflow-x-auto">
+            <div className="relative overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
                   <tr className="bg-muted/50 text-left text-xs text-muted-foreground">

@@ -158,14 +158,14 @@ function NewInternForm() {
             Back to interns
           </Link>
         </Button>
-        <h2 className="mt-2 text-xl font-semibold">Add new intern</h2>
+        <h1 className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.02em]">Add new intern</h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Personal info */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
               Personal information
             </CardTitle>
           </CardHeader>
@@ -212,7 +212,7 @@ function NewInternForm() {
         {/* Academic info */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
               Academic information
             </CardTitle>
           </CardHeader>
@@ -262,7 +262,7 @@ function NewInternForm() {
         {/* Internship info */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
               Internship details
             </CardTitle>
           </CardHeader>
@@ -318,7 +318,7 @@ function NewInternForm() {
         {/* Linked account (optional) */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
               Linked account (optional)
             </CardTitle>
           </CardHeader>

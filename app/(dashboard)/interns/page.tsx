@@ -111,7 +111,7 @@ export default function InternsPage() {
       />
 
       {/* Status tabs */}
-      <div role="tablist" aria-label="Filter by status" className="flex gap-6 overflow-x-auto border-b">
+      <div role="tablist" aria-label="Filter by status" className="relative flex gap-6 overflow-x-auto border-b">
         {TABS.map((t) => {
           const on = status === t.value;
           const n = tabCount(t.value);
@@ -164,7 +164,7 @@ export default function InternsPage() {
           <Button variant="outline" size="sm" onClick={() => refetch()}>Try again</Button>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border">
+        <div className="relative overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[960px] text-sm">
             <thead>
               <tr className="bg-muted/50 text-left text-xs text-muted-foreground">

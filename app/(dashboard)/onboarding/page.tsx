@@ -21,10 +21,10 @@ import type { ChecklistItem, DocumentStatus } from "@/types";
 // ─── Status helpers ───────────────────────────────────────────────────────────
 
 const STATUS_ICON: Record<DocumentStatus | "MISSING", React.ReactNode> = {
-  PENDING:           <Clock       className="h-4 w-4 text-amber-500" />,
-  DIGITAL_RECEIVED:  <AlertCircle className="h-4 w-4 text-blue-500" />,
-  PHYSICAL_RECEIVED: <AlertCircle className="h-4 w-4 text-blue-500" />,
-  VERIFIED:          <CheckCircle2 className="h-4 w-4 text-emerald-500" />,
+  PENDING:           <Clock       className="h-4 w-4 text-warning-foreground" />,
+  DIGITAL_RECEIVED:  <AlertCircle className="h-4 w-4 text-info-foreground" />,
+  PHYSICAL_RECEIVED: <AlertCircle className="h-4 w-4 text-info-foreground" />,
+  VERIFIED:          <CheckCircle2 className="h-4 w-4 text-success-foreground" />,
   REJECTED:          <XCircle     className="h-4 w-4 text-destructive" />,
   MISSING:           <Clock       className="h-4 w-4 text-muted-foreground/50" />,
 };
@@ -39,10 +39,10 @@ const STATUS_LABEL: Record<DocumentStatus | "MISSING", string> = {
 };
 
 function progressColor(pct: number) {
-  if (pct === 100) return "bg-emerald-500";
-  if (pct >= 60)   return "bg-blue-500";
-  if (pct >= 30)   return "bg-amber-500";
-  return "bg-rose-500";
+  if (pct === 100) return "bg-success";
+  if (pct >= 60)   return "bg-info";
+  if (pct >= 30)   return "bg-warning";
+  return "bg-danger";
 }
 
 // ─── Per-intern checklist row ─────────────────────────────────────────────────
@@ -80,7 +80,7 @@ function InternChecklistRow({ internId, name }: { internId: string; name: string
                 {name}
               </Link>
               {hasIssues && (
-                <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                <Badge variant="danger">
                   Action needed
                 </Badge>
               )}
@@ -104,7 +104,7 @@ function InternChecklistRow({ internId, name }: { internId: string; name: string
 
           {/* Badge + chevron */}
           <div className="flex shrink-0 items-center gap-2">
-            <span className={`text-sm font-semibold tabular-nums ${pct === 100 ? "text-emerald-600" : "text-muted-foreground"}`}>
+            <span className={`text-sm font-semibold tabular-nums ${pct === 100 ? "text-success-foreground" : "text-muted-foreground"}`}>
               {pct}%
             </span>
             {open
@@ -164,7 +164,7 @@ export default function OnboardingPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Onboarding</h2>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Onboarding</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
             Document completion status for all interns currently onboarding
           </p>

@@ -197,7 +197,7 @@ export default function AttendancePage() {
           <p className="mt-1 text-xs text-muted-foreground">Check-ins from the Whippie Intern app appear here.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border">
+        <div className="relative overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="bg-muted/50 text-left text-xs text-muted-foreground">

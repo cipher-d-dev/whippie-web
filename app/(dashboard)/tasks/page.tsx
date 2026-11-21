@@ -60,7 +60,7 @@ function Board() {
   }
 
   return (
-    <div className="overflow-x-auto pb-2">
+    <div className="relative overflow-x-auto pb-2">
       <div className="grid min-w-[1100px] grid-cols-5 gap-3">
         {COLUMNS.map((col) => {
           const tasks = byStatus.get(col.status) ?? [];
@@ -138,7 +138,7 @@ function List() {
       ) : tasks.length === 0 ? (
         <div className="rounded-xl border border-dashed py-16 text-center text-sm text-muted-foreground">No tasks found.</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border">
+        <div className="relative overflow-x-auto rounded-xl border">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="bg-muted/50 text-left text-xs text-muted-foreground">
