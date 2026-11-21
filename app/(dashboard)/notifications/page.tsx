@@ -267,9 +267,9 @@ export default function NotificationsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold">Notifications</h2>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Notifications</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {!isLoading && `${total} notification${total !== 1 ? "s" : ""}`}
           </p>

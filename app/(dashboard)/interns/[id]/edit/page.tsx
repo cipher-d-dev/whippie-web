@@ -152,16 +152,16 @@ export default function EditInternPage({
             Back to intern
           </Link>
         </Button>
-        <h2 className="mt-2 text-xl font-semibold">
+        <h1 className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.02em]">
           Edit — {intern.firstName} {intern.lastName}
-        </h2>
+        </h1>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* HR-only fields */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
               Internship details (HR)
             </CardTitle>
           </CardHeader>
@@ -214,7 +214,7 @@ export default function EditInternPage({
         {/* Personal info */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
               Personal information
             </CardTitle>
           </CardHeader>
@@ -261,7 +261,7 @@ export default function EditInternPage({
         {/* Academic info */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
               Academic information
             </CardTitle>
           </CardHeader>

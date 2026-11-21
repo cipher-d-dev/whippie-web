@@ -739,143 +739,148 @@ export default function DocumentGenerationPage() {
     }
   };
 
+  // ── Layout only below this line: the templates, print and PDF handlers above are unchanged. ──
+  const templateGroups: { label: string; category: "STUDENT" | "NYSC" }[] = [
+    { label: "Students (IT / SIWES)", category: "STUDENT" },
+    { label: "NYSC corps members", category: "NYSC" },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Action Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 no-print border-b border-border/60 pb-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link
-              href="/documents"
-              className="text-muted-foreground hover:text-foreground text-xs flex items-center gap-1 transition-colors"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" /> Back to Documents
-            </Link>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Official Letterhead Document Generator
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Exact replicas of DAAR Communications official templates for printing directly onto physical letterhead stationery.
+      {/* Header */}
+      <div className="no-print flex flex-wrap items-end justify-between gap-4">
+        <div className="space-y-1.5">
+          <Link
+            href="/documents"
+            className="inline-flex items-center gap-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" /> Documents
+          </Link>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em] text-foreground">Generate a letter</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Exact replicas of DAAR Communications&apos; official templates, for printing straight onto letterhead stationery.
           </p>
         </div>
-
         <div className="flex items-center gap-2">
-          <Button
-            onClick={() => handlePrint()}
-            disabled={!intern}
-            className="gap-2 rounded-xl shadow-md cursor-pointer"
-          >
-            <Printer className="h-4 w-4" />
-            Print Letterhead
-          </Button>
-
-          <Button
-            onClick={handleDownloadPdf}
-            disabled={!intern || isExportingPdf}
-            variant="outline"
-            className="gap-2 rounded-xl shadow-sm cursor-pointer"
-          >
-            {isExportingPdf ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4 text-primary" />
-            )}
+          <Button onClick={handleDownloadPdf} disabled={!intern || isExportingPdf} variant="outline">
+            {isExportingPdf ? <Loader2 className="animate-spin" /> : <Download />}
             Download PDF
           </Button>
+          <Button onClick={() => handlePrint()} disabled={!intern}>
+            <Printer />
+            Print on letterhead
+          </Button>
         </div>
       </div>
 
-      {/* Info notice explaining physical letterhead calibration */}
-      <div className="no-print flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50/60 dark:bg-blue-950/20 dark:border-blue-800/40 px-4 py-3 text-xs text-blue-900 dark:text-blue-300">
-        <Info className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
-        <div>
-          <p className="font-semibold">Calibrated Exact Replica</p>
-          <p className="text-blue-800/80 dark:text-blue-300/80 mt-0.5">
-            All template text alignments, font weights, line breaks, and margins match the original company reference documents. No artificial lines or underlines are added.
-          </p>
-        </div>
-      </div>
+      {/* Controls */}
+      <Card className="no-print">
+        <CardContent className="space-y-5 p-5">
+          <fieldset className="space-y-3">
+            <legend className="mb-3 text-[13px] font-medium text-foreground">Template</legend>
+            <div className="grid gap-4 lg:grid-cols-2">
+              {templateGroups.map((group) => (
+                <div key={group.category} className="space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</p>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                    {(Object.keys(TEMPLATES) as LetterTemplateType[])
+                      .filter((key) => TEMPLATES[key].category === group.category)
+                      .map((key) => {
+                        const on = selectedTemplate === key;
+                        return (
+                          <label
+                            key={key}
+                            className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-colors ${
+                              on ? "border-primary bg-accent/50 ring-[3px] ring-ring/15" : "hover:border-input"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="letter-template"
+                              value={key}
+                              checked={on}
+                              onChange={() => setSelectedTemplate(key)}
+                              className="mt-0.5 accent-[hsl(var(--primary))]"
+                            />
+                            <span className="min-w-0">
+                              <span className="block text-sm font-medium">{TEMPLATES[key].label}</span>
+                              <span className="block text-xs text-muted-foreground">{TEMPLATES[key].description}</span>
+                            </span>
+                          </label>
+                        );
+                      })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </fieldset>
 
-      {/* Control Panel (Hidden during Print) */}
-      <Card className="no-print border-border/60 shadow-sm bg-card">
-        <CardContent className="p-5">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* 1. Select Intern */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">Select Intern / NYSC Corper</Label>
+          <div className="grid gap-4 border-t pt-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="space-y-1.5 md:col-span-1 xl:col-span-2">
+              <Label htmlFor="letter-intern" className="text-[13px]">Intern or corps member</Label>
               <Select value={selectedInternId} onValueChange={setSelectedInternId}>
-                <SelectTrigger className="h-10 text-xs">
-                  <SelectValue placeholder={loadingInterns ? "Loading interns…" : "Choose intern..."} />
+                <SelectTrigger id="letter-intern">
+                  <SelectValue placeholder={loadingInterns ? "Loading interns…" : "Choose who the letter is for"} />
                 </SelectTrigger>
-                <SelectContent className="max-h-60">
+                <SelectContent className="max-h-72">
                   {interns.map((i) => (
-                    <SelectItem key={i._id} value={i._id} className="text-xs">
-                      {i.firstName} {i.lastName} &bull; {i.internshipType === "NYSC_IT" ? "NYSC" : "IT"} ({i.department?.name ?? "General"})
+                    <SelectItem key={i._id} value={i._id}>
+                      {i.firstName} {i.lastName} · {i.internshipType === "NYSC_IT" ? "NYSC" : "IT"} ({i.department?.name ?? "General"})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
-            {/* 2. Select Template */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">Document Template</Label>
-              <Select value={selectedTemplate} onValueChange={(v) => setSelectedTemplate(v as LetterTemplateType)}>
-                <SelectTrigger className="h-10 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ACCEPTANCE_LETTER">Student Acceptance Letter</SelectItem>
-                  <SelectItem value="IT_COMPLETION_LETTER">IT Completion Letter</SelectItem>
-                  <SelectItem value="NYSC_INTERNAL_POSTING">NYSC Internal Posting Memo</SelectItem>
-                  <SelectItem value="NYSC_MONTHLY_CLEARANCE">NYSC Monthly Clearance Letter</SelectItem>
-                  <SelectItem value="NYSC_FINAL_CLEARANCE">NYSC Final Clearance Letter</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* 3. Letter Date */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">Custom Date (Optional)</Label>
+              <Label htmlFor="letter-date" className="text-[13px]">Letter date <span className="font-normal text-muted-foreground">(optional)</span></Label>
               <Input
-                placeholder="Leave blank to use intern exit date"
+                id="letter-date"
+                placeholder="Leave blank to use the exit date"
                 value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
-                className="h-10 text-xs"
               />
             </div>
           </div>
 
-          {/* Conditional extra controls for Monthly Clearance */}
           {selectedTemplate === "NYSC_MONTHLY_CLEARANCE" && (
-            <div className="mt-4 pt-3 border-t border-border/40 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Clearance For Month</Label>
+            <div className="grid max-w-xl gap-4 rounded-xl bg-muted/60 p-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="clearance-month" className="text-[13px]">Clearance for month</Label>
                 <Input
+                  id="clearance-month"
                   placeholder="e.g. JANUARY 2026"
                   value={clearanceMonth}
                   onChange={(e) => setClearanceMonth(e.target.value)}
-                  className="h-9 text-xs"
+                  className="bg-background"
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Diligently Served Month</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="serving-month" className="text-[13px]">Diligently served month</Label>
                 <Input
+                  id="serving-month"
                   placeholder="e.g. DECEMBER 2025"
                   value={servingMonth}
                   onChange={(e) => setServingMonth(e.target.value)}
-                  className="h-9 text-xs"
+                  className="bg-background"
                 />
               </div>
             </div>
           )}
+
+          <p className="flex items-start gap-2 text-xs text-muted-foreground">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            Text alignment, weights, line breaks and margins match the company reference documents. The dashed guides on the preview mark the pre-printed letterhead and footer; they don&apos;t print.
+          </p>
         </CardContent>
       </Card>
 
-      {/* Document View Area */}
+      {/* Preview */}
       {intern ? (
+        <div className="-mx-4 overflow-x-auto bg-muted/70 px-4 py-8 lg:mx-0 lg:rounded-xl">
+          <p className="no-print mb-4 flex items-center justify-between text-xs text-muted-foreground">
+            <span>Preview · A4</span>
+            <span>{TEMPLATES[selectedTemplate].label}</span>
+          </p>
         <div ref={printComponentRef} className="pb-12 print:p-0 print:m-0 animate-fade-up">
           {selectedTemplate === "ACCEPTANCE_LETTER" && (
             <StudentAcceptanceLetter intern={intern} customDate={customDate} />
@@ -898,12 +903,13 @@ export default function DocumentGenerationPage() {
             <NYSCFinalClearanceTemplate intern={intern} customDate={customDate} />
           )}
         </div>
+        </div>
       ) : (
-        <div className="py-24 text-center border-2 border-dashed border-border/60 rounded-2xl bg-muted/20">
-          <FileText className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-          <h3 className="text-base font-bold text-foreground">Select an intern to view &amp; print document</h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-            Choose an intern from the dropdown above to auto-fill their official records into the template.
+        <div className="rounded-xl border border-dashed py-20 text-center">
+          <FileText className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+          <p className="text-sm font-medium text-foreground">Choose who the letter is for</p>
+          <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
+            Their details from Whippie fill the template automatically.
           </p>
         </div>
       )}

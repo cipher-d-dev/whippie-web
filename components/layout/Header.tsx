@@ -43,20 +43,9 @@ function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="relative flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-foreground cursor-pointer hover-press"
+      className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
     >
-      <Sun
-        className={cn(
-          "absolute h-4 w-4 transition-all duration-300",
-          isDark ? "opacity-100 rotate-0 scale-100" : "opacity-0 rotate-90 scale-50"
-        )}
-      />
-      <Moon
-        className={cn(
-          "absolute h-4 w-4 transition-all duration-300",
-          isDark ? "opacity-0 -rotate-90 scale-50" : "opacity-100 rotate-0 scale-100"
-        )}
-      />
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>
   );
 }
@@ -83,6 +72,12 @@ function getPageTitle(pathname: string): string {
   };
   return titles[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1);
 }
+
+const SECTION: Record<string, string> = {
+  verification: "People", interns: "People", supervisors: "People", departments: "People",
+  onboarding: "Programme", attendance: "Programme", tasks: "Programme", reports: "Programme",
+  evaluations: "Programme", documents: "Programme", exit: "Programme",
+};
 
 // ─── Notification entity link map ─────────────────────────────────────────────
 
@@ -127,14 +122,14 @@ function NotifItem({
   const content = (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 cursor-pointer hover:bg-accent",
-        !notification.read && "bg-primary/5"
+        "flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors cursor-pointer hover:bg-muted",
+        !notification.read && "bg-accent/60"
       )}
       onClick={() => { if (!notification.read) onRead(notification._id); }}
     >
       <div className="mt-1.5 flex h-2 w-2 shrink-0">
         {!notification.read && (
-          <span className="h-2 w-2 rounded-full bg-primary animate-pulse-dot" />
+          <span className="h-2 w-2 rounded-full bg-primary" />
         )}
       </div>
 
@@ -148,7 +143,7 @@ function NotifItem({
         <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
           {notification.body}
         </p>
-        <p className="mt-1 text-[10px] text-muted-foreground/60">
+        <p className="mt-1 font-mono text-[11px] text-muted-foreground">
           {fmtRelative(notification.createdAt)}
         </p>
       </div>
@@ -180,24 +175,24 @@ function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-9 w-9 rounded-xl hover:bg-accent cursor-pointer"
+          className="relative h-9 w-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label={`Notifications${unreadCount > 0 ? ` — ${unreadCount} unread` : ""}`}
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground animate-scale-in">
+            <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-background bg-primary px-0.5 font-mono text-[9px] font-medium text-primary-foreground">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-80 p-0 rounded-2xl shadow-xl" sideOffset={8}>
+      <DropdownMenuContent align="end" className="w-[340px] p-0 rounded-xl" sideOffset={8}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold">Notifications</p>
             {unreadCount > 0 && (
-              <Badge className="h-5 px-1.5 text-[10px] animate-scale-in">{unreadCount}</Badge>
+              <Badge variant="info" dot={false} className="font-mono">{unreadCount}</Badge>
             )}
           </div>
           {unreadCount > 0 && (
@@ -217,16 +212,16 @@ function NotificationBell() {
         <ScrollArea className="max-h-80">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
-                <Bell className="h-5 w-5 text-muted-foreground/50" />
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
+                <Bell className="h-5 w-5 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium">All caught up!</p>
+              <p className="text-sm font-medium">All caught up</p>
               <p className="mt-0.5 text-xs text-muted-foreground">No unread notifications</p>
             </div>
           ) : (
             <div className="py-1 px-1">
-              {notifications.map((n, i) => (
-                <div key={n._id} className="animate-fade-up" style={{ animationDelay: `${i * 40}ms` }}>
+              {notifications.map((n) => (
+                <div key={n._id}>
                   <NotifItem
                     notification={n}
                     onRead={(id) => markReadMut.mutate(id)}
@@ -242,7 +237,7 @@ function NotificationBell() {
         <div className="p-2">
           <Link
             href="/notifications"
-            className="flex w-full items-center justify-center rounded-xl py-2 text-xs font-medium text-muted-foreground transition-colors duration-200 hover:bg-accent hover:text-accent-foreground"
+            className="flex w-full items-center justify-center rounded-lg py-2 text-[13px] font-medium text-primary transition-colors hover:bg-muted"
           >
             View all notifications
           </Link>
@@ -258,20 +253,17 @@ export function Header() {
   const pathname  = usePathname();
   const { user }  = useAuth();
 
-  const roleLabel = user?.role === "HR" ? "HR" : user?.role === "SUPERVISOR" ? "Supervisor" : "";
+  const isHR = user?.role === "HR";
+  const getSection = (path: string) => (isHR ? SECTION[path.split("/")[1] ?? ""] : undefined);
 
   return (
-    <div className="flex flex-1 items-center justify-between px-4 lg:px-6">
-      <h1 className="text-base font-semibold text-foreground animate-fade-in">
-        {getPageTitle(pathname)}
-      </h1>
+    <div className="flex flex-1 items-center justify-between gap-3">
+      <nav aria-label="Breadcrumb" className="min-w-0 truncate text-[13px] text-muted-foreground">
+        {getSection(pathname) && <span>{getSection(pathname)} / </span>}
+        <span className="text-foreground">{getPageTitle(pathname)}</span>
+      </nav>
 
-      <div className="flex items-center gap-2">
-        {roleLabel && (
-          <span className="hidden sm:inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">
-            {roleLabel}
-          </span>
-        )}
+      <div className="flex items-center gap-1.5">
         <ThemeToggle />
         <NotificationBell />
         <UserAvatarUpload />
@@ -318,17 +310,21 @@ function UserAvatarUpload() {
   };
 
   return (
-    <div
+    <>
+    <button
+      type="button"
       onClick={() => fileInputRef.current?.click()}
-      title="Click to change profile picture"
-      className="group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-primary/10 text-xs font-bold text-primary cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all select-none"
+      title="Change profile picture"
+      aria-label="Change profile picture"
+      disabled={uploading}
+      className="group relative ml-1 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent text-xs font-semibold text-accent-foreground transition-shadow hover:ring-2 hover:ring-primary/30"
     >
       {user?.avatarUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={user.avatarUrl}
           alt={`${user.firstName} ${user.lastName}`}
-          className="h-full w-full object-cover rounded-xl"
+          className="h-full w-full rounded-full object-cover"
         />
       ) : (
         <span>{initials}</span>
@@ -342,14 +338,17 @@ function UserAvatarUpload() {
         )}
       </div>
 
+    </button>
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
         disabled={uploading}
         onChange={handleFileChange}
       />
-    </div>
+    </>
   );
 }

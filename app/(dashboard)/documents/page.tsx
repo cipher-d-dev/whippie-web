@@ -11,7 +11,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useDocuments } from "@/features/documents/hooks";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -99,13 +99,13 @@ export default function DocumentsPage() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold">Documents</h2>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Documents</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {!isLoading && `${total} record${total !== 1 ? "s" : ""}`}
             {needsReview > 0 && (
-              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning-foreground">
                 {needsReview} awaiting review
               </span>
             )}
@@ -189,14 +189,11 @@ export default function DocumentsPage() {
               const cfg = STATUS_CONFIG[doc.status];
               const needsAction = doc.status === "DIGITAL_RECEIVED" || doc.status === "PHYSICAL_RECEIVED";
               return (
-                <TableRow key={doc._id} className={needsAction ? "bg-amber-50/40 dark:bg-amber-950/10" : ""}>
+                <TableRow key={doc._id} className={needsAction ? "bg-warning-soft/40 " : ""}>
                   <TableCell className="font-medium">{getInternName(doc as Parameters<typeof getInternName>[0])}</TableCell>
                   <TableCell className="text-sm">{getRequirementLabel(doc as Parameters<typeof getRequirementLabel>[0])}</TableCell>
                   <TableCell>
-                    <Badge variant={cfg.variant} className="inline-flex items-center gap-1.5">
-                      {cfg.icon}
-                      {cfg.label}
-                    </Badge>
+                    <StatusBadge status={doc.status} label={cfg.label} />
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{fmt(doc.updatedAt)}</TableCell>
                   <TableCell className="text-right">

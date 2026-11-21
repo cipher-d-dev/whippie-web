@@ -6,6 +6,7 @@ import { Plus, Star } from "lucide-react";
 import { useEvaluations } from "@/features/evaluations/hooks";
 import { useAuth } from "@/lib/auth/context";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -49,7 +50,7 @@ export default function EvaluationsPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Evaluations</h2>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Evaluations</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {!isLoading && `${total} evaluation${total !== 1 ? "s" : ""}`}
           </p>
@@ -107,15 +108,13 @@ export default function EvaluationsPage() {
                   )}
                   <TableCell>
                     <div className="flex items-center gap-1.5">
-                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                      <Star className="h-3.5 w-3.5 fill-warning text-warning-foreground" />
                       <span className="text-sm font-semibold">{avgScore(ev.scores)}</span>
                       <span className="text-xs text-muted-foreground">/ 5</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={ev.status === "SUBMITTED" ? "default" : "outline"}>
-                      {ev.status === "SUBMITTED" ? "Submitted" : "Draft"}
-                    </Badge>
+                    <StatusBadge status={ev.status} />
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{fmt(ev.submittedAt ?? ev.createdAt)}</TableCell>
                   <TableCell className="text-right">

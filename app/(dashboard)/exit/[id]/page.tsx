@@ -7,6 +7,7 @@ import { useIntern } from "@/features/interns/hooks";
 import { useExitChecklist, useCompleteInternship } from "@/features/exit/hooks";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,16 +68,11 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
           <Button variant="ghost" size="sm" asChild className="-ml-2">
             <Link href="/exit"><ArrowLeft className="mr-2 h-4 w-4" />Back to exit list</Link>
           </Button>
-          <h2 className="mt-2 text-xl font-semibold">{intern.firstName} {intern.lastName}</h2>
+          <h1 className="mt-2 text-[24px] font-semibold leading-tight tracking-[-0.02em]">{intern.firstName} {intern.lastName}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Badge variant={
-              intern.status === "ACTIVE"     ? "default"    :
-              intern.status === "COMPLETED"  ? "secondary"  : "outline"
-            }>
-              {intern.status}
-            </Badge>
+            <StatusBadge status={intern.status} />
             {days !== null && !isCompleted && (
-              <Badge variant={days < 0 ? "destructive" : days <= 14 ? "secondary" : "outline"}>
+              <Badge variant={days < 0 ? "danger" : days <= 14 ? "warning" : "neutral"}>
                 {days < 0 ? `${Math.abs(days)}d overdue` : `${days}d remaining`}
               </Badge>
             )}
@@ -85,7 +81,7 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
 
         {!isCompleted && passedAll && (
           <Button
-            className="shrink-0 bg-emerald-600 hover:bg-emerald-700"
+            className="shrink-0 bg-success hover:bg-success"
             onClick={() => setCompleteOpen(true)}
           >
             <DoorOpen className="mr-2 h-4 w-4" />
@@ -97,7 +93,7 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
       {/* Intern summary */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Internship summary</CardTitle>
+          <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">Internship summary</CardTitle>
         </CardHeader>
         <CardContent className="divide-y">
           {[
@@ -123,13 +119,13 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
               Exit checklist
             </CardTitle>
             <div className="flex items-center gap-1.5">
               {passedAll
-                ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                : <AlertCircle  className="h-4 w-4 text-amber-500"   />}
+                ? <CheckCircle2 className="h-4 w-4 text-success-foreground" />
+                : <AlertCircle  className="h-4 w-4 text-warning-foreground"   />}
               <span className="text-sm font-semibold">
                 {passCount}/{items.length} passed
               </span>
@@ -148,13 +144,13 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
                   key={i}
                   className={`flex items-start gap-3 rounded-lg p-3 ${
                     item.passed
-                      ? "bg-emerald-50/50 dark:bg-emerald-950/10"
-                      : "bg-rose-50/50 dark:bg-rose-950/10 border border-destructive/10"
+                      ? "bg-success-soft/50 "
+                      : "bg-danger-soft/50  border border-destructive/10"
                   }`}
                 >
                   <span className="mt-0.5 shrink-0">
                     {item.passed
-                      ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      ? <CheckCircle2 className="h-4 w-4 text-success-foreground" />
                       : <XCircle      className="h-4 w-4 text-destructive"  />}
                   </span>
                   <div className="min-w-0">
@@ -170,9 +166,9 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
 
           {/* Cannot complete warning */}
           {!passedAll && items.length > 0 && !isCompleted && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50/50 px-3 py-2.5 dark:bg-amber-950/20">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-              <p className="text-xs text-amber-700 dark:text-amber-400">
+            <div className="mt-4 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-soft/50 px-3 py-2.5">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning-foreground" />
+              <p className="text-xs text-warning-foreground">
                 Resolve all outstanding checklist items before completing this internship.
               </p>
             </div>
@@ -180,9 +176,9 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
 
           {/* Already completed */}
           {isCompleted && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-emerald-300 bg-emerald-50/50 px-3 py-2.5 dark:bg-emerald-950/20">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-              <div className="text-xs text-emerald-700 dark:text-emerald-400">
+            <div className="mt-4 flex items-start gap-2 rounded-lg border border-success/30 bg-success-soft/50 px-3 py-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success-foreground" />
+              <div className="text-xs text-success-foreground">
                 <p className="font-medium">Internship completed on {fmt(intern.completedAt)}</p>
                 {intern.completionNote && <p className="mt-0.5">{intern.completionNote}</p>}
               </div>
@@ -201,8 +197,8 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
             <DialogTitle>Complete internship — {intern.firstName} {intern.lastName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-1">
-            <div className="rounded-lg border border-emerald-300 bg-emerald-50/50 px-4 py-3 dark:bg-emerald-950/20">
-              <div className="flex items-center gap-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+            <div className="rounded-lg border border-success/30 bg-success-soft/50 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-success-foreground">
                 <CheckCircle2 className="h-4 w-4" />
                 All checklist items passed — ready to complete
               </div>
@@ -224,7 +220,7 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
           </div>
           <DialogFooter>
             <Button
-              className="w-full bg-emerald-600 hover:bg-emerald-700"
+              className="w-full bg-success hover:bg-success"
               disabled={completeMut.isPending}
               onClick={() => completeMut.mutate(note || undefined)}
             >

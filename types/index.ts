@@ -43,8 +43,10 @@ export interface InternObject {
   status: InternshipStatus;
   startDate?: string; // ISO date string
   endDate?: string;   // ISO date string
-  department?: { _id: string; name: string } | null;
+  department?: { _id: string; name: string; subsidiary?: string } | null;
   supervisor?: { _id: string; firstName: string; lastName: string } | null;
+  /** Linked login account; the API populates email, role and status. */
+  user?: { _id: string; email?: string; role?: string; status?: string } | string | null;
   completedAt?: string;
   completionNote?: string;
   createdAt: string;
@@ -150,7 +152,7 @@ export interface ExitChecklist {
 
 // ─── Attendance ───────────────────────────────────────────────────────────────
 
-export type AttendanceStatus  = "ACCEPTED" | "FLAGGED" | "REJECTED";
+export type AttendanceStatus  = "ACCEPTED" | "FLAGGED" | "REJECTED" | "CORRECTED";
 export type AttendanceCheckType = "CHECK_IN" | "CHECK_OUT";
 
 export interface AttendanceObject {

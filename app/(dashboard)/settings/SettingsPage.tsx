@@ -65,7 +65,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-6 space-y-5">
+    <div className="rounded-xl border border-border/60 bg-card p-6 space-y-5">
       <div className="flex items-start gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <Icon className="h-4 w-4 text-primary" />
@@ -130,7 +130,7 @@ function ProfileSection() {
         <div
           onClick={() => fileInputRef.current?.click()}
           title="Click to change profile picture"
-          className="group relative flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-lg font-bold text-primary hover:ring-2 hover:ring-primary/40 transition-all select-none"
+          className="group relative flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-lg font-bold text-primary hover:ring-2 hover:ring-primary/40 transition-all select-none"
         >
           {user?.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -142,7 +142,7 @@ function ProfileSection() {
           ) : (
             <span>{initials}</span>
           )}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
             {uploading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -166,7 +166,7 @@ function ProfileSection() {
           </p>
           <p className="text-xs text-muted-foreground">{user?.email}</p>
           <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary capitalize">
-            {user?.role?.toLowerCase().replace("_", " ")}
+            {user?.role === "HR" ? "HR" : user?.role === "SUPERVISOR" ? "Supervisor" : user?.role}
           </span>
         </div>
       </div>
@@ -300,7 +300,7 @@ function AppearanceSection() {
               : "border-border hover:border-primary/40"
           )}
         >
-          <Sun className="h-5 w-5 text-amber-500" />
+          <Sun className="h-5 w-5 text-warning-foreground" />
           <span className="text-xs font-semibold">Light</span>
           {theme === "light" && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
         </button>
@@ -314,7 +314,7 @@ function AppearanceSection() {
               : "border-border hover:border-primary/40"
           )}
         >
-          <Moon className="h-5 w-5 text-blue-500" />
+          <Moon className="h-5 w-5 text-info-foreground" />
           <span className="text-xs font-semibold">Dark</span>
           {theme === "dark" && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
         </button>
@@ -329,8 +329,8 @@ function AppearanceSection() {
           )}
         >
           <div className="flex gap-0.5">
-            <Sun className="h-4 w-4 text-amber-400" />
-            <Moon className="h-4 w-4 text-blue-400" />
+            <Sun className="h-4 w-4 text-warning-foreground" />
+            <Moon className="h-4 w-4 text-info-foreground" />
           </div>
           <span className="text-xs font-semibold">System</span>
           {theme === "system" && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
@@ -377,8 +377,8 @@ function NotificationsSection() {
           </button>
         </div>
 
-        <div className="rounded-xl border border-amber-200/60 bg-amber-50/60 dark:bg-amber-900/10 dark:border-amber-700/30 px-4 py-3">
-          <p className="text-xs text-amber-700 dark:text-amber-400 font-medium leading-snug">
+        <div className="rounded-xl border border-warning/30 bg-warning-soft/60 px-4 py-3">
+          <p className="text-xs text-warning-foreground font-medium leading-snug">
             In-app notifications are always enabled. Manage your notification history from the Notifications page.
           </p>
         </div>
@@ -415,12 +415,12 @@ function AccountSection() {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Role</p>
             <p className="mt-0.5 font-medium text-foreground capitalize">
-              {user?.role?.toLowerCase().replace("_", " ")}
+              {user?.role === "HR" ? "HR" : user?.role === "SUPERVISOR" ? "Supervisor" : user?.role}
             </p>
           </div>
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Status</p>
-            <span className="mt-0.5 inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+            <span className="mt-0.5 inline-flex items-center rounded-full bg-success-soft px-2 py-0.5 text-[10px] font-semibold text-success-foreground">
               {user?.status ?? "Active"}
             </span>
           </div>

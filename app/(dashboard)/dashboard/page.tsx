@@ -1,618 +1,344 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import {
-  Users,
-  ClipboardCheck,
-  CalendarDays,
-  CheckSquare,
-  ArrowRight,
-  Clock,
-  BookOpen,
-  AlertTriangle,
-  Star,
-  Timer,
-  UserCheck,
-} from "lucide-react";
-import { useQueries } from "@tanstack/react-query";
+import { AlertTriangle, ArrowRight, FileText, Plus, UserCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
+import { useDashboardStats } from "@/features/dashboard/hooks";
+import type { DashboardStats } from "@/features/dashboard/api";
 import { useInterns } from "@/features/interns/hooks";
 import { useSupervisorMe, useSupervisorInterns } from "@/features/supervisors/hooks";
 import { useTasks } from "@/features/tasks/hooks";
-import { useAttendance } from "@/features/attendance/hooks";
+import { useReports } from "@/features/reports/hooks";
 import { useEvaluations } from "@/features/evaluations/hooks";
-import { usePendingCount } from "@/features/users/hooks";
-import { listAttendance } from "@/features/attendance/api";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader, Section } from "@/components/shared/PageHeader";
+import { PersonCell } from "@/components/shared/PersonAvatar";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils/cn";
-import type { InternshipStatus } from "@/types";
+import { fmtWhen, programmeProgress, INTERNSHIP_TYPE_LABEL } from "@/lib/utils/format";
+import type { TaskObject, ReportObject } from "@/types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const STATUS_VARIANT: Record<InternshipStatus, "default" | "secondary" | "outline"> = {
-  SCREENED:   "outline",
-  ONBOARDING: "secondary",
-  ACTIVE:     "default",
-  COMPLETED:  "secondary",
-};
-
-function getTimeOfDay() {
+function greeting() {
   const h = new Date().getHours();
-  if (h < 12) return "morning";
-  if (h < 17) return "afternoon";
-  return "evening";
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
 }
 
-// ─── Count-up number ──────────────────────────────────────────────────────────
-
-function CountUp({ value, loading }: { value: number; loading?: boolean }) {
-  const [display, setDisplay] = useState(0);
-  const prevRef = useRef(0);
-
-  useEffect(() => {
-    if (loading || value === 0) { setDisplay(value); return; }
-    const from = prevRef.current;
-    const to   = value;
-    const duration = 600;
-    const start = performance.now();
-
-    const tick = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1);
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(from + (to - from) * eased));
-      if (progress < 1) requestAnimationFrame(tick);
-      else prevRef.current = to;
-    };
-    requestAnimationFrame(tick);
-  }, [value, loading]);
-
-  if (loading) {
-    return <div className="h-9 w-12 animate-pulse rounded-lg bg-current opacity-10" />;
-  }
-  return <span>{display}</span>;
+function todayLabel() {
+  return new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 }
 
-// ─── Stat card ────────────────────────────────────────────────────────────────
+// ─── Stat tile ────────────────────────────────────────────────────────────────
 
-interface StatCardProps {
+function StatTile({
+  label, value, of, sub, href, loading, tone,
+}: {
   label: string;
   value: number | string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
+  of?: number | string;
+  sub?: React.ReactNode;
   href?: string;
-  iconBg: string;        // Tailwind bg class for icon container
-  cardBg?: string;       // optional tinted card bg
   loading?: boolean;
-  alert?: boolean;
-  delay?: number;
-}
-
-function StatCard({
-  label, value, description, icon: Icon,
-  href, iconBg, cardBg, loading, alert, delay = 0,
-}: StatCardProps) {
-  const isNum = typeof value === "number";
-
-  const inner = (
-    <div
-      className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border/60 p-5",
-        "hover-lift cursor-pointer",
-        cardBg ?? "bg-card",
-        alert && Number(value) > 0 && "border-destructive/30 bg-destructive/5",
-        // Dark mode: ensure tinted border matches tinted bg
-        cardBg && "dark:border-white/5"
-      )}
-    >
-      {/* Background decoration blob — animates on hover via group */}
-      <div className={cn(
-        "absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-15 blur-2xl transition-all duration-500 group-hover:opacity-35 group-hover:scale-110 dark:opacity-25 dark:group-hover:opacity-50",
-        iconBg
-      )} />
-
-      <div className="relative flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {label}
-          </p>
-          <div className={cn(
-            "mt-2 text-3xl font-black tracking-tight",
-            alert && Number(value) > 0 ? "text-destructive" : "text-foreground"
-          )}>
-            {isNum ? <CountUp value={value as number} loading={loading} /> : value}
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-        </div>
-
-        {/* Icon with pop animation and glow blob */}
-        <div className={cn(
-          "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-md animate-icon-pop",
-          iconBg
-        )}
-          style={{ animationDelay: `${delay + 100}ms` }}
-        >
-          <Icon className="h-5 w-5 text-white transition-transform duration-300 group-hover:scale-110" />
-        </div>
-      </div>
-
-      {href && (
-        <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-muted-foreground transition-colors duration-200 group-hover:text-primary">
-          <span>View details</span>
-          <ArrowRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-1" />
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <div
-      className="animate-fade-up"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      {href ? <Link href={href}>{inner}</Link> : inner}
-    </div>
-  );
-}
-
-// ─── Sparkline ────────────────────────────────────────────────────────────────
-
-function Sparkline({ data }: { data: number[] }) {
-  const width = 120;
-  const height = 36;
-  const pad = 4;
-
-  if (!data.length) return null;
-  const max = Math.max(...data, 1);
-  const step = (width - pad * 2) / Math.max(data.length - 1, 1);
-  const scaleY = (v: number) => height - pad - ((v / max) * (height - pad * 2));
-
-  const points = data.map((v, i) => ({ x: pad + i * step, y: scaleY(v) }));
-  const d = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const areaD = `${d} L${points[points.length - 1]!.x.toFixed(1)},${height} L${pad},${height} Z`;
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} aria-hidden="true">
-      <defs>
-        <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={areaD} fill="url(#sparkGrad)" />
-      <path
-        d={d}
-        fill="none"
-        stroke="hsl(var(--primary))"
-        strokeWidth="2"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-        style={{
-          strokeDasharray: 1000,
-          strokeDashoffset: 0,
-          animation: "draw-line 1s ease-out forwards",
-        }}
-      />
-      <circle
-        cx={points[points.length - 1]!.x}
-        cy={points[points.length - 1]!.y}
-        r="3"
-        fill="hsl(var(--primary))"
-        className="animate-scale-in"
-      />
-    </svg>
-  );
-}
-
-// ─── Attendance trend card ─────────────────────────────────────────────────────
-
-function AttendanceTrendCard() {
-  const today = new Date();
-  const dates = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (6 - i));
-    return d.toISOString().slice(0, 10);
-  });
-
-  const results = useQueries({
-    queries: dates.map((date) => ({
-      queryKey: ["attendance", "trend", date],
-      queryFn: () => listAttendance({ date, checkType: "CHECK_IN", limit: 1 }),
-      staleTime: 5 * 60 * 1000,
-    })),
-  });
-
-  const counts    = results.map((r) => r.data?.total ?? 0);
-  const isLoading = results.some((r) => r.isLoading);
-  const todayCount = counts[counts.length - 1] ?? 0;
-  const prevCount  = counts[counts.length - 2] ?? 0;
-  const diff       = todayCount - prevCount;
-
-  const labels = dates.map((d) =>
-    new Date(d + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short" })
-  );
-
-  return (
-    <div className="animate-fade-up delay-300 rounded-2xl border border-border/60 bg-card p-5 hover:shadow-md transition-all duration-200">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Attendance trend
-        </p>
-        <Link href="/attendance">
-          <Button variant="ghost" size="sm" className="h-7 rounded-lg px-2 text-xs cursor-pointer">
-            View all <ArrowRight className="ml-1 h-3 w-3" />
-          </Button>
-        </Link>
-      </div>
-
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="text-3xl font-bold tracking-tight">
-            {isLoading ? (
-              <span className="inline-block h-9 w-10 animate-pulse rounded-lg bg-muted" />
-            ) : (
-              <CountUp value={todayCount} />
-            )}
-          </p>
-          <div className="mt-0.5 flex items-center gap-2">
-            <p className="text-xs text-muted-foreground">Check-ins today</p>
-            {!isLoading && diff !== 0 && (
-              <span className={cn(
-                "text-xs font-semibold",
-                diff > 0 ? "text-emerald-600" : "text-amber-600"
-              )}>
-                {diff > 0 ? "+" : ""}{diff}
-              </span>
-            )}
-          </div>
-        </div>
-        {!isLoading && (
-          <div className="flex flex-col items-end gap-1">
-            <Sparkline data={counts} />
-            <div className="flex gap-2">
-              {labels.map((label, i) => (
-                <span
-                  key={label}
-                  className={cn(
-                    "w-3.5 text-center text-[9px] leading-none",
-                    i === labels.length - 1
-                      ? "font-bold text-primary"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {label.slice(0, 1)}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Upcoming endings card ─────────────────────────────────────────────────────
-
-function UpcomingEndingsCard() {
-  const todayStr  = new Date().toISOString().slice(0, 10);
-  const in30Days  = new Date();
-  in30Days.setDate(in30Days.getDate() + 30);
-  const in30Str   = in30Days.toISOString().slice(0, 10);
-
-  const { data, isLoading } = useInterns({ status: "ACTIVE", limit: 200 });
-  const interns = data?.data ?? [];
-
-  const ending = interns
-    .filter((i) => {
-      if (!i.endDate) return false;
-      const end = i.endDate.slice(0, 10);
-      return end >= todayStr && end <= in30Str;
-    })
-    .sort((a, b) => (a.endDate ?? "").localeCompare(b.endDate ?? ""))
-    .slice(0, 5);
-
-  const daysLeft = (endDate: string) =>
-    Math.ceil((new Date(endDate).getTime() - new Date().setHours(0, 0, 0, 0)) / 86_400_000);
-
-  return (
-    <div className="animate-fade-up delay-350 rounded-2xl border border-border/60 bg-card p-5 hover:shadow-md transition-all duration-200">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Ending within 30 days
-        </p>
-        <Link href="/exit">
-          <Button variant="ghost" size="sm" className="h-7 rounded-lg px-2 text-xs cursor-pointer">
-            Exit <ArrowRight className="ml-1 h-3 w-3" />
-          </Button>
-        </Link>
-      </div>
-
-      {isLoading ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map((n) => (
-            <div key={n} className="h-10 animate-pulse rounded-xl bg-muted" />
-          ))}
-        </div>
-      ) : ending.length === 0 ? (
-        <div className="flex items-center gap-3 rounded-xl bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-          <CheckSquare className="h-4 w-4 shrink-0 text-emerald-500" />
-          No interns ending in the next 30 days
-        </div>
+  tone?: "danger";
+}) {
+  const body = (
+    <div className={cn("flex h-full flex-col gap-2.5 rounded-xl border bg-card p-[18px] transition-colors", href && "hover:border-input")}>
+      <span className="text-[13px] text-muted-foreground">{label}</span>
+      {loading ? (
+        <Skeleton className="h-8 w-20" />
       ) : (
-        <div className="space-y-2">
-          {ending.map((intern, i) => {
-            const days   = daysLeft(intern.endDate!);
-            const urgent = days <= 7;
+        <span className={cn("font-mono text-[30px] font-medium leading-none tracking-[-0.03em] tabular", tone === "danger" && "text-danger-foreground")}>
+          {value}
+          {of !== undefined && <span className="text-[15px] text-muted-foreground">/{of}</span>}
+        </span>
+      )}
+      {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
+    </div>
+  );
+  return href ? <Link href={href} className="block rounded-xl focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/30">{body}</Link> : body;
+}
+
+// ─── Needs attention ──────────────────────────────────────────────────────────
+
+function NeedsAttention({ stats }: { stats: DashboardStats }) {
+  const items = [
+    { n: stats.pending.verifications, t: "accounts to approve", s: "Confirmed their email, waiting for you", href: "/verification", icon: UserCheck, tone: "warning" as const },
+    { n: stats.today.flagged, t: "flagged check-ins", s: "Low GPS accuracy today", href: "/attendance", icon: AlertTriangle, tone: "danger" as const },
+    { n: stats.pending.documentsToVerify, t: "documents to verify", s: "Uploaded or handed in", href: "/documents", icon: FileText, tone: "info" as const },
+  ].filter((i) => i.n > 0);
+
+  if (items.length === 0) {
+    return (
+      <div className="flex items-center gap-3 rounded-xl border bg-success-soft/50 px-4 py-3 text-sm text-success-foreground">
+        <span className="h-2 w-2 rounded-full bg-success" aria-hidden="true" />
+        Nothing waiting on you right now.
+      </div>
+    );
+  }
+
+  const toneClass = { warning: "bg-warning-soft text-warning-foreground", danger: "bg-danger-soft text-danger-foreground", info: "bg-info-soft text-info-foreground" };
+
+  return (
+    <Section title="Needs your attention" bodyClassName="grid sm:grid-cols-2 xl:grid-cols-3">
+      {items.map(({ n, t, s, href, icon: Icon, tone }, i) => (
+        <Link
+          key={href}
+          href={href}
+          className={cn(
+            "group flex items-center gap-3.5 px-5 py-4 transition-colors hover:bg-muted/40",
+            i > 0 && "border-t sm:border-t-0 sm:border-l"
+          )}
+        >
+          <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", toneClass[tone])}>
+            <Icon className="h-[18px] w-[18px]" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium">
+              <span className="font-mono tabular">{n}</span> {t}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">{s}</span>
+          </span>
+          <span className="text-[13px] font-medium text-primary">Review <ArrowRight className="inline h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span>
+        </Link>
+      ))}
+    </Section>
+  );
+}
+
+// ─── Week chart (single series, direct labels) ────────────────────────────────
+
+function WeekChart({ stats }: { stats: DashboardStats }) {
+  const active = stats.interns.byStatus.ACTIVE || 1;
+  return (
+    <Section
+      title="Check-ins this week"
+      description={`Interns checked in at DAAR HQ, out of ${stats.interns.byStatus.ACTIVE} active`}
+      className="flex-[2_1_460px]"
+      bodyClassName="px-5 pb-5 pt-6"
+    >
+      <figure>
+        <div className="relative flex h-[200px] items-end gap-3 border-b px-1 sm:gap-5">
+          <div className="pointer-events-none absolute inset-x-0 bottom-1/2 border-t border-dashed" aria-hidden="true" />
+          {stats.week.map((d) => {
+            const isToday = d.date === stats.today.date;
+            const pct = d.checkedIn === null ? 0 : Math.round((d.checkedIn / active) * 100);
             return (
-              <Link key={intern._id} href={`/interns/${intern._id}`}>
+              <div key={d.date} className="relative flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+                <span className={cn("font-mono text-xs tabular", isToday ? "text-foreground" : "text-muted-foreground")}>
+                  {d.checkedIn ?? "—"}
+                </span>
                 <div
                   className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 cursor-pointer animate-fade-up hover:-translate-y-0.5 hover:shadow-sm",
-                    urgent
-                      ? "border border-amber-200 bg-amber-50 dark:bg-amber-950/20"
-                      : "border border-border/60 bg-muted/30 hover:bg-accent"
+                    "w-full max-w-14 rounded-t transition-colors",
+                    isToday ? "bg-primary" : "bg-primary/30 hover:bg-primary/50"
                   )}
-                  style={{ animationDelay: `${400 + i * 50}ms` }}
-                >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                    {intern.firstName[0]}{intern.lastName[0]}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
-                      {intern.firstName} {intern.lastName}
-                    </p>
-                    <p className="truncate text-[11px] text-muted-foreground">{intern.institution}</p>
-                  </div>
-                  <span className={cn(
-                    "shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold",
-                    urgent
-                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {days}d
-                  </span>
-                </div>
-              </Link>
+                  style={{ height: `${pct}%` }}
+                  title={`${d.weekday}: ${d.checkedIn ?? "not yet"} of ${stats.interns.byStatus.ACTIVE}`}
+                />
+              </div>
             );
           })}
         </div>
-      )}
-    </div>
+        <div className="mt-2 flex gap-3 px-1 sm:gap-5">
+          {stats.week.map((d) => (
+            <span key={d.date} className={cn("flex-1 text-center text-xs", d.date === stats.today.date ? "font-medium text-foreground" : "text-muted-foreground")}>
+              {d.weekday}
+            </span>
+          ))}
+        </div>
+        <figcaption className="sr-only">
+          {stats.week.map((d) => `${d.weekday} ${d.checkedIn ?? "not yet"}`).join(", ")}
+        </figcaption>
+      </figure>
+    </Section>
   );
 }
 
-// ─── Quick action card ────────────────────────────────────────────────────────
-
-function QuickAction({
-  label, href, icon: Icon, iconBg, delay = 0,
-}: {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  iconBg: string;
-  delay?: number;
-}) {
+function SubsidiaryBreakdown({ stats }: { stats: DashboardStats }) {
+  const rows = stats.interns.activeBySubsidiary;
+  const max = Math.max(1, ...rows.map((r) => r.count));
   return (
-    <Link href={href}>
-      <div
-        className={cn(
-          "group flex items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3.5 cursor-pointer hover-lift animate-fade-up"
-        )}
-        style={{ animationDelay: `${delay}ms` }}
-      >
-        <div className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm animate-icon-pop transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3",
-          iconBg
-        )}
-          style={{ animationDelay: `${delay + 80}ms` }}
-        >
-          <Icon className="h-4 w-4 text-white" />
+    <Section title="Interns by subsidiary" description={`${stats.interns.byStatus.ACTIVE} active`} className="flex-[1_1_280px]" bodyClassName="space-y-4 p-5">
+      {rows.length === 0 && <p className="text-sm text-muted-foreground">No active interns yet.</p>}
+      {rows.map((r) => (
+        <div key={r.subsidiary} className="space-y-1.5">
+          <div className="flex justify-between text-[13px]">
+            <span className="font-medium">{r.subsidiary}</span>
+            <span className="font-mono tabular text-secondary-foreground">{r.count}</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-muted">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${(r.count / max) * 100}%` }} />
+          </div>
         </div>
-        <span className="flex-1 text-sm font-semibold">{label}</span>
-        <ArrowRight className="h-4 w-4 text-muted-foreground transition-all duration-200 group-hover:translate-x-1 group-hover:text-primary" />
-      </div>
-    </Link>
+      ))}
+    </Section>
+  );
+}
+
+// ─── Waiting for review (tasks + reports) ─────────────────────────────────────
+
+type QueueRow = { key: string; who: { firstName?: string; lastName?: string }; item: string; kind: "Task" | "Report"; when: string; href: string };
+
+function ReviewQueue() {
+  const tasks = useTasks({ status: "SUBMITTED", limit: 5 });
+  const reports = useReports({ status: "SUBMITTED", limit: 5 });
+  const loading = tasks.isLoading || reports.isLoading;
+
+  const person = (p: TaskObject["intern"]) => (typeof p === "string" ? {} : p);
+  const rows: QueueRow[] = [
+    ...(tasks.data?.data ?? []).map((t) => ({ key: t._id, who: person(t.intern), item: t.title, kind: "Task" as const, when: t.updatedAt, href: `/tasks/${t._id}` })),
+    ...(reports.data?.data ?? []).map((r: ReportObject) => ({ key: r._id, who: person(r.intern), item: r.title, kind: "Report" as const, when: r.updatedAt, href: `/reports/${r._id}` })),
+  ]
+    .sort((a, b) => b.when.localeCompare(a.when))
+    .slice(0, 6);
+
+  return (
+    <Section title="Waiting for review" action={<Link href="/tasks" className="text-[13px] font-medium text-primary hover:underline">All tasks</Link>}>
+      {loading ? (
+        <div className="space-y-2 p-5">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+      ) : rows.length === 0 ? (
+        <p className="px-5 py-8 text-center text-sm text-muted-foreground">Nothing waiting for review.</p>
+      ) : (
+        <div className="relative overflow-x-auto">
+          <table className="w-full min-w-[600px] text-sm">
+            <thead>
+              <tr className="text-left text-xs text-muted-foreground">
+                <th className="px-5 py-2.5 font-medium">Intern</th>
+                <th className="px-5 py-2.5 font-medium">Item</th>
+                <th className="px-5 py-2.5 font-medium">Type</th>
+                <th className="px-5 py-2.5 font-medium">Submitted</th>
+                <th className="px-5 py-2.5"><span className="sr-only">Open</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.key} className="border-t transition-colors hover:bg-muted/40">
+                  <td className="px-5 py-3"><PersonCell firstName={r.who.firstName} lastName={r.who.lastName} size="xs" /></td>
+                  <td className="w-full max-w-0 truncate px-5 py-3 text-secondary-foreground" title={r.item}>{r.item}</td>
+                  <td className="px-5 py-3"><span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-secondary-foreground">{r.kind}</span></td>
+                  <td className="px-5 py-3 font-mono text-[13px] text-muted-foreground tabular">{fmtWhen(r.when)}</td>
+                  <td className="px-5 py-3 text-right"><Link href={r.href} className="text-[13px] font-medium text-primary hover:underline">Open</Link></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Section>
+  );
+}
+
+// ─── Ending soon ──────────────────────────────────────────────────────────────
+
+function EndingSoon() {
+  const { data, isLoading } = useInterns({ status: "ACTIVE", limit: 200 });
+  const today = new Date();
+  const in30 = new Date(today.getTime() + 30 * 86_400_000);
+  const ending = (data?.data ?? [])
+    .filter((i) => i.endDate && new Date(i.endDate) >= new Date(today.toDateString()) && new Date(i.endDate) <= in30)
+    .sort((a, b) => (a.endDate ?? "").localeCompare(b.endDate ?? ""))
+    .slice(0, 5);
+  const daysLeft = (end: string) => Math.ceil((new Date(end).getTime() - new Date(today.toDateString()).getTime()) / 86_400_000);
+
+  return (
+    <Section title="Finishing in the next 30 days" action={<Link href="/exit" className="text-[13px] font-medium text-primary hover:underline">Exit</Link>}>
+      {isLoading ? (
+        <div className="space-y-2 p-5">{[0, 1].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+      ) : ending.length === 0 ? (
+        <p className="px-5 py-8 text-center text-sm text-muted-foreground">Nobody finishes in the next 30 days.</p>
+      ) : (
+        <ul>
+          {ending.map((i, k) => {
+            const d = daysLeft(i.endDate!);
+            return (
+              <li key={i._id} className={cn(k > 0 && "border-t")}>
+                <Link href={`/interns/${i._id}`} className="flex items-center gap-3 px-5 py-3 text-sm transition-colors hover:bg-muted/40">
+                  <span className="min-w-0 flex-1"><PersonCell firstName={i.firstName} lastName={i.lastName} sub={i.department?.name ?? i.institution} /></span>
+                  <span className={cn("font-mono text-[13px] tabular", d <= 7 ? "font-medium text-warning-foreground" : "text-muted-foreground")}>
+                    {d === 0 ? "today" : `${d} day${d === 1 ? "" : "s"}`}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Section>
   );
 }
 
 // ─── HR dashboard ─────────────────────────────────────────────────────────────
 
 function HRDashboard({ firstName }: { firstName: string }) {
-  const { data: allInternsData,        isLoading: loadingAll }    = useInterns({ limit: 1 });
-  const { data: activeInternsData,     isLoading: loadingActive } = useInterns({ status: "ACTIVE",     limit: 1 });
-  const { data: onboardingInternsData, isLoading: loadingOnb }    = useInterns({ status: "ONBOARDING", limit: 5 });
-  const { data: pendingEvalsData,      isLoading: loadingEvals }  = useEvaluations({ status: "DRAFT", limit: 1 });
-  const { data: submittedTasksData,    isLoading: loadingTasks }  = useTasks({ status: "SUBMITTED", limit: 1 });
-  const { data: pendingVerifications,  isLoading: loadingVerifications } = usePendingCount();
-
-  const todayISO = new Date().toISOString().slice(0, 10);
-  const { data: todayAttendance, isLoading: loadingAtt } = useAttendance({
-    date: todayISO, checkType: "CHECK_IN", limit: 1,
-  });
-
-  const totalInterns    = allInternsData?.total ?? 0;
-  const activeInterns   = activeInternsData?.total ?? 0;
-  const onboardingCount = onboardingInternsData?.total ?? 0;
-  const onboardingList  = onboardingInternsData?.data ?? [];
-  const pendingEvals    = pendingEvalsData?.total ?? 0;
-  const needsReview     = submittedTasksData?.total ?? 0;
-  const todayCheckIns   = todayAttendance?.total ?? 0;
+  const { data: stats, isLoading, isError, refetch } = useDashboardStats();
 
   return (
-    <div className="space-y-8">
-      {/* Welcome banner */}
-      <div className="animate-fade-up relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-violet-400 p-6 text-primary-foreground">
-        <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -bottom-4 right-12 h-24 w-24 rounded-full bg-white/10 blur-xl" />
-        <div className="relative">
-          <p className="text-sm font-medium opacity-80">Good {getTimeOfDay()}</p>
-          <h2 className="mt-0.5 text-2xl font-bold">{firstName} 👋</h2>
-          <p className="mt-1 text-sm opacity-70">
-            DAAR Communications intern programme overview
-          </p>
+    <div className="space-y-7">
+      <PageHeader
+        eyebrow={todayLabel()}
+        title={`${greeting()}, ${firstName}`}
+        actions={
+          <Button asChild>
+            <Link href="/interns/new"><Plus /> Add intern</Link>
+          </Button>
+        }
+      />
+
+      {isError ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-danger/30 bg-danger-soft px-5 py-4 text-sm text-danger-foreground">
+          Couldn&apos;t load the dashboard figures.
+          <Button variant="outline" size="sm" onClick={() => refetch()}>Try again</Button>
         </div>
-      </div>
+      ) : isLoading || !stats ? (
+        <>
+          <Skeleton className="h-[74px] w-full rounded-xl" />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[112px] rounded-xl" />)}</div>
+          <Skeleton className="h-[300px] w-full rounded-xl" />
+        </>
+      ) : (
+        <>
+          <NeedsAttention stats={stats} />
 
-      {/* Primary stats */}
-      <div>
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground animate-fade-up delay-50">
-          Overview
-        </h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Total interns"
-            value={totalInterns}
-            description="All records"
-            icon={Users}
-            href="/interns"
-            iconBg="bg-violet-500"
-            cardBg="bg-card-violet"
-            loading={loadingAll}
-            delay={100}
-          />
-          <StatCard
-            label="Active"
-            value={activeInterns}
-            description="Currently placed"
-            icon={CheckSquare}
-            href="/interns"
-            iconBg="bg-emerald-500"
-            cardBg="bg-card-emerald"
-            loading={loadingActive}
-            delay={150}
-          />
-          <StatCard
-            label="Onboarding"
-            value={onboardingCount}
-            description="Awaiting completion"
-            icon={ClipboardCheck}
-            href="/onboarding"
-            iconBg="bg-amber-500"
-            cardBg="bg-card-amber"
-            loading={loadingOnb}
-            delay={200}
-          />
-          <StatCard
-            label="Check-ins today"
-            value={todayCheckIns}
-            description="Attendance recorded"
-            icon={CalendarDays}
-            href="/attendance"
-            iconBg="bg-blue-500"
-            cardBg="bg-card-blue"
-            loading={loadingAtt}
-            delay={250}
-          />
-        </div>
-      </div>
-
-      {/* Action needed */}
-      <div>
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground animate-fade-up delay-200">
-          Needs attention
-        </h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Pending verifications"
-            value={pendingVerifications ?? 0}
-            description="Awaiting HR approval"
-            icon={UserCheck}
-            href="/verification"
-            iconBg={(pendingVerifications ?? 0) > 0 ? "bg-amber-500" : "bg-muted-foreground"}
-            loading={loadingVerifications}
-            alert={(pendingVerifications ?? 0) > 0}
-            delay={300}
-          />
-          <StatCard
-            label="Tasks to review"
-            value={needsReview}
-            description="Submitted submissions"
-            icon={Clock}
-            href="/tasks"
-            iconBg={needsReview > 0 ? "bg-orange-500" : "bg-muted-foreground"}
-            loading={loadingTasks}
-            alert={needsReview > 5}
-            delay={300}
-          />
-          <StatCard
-            label="Pending evaluations"
-            value={pendingEvals}
-            description="Drafts not submitted"
-            icon={Star}
-            href="/evaluations"
-            iconBg={pendingEvals > 0 ? "bg-violet-500" : "bg-muted-foreground"}
-            loading={loadingEvals}
-            alert={pendingEvals > 3}
-            delay={350}
-          />
-          <StatCard
-            label="Onboarding"
-            value={onboardingCount}
-            description="Setup pending"
-            icon={AlertTriangle}
-            href="/onboarding"
-            iconBg={onboardingCount > 0 ? "bg-amber-400" : "bg-muted-foreground"}
-            loading={loadingOnb}
-            delay={400}
-          />
-        </div>
-      </div>
-
-      {/* Trend + Upcoming */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <AttendanceTrendCard />
-        <UpcomingEndingsCard />
-      </div>
-
-      {/* Currently onboarding */}
-      {onboardingList.length > 0 && (
-        <div className="animate-fade-up delay-400 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Currently onboarding</h3>
-            <Button variant="ghost" size="sm" asChild className="text-xs cursor-pointer">
-              <Link href="/onboarding">
-                View all <ArrowRight className="ml-1 h-3 w-3" />
-              </Link>
-            </Button>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <StatTile
+              label="Active interns"
+              value={stats.interns.byStatus.ACTIVE}
+              sub={`${stats.interns.activeByType.INTERNSHIP} interns · ${stats.interns.activeByType.NYSC_IT} corps members`}
+              href="/interns"
+            />
+            <StatTile
+              label="Checked in today"
+              value={stats.today.checkedIn}
+              of={stats.interns.byStatus.ACTIVE}
+              sub={stats.today.averageArrival ? <>Average arrival <span className="font-mono">{stats.today.averageArrival}</span></> : "No check-ins yet"}
+              href="/attendance"
+            />
+            <StatTile
+              label="Onboarding"
+              value={stats.interns.byStatus.ONBOARDING}
+              sub="Finishing their setup"
+              href="/onboarding"
+            />
+            <StatTile
+              label="Waiting for review"
+              value={stats.pending.tasksToReview + stats.pending.reportsToReview}
+              sub={`${stats.pending.tasksToReview} tasks · ${stats.pending.reportsToReview} reports`}
+              href="/tasks"
+            />
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {onboardingList.map((intern, i) => (
-              <Link key={intern._id} href={`/interns/${intern._id}`}>
-                <div
-                  className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-3.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer animate-fade-up"
-                  style={{ animationDelay: `${450 + i * 50}ms` }}
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                    {intern.firstName[0]}{intern.lastName[0]}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
-                      {intern.firstName} {intern.lastName}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">{intern.institution}</p>
-                  </div>
-                  <Badge variant="secondary" className="ml-auto shrink-0 text-[10px]">
-                    Onboarding
-                  </Badge>
-                </div>
-              </Link>
-            ))}
+
+          <div className="flex flex-wrap gap-3">
+            <WeekChart stats={stats} />
+            <SubsidiaryBreakdown stats={stats} />
           </div>
-        </div>
+        </>
       )}
 
-      {/* Quick actions */}
-      <div className="animate-fade-up delay-400 space-y-3">
-        <h3 className="text-sm font-semibold">Quick actions</h3>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <QuickAction label="Add intern"       href="/interns/new"  icon={Users}        iconBg="bg-violet-500" delay={500} />
-          <QuickAction label="Review documents" href="/documents"    icon={ClipboardCheck} iconBg="bg-blue-500"   delay={540} />
-          <QuickAction label="Departments"      href="/departments"  icon={BookOpen}     iconBg="bg-emerald-500" delay={580} />
-          <QuickAction label="Exit management"  href="/exit"         icon={Timer}        iconBg="bg-amber-500"  delay={620} />
-        </div>
+      <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
+        <ReviewQueue />
+        <EndingSoon />
       </div>
     </div>
   );
@@ -621,145 +347,60 @@ function HRDashboard({ firstName }: { firstName: string }) {
 // ─── Supervisor dashboard ─────────────────────────────────────────────────────
 
 function SupervisorDashboard({ firstName }: { firstName: string }) {
-  const { data: meData }      = useSupervisorMe();
-  const supervisorId          = meData?.data?.supervisor?._id ?? "";
-  const { data: internsData } = useSupervisorInterns(supervisorId);
-
-  const interns     = internsData?.data?.interns ?? [];
+  const { data: meData } = useSupervisorMe();
+  const me = meData?.data?.supervisor;
+  const { data: internsData, isLoading } = useSupervisorInterns(me?._id ?? "");
+  const interns = internsData?.data?.interns ?? [];
   const activeCount = interns.filter((i) => i.status === "ACTIVE").length;
-
-  const { data: submittedTasksData } = useTasks({ status: "SUBMITTED", limit: 1 });
-  const pendingTasks = submittedTasksData?.total ?? 0;
-
-  const { data: draftEvalsData } = useEvaluations({ status: "DRAFT", limit: 1 });
-  const draftEvals = draftEvalsData?.total ?? 0;
+  const submitted = useTasks({ status: "SUBMITTED", limit: 1 });
+  const drafts = useEvaluations({ status: "DRAFT", limit: 1 });
 
   return (
-    <div className="space-y-8">
-      {/* Welcome banner */}
-      <div className="animate-fade-up relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-violet-400 p-6 text-primary-foreground">
-        <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-        <div className="relative">
-          <p className="text-sm font-medium opacity-80">Good {getTimeOfDay()}</p>
-          <h2 className="mt-0.5 text-2xl font-bold">{firstName} 👋</h2>
-          <p className="mt-1 text-sm opacity-70">Your supervision workspace at DAAR Communications</p>
-        </div>
+    <div className="space-y-7">
+      <PageHeader
+        eyebrow={todayLabel()}
+        title={`${greeting()}, ${firstName}`}
+        description={me?.department ? `${me.department.name}${me.department.subsidiary ? ` · ${me.department.subsidiary}` : ""}` : undefined}
+        actions={<Button asChild><Link href="/tasks/new"><Plus /> New task</Link></Button>}
+      />
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile label="Your interns" value={interns.length} loading={isLoading} href="/interns" />
+        <StatTile label="Active" value={activeCount} loading={isLoading} />
+        <StatTile label="Tasks to review" value={submitted.data?.total ?? 0} loading={submitted.isLoading} href="/tasks" />
+        <StatTile label="Draft evaluations" value={drafts.data?.total ?? 0} loading={drafts.isLoading} href="/evaluations" sub="Not yet submitted" />
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Assigned interns"
-          value={interns.length}
-          description="Under your supervision"
-          icon={Users}
-          iconBg="bg-violet-500"
-          cardBg="bg-card-violet"
-          delay={100}
-        />
-        <StatCard
-          label="Active"
-          value={activeCount}
-          description="Currently placed"
-          icon={CheckSquare}
-          iconBg="bg-emerald-500"
-          cardBg="bg-card-emerald"
-          delay={150}
-        />
-        <StatCard
-          label="Tasks to review"
-          value={pendingTasks}
-          description="Submitted submissions"
-          icon={Clock}
-          href="/tasks"
-          iconBg="bg-amber-500"
-          cardBg="bg-card-amber"
-          alert={pendingTasks > 5}
-          delay={200}
-        />
-        <StatCard
-          label="Draft evaluations"
-          value={draftEvals}
-          description="Not yet submitted"
-          icon={Star}
-          href="/evaluations"
-          iconBg="bg-violet-500"
-          cardBg="bg-card-violet"
-          delay={250}
-        />
-      </div>
-
-      {/* Intern list */}
-      <div className="animate-fade-up delay-300 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Your interns</h3>
-          <Button variant="ghost" size="sm" asChild className="text-xs cursor-pointer">
-            <Link href="/interns">
-              View all <ArrowRight className="ml-1 h-3 w-3" />
-            </Link>
-          </Button>
-        </div>
-
-        {interns.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-12 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
-              <Users className="h-5 w-5 text-muted-foreground/50" />
+      <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
+        <Section title="Your interns" action={<Link href="/interns" className="text-[13px] font-medium text-primary hover:underline">View all</Link>}>
+          {isLoading ? (
+            <div className="space-y-2 p-5">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+          ) : interns.length === 0 ? (
+            <div className="px-5 py-10 text-center">
+              <p className="text-sm font-medium">No interns assigned yet</p>
+              <p className="mt-1 text-xs text-muted-foreground">HR assigns interns to you from their profile.</p>
             </div>
-            <p className="text-sm font-semibold">No interns assigned yet</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Contact HR to get interns assigned to your profile.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {interns.map((intern, i) => (
-              <Link key={intern._id} href={`/interns/${intern._id}`}>
-                <div
-                  className="group flex items-center gap-4 rounded-2xl border border-border/60 bg-card px-4 py-3.5 cursor-pointer hover-lift animate-fade-up"
-                  style={{ animationDelay: `${350 + i * 40}ms` }}
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                    {intern.firstName[0]}{intern.lastName[0]}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">
-                      {intern.firstName} {intern.lastName}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {intern.institution} · {intern.course}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <Badge variant={STATUS_VARIANT[intern.status]} className="text-xs">
-                      {intern.status}
-                    </Badge>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0.5" />
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+          ) : (
+            <ul>
+              {interns.map((i, k) => {
+                const p = programmeProgress(i.startDate, i.endDate);
+                return (
+                  <li key={i._id} className={cn(k > 0 && "border-t")}>
+                    <Link href={`/interns/${i._id}`} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 text-sm transition-colors hover:bg-muted/40">
+                      <span className="min-w-[200px] flex-1">
+                        <PersonCell firstName={i.firstName} lastName={i.lastName} sub={`${INTERNSHIP_TYPE_LABEL[i.internshipType]} · ${i.department?.name ?? "No department"}`} />
+                      </span>
+                      {p && <span className="font-mono text-xs text-muted-foreground tabular">Wk {p.week}/{p.totalWeeks}</span>}
+                      <StatusBadge status={i.status} />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Section>
+        <ReviewQueue />
       </div>
-
-      <Separator />
-
-      {meData?.data?.supervisor?.department && (
-        <div className="animate-fade-up delay-400 flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-            <BookOpen className="h-4 w-4 text-primary" />
-          </div>
-          <div className="text-sm">
-            <span className="text-muted-foreground">Department: </span>
-            <span className="font-semibold">{meData.data.supervisor.department.name}</span>
-            {meData.data.supervisor.department.subsidiary && (
-              <span className="ml-1 text-muted-foreground">
-                · {meData.data.supervisor.department.subsidiary}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -769,8 +410,7 @@ function SupervisorDashboard({ firstName }: { firstName: string }) {
 export default function DashboardPage() {
   const { user } = useAuth();
   if (!user) return null;
-
   return user.role === "SUPERVISOR"
     ? <SupervisorDashboard firstName={user.firstName} />
-    : <HRDashboard         firstName={user.firstName} />;
+    : <HRDashboard firstName={user.firstName} />;
 }

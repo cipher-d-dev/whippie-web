@@ -58,10 +58,10 @@ function Field({ label, error, children }: { label: React.ReactNode; error?: str
 }
 
 const SUBSIDIARY_COLORS: Record<string, string> = {
-  AIT:       "bg-blue-100 text-blue-700",
-  Raypower:  "bg-purple-100 text-purple-700",
-  Faaji:     "bg-orange-100 text-orange-700",
-  Corporate: "bg-slate-100 text-slate-700",
+  AIT:       "bg-info-soft text-info-foreground",
+  Raypower:  "bg-info-soft text-info-foreground",
+  Faaji:     "bg-warning-soft text-warning-foreground",
+  Corporate: "bg-muted text-muted-foreground",
 };
 
 // ─── Department form (shared for create + edit) ───────────────────────────────
@@ -174,7 +174,7 @@ export default function DepartmentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Departments</h2>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Departments</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {departments.length} department{departments.length !== 1 ? "s" : ""} across all subsidiaries
           </p>
@@ -239,7 +239,7 @@ export default function DepartmentsPage() {
                     {dept.subsidiary}
                   </span>
                 )}
-                <Badge variant={dept.isActive ? "default" : "outline"} className="text-xs">
+                <Badge variant={dept.isActive ? "success" : "neutral"}>
                   {dept.isActive ? "Active" : "Inactive"}
                 </Badge>
               </div>

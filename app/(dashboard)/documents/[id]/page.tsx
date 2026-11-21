@@ -14,6 +14,7 @@ import { useDocument, useMarkPhysical, useReviewDocument } from "@/features/docu
 import { getDownloadUrl } from "@/features/documents/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -185,30 +186,22 @@ export default function DocumentDetailPage({
         </Button>
         <div className="mt-2 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold">
+            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">
               {requirement ? requirement.label : "Document"}
-            </h2>
+            </h1>
             {intern && (
               <p className="mt-0.5 text-sm text-muted-foreground">
                 {intern.firstName} {intern.lastName}
               </p>
             )}
           </div>
-          <Badge
-            variant={
-              doc.status === "VERIFIED"   ? "default"     :
-              doc.status === "REJECTED"   ? "destructive" :
-              doc.status === "PENDING"    ? "outline"     : "secondary"
-            }
-          >
-            {STATUS_LABELS[doc.status]}
-          </Badge>
+          <StatusBadge status={doc.status} label={STATUS_LABELS[doc.status]} />
         </div>
       </div>
 
       {/* Status timeline */}
       <Card>
-        <CardContent className="flex justify-center overflow-x-auto pt-6 pb-5">
+        <CardContent className="relative flex justify-center overflow-x-auto pt-6 pb-5">
           <StatusTimeline current={doc.status} />
         </CardContent>
       </Card>
@@ -216,7 +209,7 @@ export default function DocumentDetailPage({
       {/* Document info */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
             Document details
           </CardTitle>
         </CardHeader>
@@ -263,7 +256,7 @@ export default function DocumentDetailPage({
             <>
               <Button
                 variant="default"
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-success hover:bg-success"
                 onClick={() => setVerifyOpen(true)}
               >
                 <CheckCircle2 className="mr-2 h-4 w-4" />
@@ -306,7 +299,7 @@ export default function DocumentDetailPage({
           </div>
           <DialogFooter>
             <Button
-              className="w-full bg-emerald-600 hover:bg-emerald-700"
+              className="w-full bg-success hover:bg-success"
               disabled={reviewMut.isPending}
               onClick={() => reviewMut.mutate({ status: "VERIFIED", notes: verifyNotes || undefined })}
             >

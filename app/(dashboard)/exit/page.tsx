@@ -4,6 +4,7 @@ import Link from "next/link";
 import { DoorOpen, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
 import { useInterns } from "@/features/interns/hooks";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import type { InternObject, InternshipStatus } from "@/types";
 
@@ -18,14 +19,14 @@ function daysUntil(iso?: string): number | null {
 function urgencyConfig(days: number | null): {
   label: string;
   rowClass: string;
-  badgeVariant: "destructive" | "secondary" | "outline" | "default";
+  badgeVariant: "danger" | "warning" | "info" | "neutral";
   icon: React.ReactNode;
 } {
-  if (days === null)  return { label: "No end date", rowClass: "", badgeVariant: "outline", icon: <Clock className="h-3.5 w-3.5" /> };
-  if (days < 0)       return { label: "Overdue",    rowClass: "bg-rose-50/60 dark:bg-rose-950/20",   badgeVariant: "destructive", icon: <AlertTriangle className="h-3.5 w-3.5" /> };
-  if (days <= 14)     return { label: `${days}d left`, rowClass: "bg-amber-50/60 dark:bg-amber-950/20", badgeVariant: "secondary",   icon: <AlertTriangle className="h-3.5 w-3.5" /> };
-  if (days <= 30)     return { label: `${days}d left`, rowClass: "bg-blue-50/40 dark:bg-blue-950/10",   badgeVariant: "secondary",   icon: <Clock className="h-3.5 w-3.5" /> };
-  return              { label: `${days}d left`, rowClass: "", badgeVariant: "outline", icon: <Clock className="h-3.5 w-3.5" /> };
+  if (days === null)  return { label: "No end date", rowClass: "", badgeVariant: "neutral", icon: <Clock className="h-3.5 w-3.5" /> };
+  if (days < 0)       return { label: "Overdue",    rowClass: "bg-danger-soft/60 ",   badgeVariant: "danger", icon: <AlertTriangle className="h-3.5 w-3.5" /> };
+  if (days <= 14)     return { label: `${days}d left`, rowClass: "bg-warning-soft/60 ", badgeVariant: "warning",   icon: <AlertTriangle className="h-3.5 w-3.5" /> };
+  if (days <= 30)     return { label: `${days}d left`, rowClass: "bg-info-soft/40 ",   badgeVariant: "info",   icon: <Clock className="h-3.5 w-3.5" /> };
+  return              { label: `${days}d left`, rowClass: "", badgeVariant: "neutral", icon: <Clock className="h-3.5 w-3.5" /> };
 }
 
 function fmt(iso?: string) {
@@ -56,9 +57,7 @@ function InternExitRow({ intern }: { intern: InternObject }) {
           <Link href={`/exit/${intern._id}`} className="text-sm font-semibold hover:underline">
             {intern.firstName} {intern.lastName}
           </Link>
-          <Badge variant={STATUS_VARIANT[intern.status]} className="text-[10px]">
-            {intern.status}
-          </Badge>
+          <StatusBadge status={intern.status} />
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground truncate">
           {intern.institution} · {intern.course}
@@ -72,7 +71,7 @@ function InternExitRow({ intern }: { intern: InternObject }) {
         <p className="text-xs text-muted-foreground">{fmt(intern.endDate)}</p>
         <Badge
           variant={config.badgeVariant}
-          className="inline-flex items-center gap-1 text-[10px]"
+          dot={false}
         >
           {config.icon}
           {config.label}
@@ -112,17 +111,17 @@ export default function ExitPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold">Exit & Completion</h2>
+        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Exit & Completion</h1>
         <p className="mt-0.5 text-sm text-muted-foreground">
           {!isLoading && `${allInterns.length} active intern${allInterns.length !== 1 ? "s" : ""}`}
           {overdue.length > 0 && (
-            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700">
+            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-danger-soft px-2 py-0.5 text-xs font-medium text-danger-foreground">
               <AlertTriangle className="h-3 w-3" />
               {overdue.length} overdue
             </span>
           )}
           {soonCount > 0 && (
-            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+            <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning-foreground">
               <Clock className="h-3 w-3" />
               {soonCount} ending within 30 days
             </span>
@@ -132,9 +131,9 @@ export default function ExitPage() {
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 rounded-lg border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-400" />Overdue</span>
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" />Ending within 14 days</span>
-        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-400" />Ending within 30 days</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-danger" />Overdue</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-warning" />Ending within 14 days</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-info" />Ending within 30 days</span>
       </div>
 
       {/* List */}
@@ -168,20 +167,20 @@ function CompletedSection() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+        <CheckCircle2 className="h-4 w-4 text-success-foreground" />
         <h3 className="text-sm font-semibold">Recently completed ({data?.total})</h3>
       </div>
       <div className="space-y-2">
         {completed.map((intern) => (
           <div key={intern._id} className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3 opacity-75">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-success-soft text-xs font-bold text-success-foreground">
               {intern.firstName[0]}{intern.lastName[0]}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">{intern.firstName} {intern.lastName}</p>
               <p className="text-xs text-muted-foreground">{intern.institution}</p>
             </div>
-            <Badge variant="secondary" className="text-xs shrink-0">Completed</Badge>
+            <StatusBadge status="COMPLETED" className="shrink-0" />
             <p className="text-xs text-muted-foreground shrink-0">{fmt(intern.completedAt)}</p>
           </div>
         ))}

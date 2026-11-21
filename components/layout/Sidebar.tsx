@@ -9,7 +9,7 @@ import {
   CalendarDays,
   CheckSquare,
   FileText,
-  UserCog,
+  BriefcaseBusiness,
   FolderOpen,
   Star,
   DoorOpen,
@@ -17,7 +17,7 @@ import {
   Building2,
   Bell,
   UserCheck,
-  Settings,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/context";
@@ -26,41 +26,73 @@ import { usePendingCount } from "@/features/users/hooks";
 import { WhippieLogo } from "@/components/shared/WhippieLogo";
 import { toast } from "sonner";
 
-// ─── Nav items ────────────────────────────────────────────────────────────────
+// ─── Nav structure ────────────────────────────────────────────────────────────
+
+type BadgeKey = "notifications" | "verification";
 
 interface NavItem {
   label: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  badge?: BadgeKey;
 }
 
-const hrNav: NavItem[] = [
-  { label: "Dashboard",     href: "/dashboard",          icon: LayoutDashboard },
-  { label: "Verification",  href: "/verification",       icon: UserCheck },
-  { label: "Interns",       href: "/interns",            icon: Users },
-  { label: "Documents",     href: "/documents/generate", icon: FolderOpen },
-  { label: "Departments",   href: "/departments",        icon: Building2 },
-  { label: "Onboarding",    href: "/onboarding",         icon: ClipboardCheck },
-  { label: "Attendance",    href: "/attendance",         icon: CalendarDays },
-  { label: "Tasks",         href: "/tasks",              icon: CheckSquare },
-  { label: "Reports",       href: "/reports",            icon: FileText },
-  { label: "Supervisors",   href: "/supervisors",        icon: UserCog },
-  { label: "Evaluations",   href: "/evaluations",        icon: Star },
-  { label: "Exit",          href: "/exit",               icon: DoorOpen },
-  { label: "Notifications", href: "/notifications",      icon: Bell },
-  { label: "Settings",      href: "/settings",           icon: Settings },
+interface NavGroup {
+  label?: string;
+  items: NavItem[];
+}
+
+const hrNav: NavGroup[] = [
+  {
+    label: "Overview",
+    items: [
+      { label: "Dashboard",     href: "/dashboard",     icon: LayoutDashboard },
+      { label: "Notifications", href: "/notifications", icon: Bell, badge: "notifications" },
+    ],
+  },
+  {
+    label: "People",
+    items: [
+      { label: "Verification", href: "/verification", icon: UserCheck, badge: "verification" },
+      { label: "Interns",      href: "/interns",      icon: Users },
+      { label: "Supervisors",  href: "/supervisors",  icon: BriefcaseBusiness },
+      { label: "Departments",  href: "/departments",  icon: Building2 },
+    ],
+  },
+  {
+    label: "Programme",
+    items: [
+      { label: "Onboarding",  href: "/onboarding",         icon: ClipboardCheck },
+      { label: "Attendance",  href: "/attendance",         icon: CalendarDays },
+      { label: "Tasks",       href: "/tasks",              icon: CheckSquare },
+      { label: "Reports",     href: "/reports",            icon: FileText },
+      { label: "Evaluations", href: "/evaluations",        icon: Star },
+      { label: "Documents",   href: "/documents/generate", icon: FolderOpen },
+      { label: "Exit",        href: "/exit",               icon: DoorOpen },
+    ],
+  },
 ];
 
-const supervisorNav: NavItem[] = [
-  { label: "Dashboard",     href: "/dashboard",          icon: LayoutDashboard },
-  { label: "My Interns",    href: "/interns",            icon: Users },
-  { label: "Documents",     href: "/documents/generate", icon: FolderOpen },
-  { label: "Tasks",         href: "/tasks",              icon: CheckSquare },
-  { label: "Reports",       href: "/reports",            icon: FileText },
-  { label: "Evaluations",   href: "/evaluations",        icon: Star },
-  { label: "Notifications", href: "/notifications",      icon: Bell },
-  { label: "Settings",      href: "/settings",           icon: Settings },
+const supervisorNav: NavGroup[] = [
+  {
+    items: [
+      { label: "Dashboard",     href: "/dashboard",          icon: LayoutDashboard },
+      { label: "My interns",    href: "/interns",            icon: Users },
+      { label: "Tasks",         href: "/tasks",              icon: CheckSquare },
+      { label: "Reports",       href: "/reports",            icon: FileText },
+      { label: "Evaluations",   href: "/evaluations",        icon: Star },
+      { label: "Documents",     href: "/documents/generate", icon: FolderOpen },
+      { label: "Notifications", href: "/notifications",      icon: Bell, badge: "notifications" },
+    ],
+  },
 ];
+
+function isActivePath(pathname: string, href: string) {
+  if (href === "/dashboard") return pathname === href;
+  // "/documents/generate" should light up for every /documents page
+  const base = href.startsWith("/documents") ? "/documents" : href;
+  return pathname === base || pathname.startsWith(base + "/") || pathname === href;
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -68,10 +100,15 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router   = useRouter();
   const { user, logout } = useAuth();
-  const unreadCount = useUnreadCount().data ?? 0;
+  const isHR = user?.role === "HR";
+  const unreadCount  = useUnreadCount().data ?? 0;
   const pendingCount = usePendingCount().data ?? 0;
 
-  const navItems = user?.role === "SUPERVISOR" ? supervisorNav : hrNav;
+  const groups = isHR ? hrNav : supervisorNav;
+  const counts: Record<BadgeKey, number> = {
+    notifications: unreadCount,
+    verification: isHR ? pendingCount : 0,
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -79,120 +116,118 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     router.replace("/login");
   };
 
-  const initials = user
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : "?";
+  const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "?";
 
   return (
-    <aside className="flex w-60 flex-col bg-card border-r border-border/60">
+    <aside className="flex h-full w-[236px] flex-col gap-4 px-2 py-3" aria-label="Sidebar">
       {/* Brand */}
-      <div className="flex h-14 items-center px-5 border-b border-border/60">
-        <div className="flex items-center gap-2.5">
-          <WhippieLogo size={28} />
-          <span className="text-base font-bold tracking-tight text-foreground">
-            Whippie
-          </span>
-        </div>
+      <div className="flex items-center gap-2.5 px-2.5 pt-1">
+        <WhippieLogo size={26} />
+        <span className="flex-1 text-[17px] font-semibold tracking-[-0.02em] text-foreground">Whippie</span>
+        <span
+          className={cn(
+            "rounded-md px-1.5 py-0.5 text-[11px] font-semibold",
+            isHR ? "bg-accent text-accent-foreground" : "bg-border text-secondary-foreground"
+          )}
+        >
+          {isHR ? "HR" : "Supervisor"}
+        </span>
       </div>
 
       {/* Navigation */}
-      <nav
-        className="flex-1 overflow-y-auto py-3 scrollbar-thin"
-        role="navigation"
-        aria-label="Main navigation"
-      >
-        <ul className="space-y-0.5 px-2">
-          {navItems.map((item, i) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/dashboard" && pathname.startsWith(item.href));
-            const Icon = item.icon;
-            const isNotif = item.href === "/notifications";
-            const isVerification = item.href === "/verification";
-            const badgeCount = isNotif ? unreadCount : isVerification ? pendingCount : 0;
-
-            return (
-              <li
-                key={item.href}
-                className="animate-fade-up"
-                style={{ animationDelay: `${i * 30}ms` }}
-              >
-                <Link
-                  href={item.href}
-                  onClick={onNavigate}
-                  aria-current={isActive ? "page" : undefined}
-                  className={cn(
-                    "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 cursor-pointer",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                  )}
-                >
-                  {/* Active left indicator */}
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary-foreground/40" />
-                  )}
-
-                  <Icon className={cn(
-                    "h-4 w-4 shrink-0 transition-transform duration-200",
-                    isActive ? "" : "group-hover:scale-110"
-                  )} />
-
-                  <span className="flex-1 truncate">{item.label}</span>
-
-                  {/* Badge for notifications or verification queue */}
-                  {badgeCount > 0 && (
-                    <span className={cn(
-                      "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold",
-                      isActive
-                        ? "bg-primary-foreground/20 text-primary-foreground"
-                        : isVerification
-                          ? "bg-amber-500 text-white animate-pulse-dot"
-                          : "bg-primary text-primary-foreground animate-pulse-dot"
-                    )}>
-                      {badgeCount > 9 ? "9+" : badgeCount}
-                    </span>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <nav className="flex-1 space-y-4 overflow-y-auto" aria-label="Main navigation">
+        {groups.map((group, gi) => (
+          <div key={group.label ?? gi} className="space-y-0.5">
+            {group.label && (
+              <p className="px-2.5 pb-1 text-[11px] font-medium text-muted-foreground">{group.label}</p>
+            )}
+            <ul className="space-y-0.5">
+              {group.items.map((item) => {
+                const active = isActivePath(pathname, item.href);
+                const Icon = item.icon;
+                const count = item.badge ? counts[item.badge] : 0;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={onNavigate}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "flex h-[34px] items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-colors",
+                        active
+                          ? "bg-card text-foreground shadow-[0_1px_2px_rgba(13,18,32,0.06),0_0_0_1px_hsl(var(--border))]"
+                          : "text-secondary-foreground hover:bg-black/[0.04] hover:text-foreground dark:hover:bg-white/[0.05]"
+                      )}
+                    >
+                      <Icon
+                        className={cn("h-[17px] w-[17px] shrink-0", active ? "text-primary" : "text-muted-foreground")}
+                        strokeWidth={1.8}
+                      />
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {count > 0 && (
+                        <span
+                          className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 font-mono text-[11px] font-medium text-primary-foreground"
+                          aria-label={`${count} ${item.badge === "verification" ? "waiting" : "unread"}`}
+                        >
+                          {count > 99 ? "99+" : count}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
 
-      {/* User footer */}
-      <div className="border-t border-border/60 p-3 space-y-1">
+      {/* Footer */}
+      <div className="space-y-1">
+        <Link
+          href="/settings"
+          onClick={onNavigate}
+          aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+          className={cn(
+            "flex h-[34px] items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-colors",
+            pathname.startsWith("/settings")
+              ? "bg-card text-foreground shadow-[0_0_0_1px_hsl(var(--border))]"
+              : "text-secondary-foreground hover:bg-black/[0.04] hover:text-foreground dark:hover:bg-white/[0.05]"
+          )}
+        >
+          <SlidersHorizontal className="h-[17px] w-[17px] text-muted-foreground" strokeWidth={1.8} />
+          Settings
+        </Link>
         {user && (
-          <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 bg-accent/50">
+          <div className="flex items-center gap-2.5 rounded-xl border bg-card p-2">
             {user.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={user.avatarUrl}
-                alt={`${user.firstName} ${user.lastName}`}
-                className="h-8 w-8 shrink-0 rounded-full object-cover border border-border"
+                alt=""
+                className="h-8 w-8 shrink-0 rounded-full object-cover"
               />
             ) : (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-accent-foreground">
                 {initials}
-              </div>
+              </span>
             )}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-foreground">
+              <p className="truncate text-[13px] font-medium text-foreground">
                 {user.firstName} {user.lastName}
               </p>
-              <p className="text-[11px] text-muted-foreground capitalize">
-                {user.role.toLowerCase().replace("_", " ")}
-              </p>
+              <p className="truncate text-xs text-muted-foreground">{isHR ? "HR" : "Supervisor"}</p>
             </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Log out"
+              title="Log out"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-danger-soft hover:text-danger-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         )}
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-        >
-          <LogOut className="h-4 w-4" />
-          Log out
-        </button>
       </div>
     </aside>
   );

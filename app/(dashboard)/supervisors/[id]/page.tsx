@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -144,10 +145,10 @@ export default function SupervisorDetailPage({
             </Link>
           </Button>
           <div className="mt-2 flex items-center gap-3">
-            <h2 className="text-xl font-semibold">
+            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">
               {supervisor.firstName} {supervisor.lastName}
-            </h2>
-            <Badge variant={supervisor.isActive ? "default" : "outline"}>
+            </h1>
+            <Badge variant={supervisor.isActive ? "success" : "neutral"}>
               {supervisor.isActive ? "Active" : "Inactive"}
             </Badge>
           </div>
@@ -161,7 +162,7 @@ export default function SupervisorDetailPage({
       {/* Profile */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
             Profile
           </CardTitle>
         </CardHeader>
@@ -182,7 +183,7 @@ export default function SupervisorDetailPage({
       {/* Assigned interns */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+          <CardTitle className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
             Assigned interns ({interns.length})
           </CardTitle>
         </CardHeader>
@@ -204,12 +205,7 @@ export default function SupervisorDetailPage({
                     </Link>
                     <p className="text-xs text-muted-foreground">{intern.institution} · {intern.course}</p>
                   </div>
-                  <Badge variant={
-                    intern.status === "ACTIVE" ? "default" :
-                    intern.status === "ONBOARDING" ? "secondary" : "outline"
-                  } className="text-xs">
-                    {intern.status}
-                  </Badge>
+                  <StatusBadge status={intern.status} />
                 </li>
               ))}
             </ul>
