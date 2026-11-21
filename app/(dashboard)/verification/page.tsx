@@ -1,22 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  UserCheck,
-  XCircle,
-  Clock,
-  Chrome,
-  Mail,
-  Loader2,
-  CheckCircle2,
-  UserPlus,
-  AlertTriangle,
-} from "lucide-react";
+import { Check, CheckCircle2, Loader2, UserPlus, X } from "lucide-react";
 import { useVerificationQueue, useApproveUser, useRejectUser, useUnlinkedInternUsers } from "@/features/users/hooks";
 import type { PendingUser } from "@/features/users/api";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -27,38 +17,21 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { PageHeader } from "@/components/shared/PageHeader";
+import { PersonAvatar } from "@/components/shared/PersonAvatar";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils/cn";
+import { fmtDate, fmtWhen } from "@/lib/utils/format";
 
 function daysUntil(iso: string): number {
-  return Math.ceil(
-    (new Date(iso).getTime() - Date.now()) / 86_400_000
-  );
+  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
 }
 
-function initials(first: string, last: string): string {
-  return `${first[0] ?? ""}${last[0] ?? ""}`.toUpperCase();
-}
+const METHOD_LABEL: Record<string, string> = { PASSWORD: "Email & password", GOOGLE: "Google", BOTH: "Google and password" };
 
 // ─── Reject dialog ────────────────────────────────────────────────────────────
 
-function RejectDialog({
-  user,
-  open,
-  onClose,
-}: {
-  user: PendingUser | null;
-  open: boolean;
-  onClose: () => void;
-}) {
+function RejectDialog({ user, open, onClose, onDone }: { user: PendingUser | null; open: boolean; onClose: () => void; onDone: () => void }) {
   const reject = useRejectUser();
   const [reason, setReason] = useState("");
 
@@ -66,7 +39,7 @@ function RejectDialog({
     if (!user || !reason.trim()) return;
     reject.mutate(
       { userId: user._id, reason: reason.trim() },
-      { onSuccess: () => { setReason(""); onClose(); } }
+      { onSuccess: () => { setReason(""); onClose(); onDone(); } }
     );
   };
 
@@ -74,9 +47,9 @@ function RejectDialog({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Reject account</DialogTitle>
+          <DialogTitle>Reject {user ? `${user.firstName} ${user.lastName}` : "account"}?</DialogTitle>
           <DialogDescription>
-            {user && `Reject ${user.firstName} ${user.lastName} (${user.email}). A rejection email will be sent with your reason.`}
+            {user && `We'll email ${user.email} with the reason you give below.`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
@@ -90,19 +63,9 @@ function RejectDialog({
           />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleReject}
-            disabled={!reason.trim() || reject.isPending}
-          >
-            {reject.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <XCircle className="mr-2 h-4 w-4" />
-            )}
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="destructive" onClick={handleReject} disabled={!reason.trim() || reject.isPending}>
+            {reject.isPending && <Loader2 className="animate-spin" />}
             Reject account
           </Button>
         </DialogFooter>
@@ -111,282 +74,229 @@ function RejectDialog({
   );
 }
 
-// ─── Pending user card ────────────────────────────────────────────────────────
+// ─── Detail panel ─────────────────────────────────────────────────────────────
 
-function PendingUserCard({
+function Detail({
   user,
   onApprove,
   onReject,
   approving,
 }: {
   user: PendingUser;
-  onApprove: (user: PendingUser) => void;
-  onReject: (user: PendingUser) => void;
+  onApprove: () => void;
+  onReject: () => void;
   approving: boolean;
 }) {
   const days = daysUntil(user.verificationExpiresAt);
-  const isExpiringSoon = days <= 7;
+  const fields = [
+    { k: "Signed up", v: fmtDate(user.createdAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) },
+    { k: "Sign-in method", v: METHOD_LABEL[user.authMethod] ?? user.authMethod },
+    { k: "Requested role", v: user.role.charAt(0) + user.role.slice(1).toLowerCase() },
+  ];
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-border/60 bg-card p-4 transition-all hover:shadow-sm">
-      {/* Avatar */}
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-        {initials(user.firstName, user.lastName)}
+    <section aria-label="Applicant" className="flex flex-col rounded-xl border">
+      <div className="flex flex-wrap items-center gap-4 border-b p-6">
+        <PersonAvatar firstName={user.firstName} lastName={user.lastName} size="xl" />
+        <div className="min-w-0 flex-1">
+          <p className="text-xl font-semibold tracking-[-0.02em]">{user.firstName} {user.lastName}</p>
+          <p className="truncate text-sm text-secondary-foreground">{user.email}</p>
+        </div>
+        <Badge variant="warning">Awaiting HR</Badge>
       </div>
 
-      {/* Info */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-semibold text-foreground">
-            {user.firstName} {user.lastName}
-          </p>
-          <Badge variant="outline" className="shrink-0 text-[10px]">
-            {user.role.toLowerCase()}
-          </Badge>
-        </div>
-        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Mail className="h-3 w-3" />
-            {user.email}
-          </span>
-          {user.authMethod === "GOOGLE" || user.authMethod === "BOTH" ? (
-            <span className="flex items-center gap-1">
-              <Chrome className="h-3 w-3" />
-              Google
-            </span>
-          ) : null}
-          <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {fmtDate(user.createdAt)}
-          </span>
-        </div>
-        {/* Expiry warning */}
-        {isExpiringSoon && (
-          <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-amber-600">
-            <AlertTriangle className="h-3 w-3" />
-            Account expires in {days} day{days !== 1 ? "s" : ""}
+      <dl className="grid gap-x-6 px-6 py-2 sm:grid-cols-3">
+        {fields.map((f) => (
+          <div key={f.k} className="border-b py-3.5 last:border-b-0 sm:border-b-0">
+            <dt className="text-xs text-muted-foreground">{f.k}</dt>
+            <dd className="mt-1 text-sm font-medium">{f.v}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="space-y-2 px-6">
+        <p className="flex items-center gap-2.5 rounded-lg bg-success-soft px-4 py-3 text-[13px] text-success-foreground">
+          <Check className="h-4 w-4 shrink-0" /> Email confirmed
+        </p>
+        {days <= 7 && (
+          <p className="rounded-lg bg-warning-soft px-4 py-3 text-[13px] text-warning-foreground">
+            This sign-up expires in {days} day{days === 1 ? "" : "s"} if you don&apos;t act on it.
           </p>
         )}
+        <p className="pt-1 text-[13px] text-muted-foreground">
+          Check the name and email belong to someone you expect. Internship type, institution, department and supervisor are added when you create their intern record.
+        </p>
       </div>
 
-      {/* Actions */}
-      <div className="flex shrink-0 items-center gap-2">
-        <Button
-          size="sm"
-          className="gap-1.5"
-          disabled={approving}
-          onClick={() => onApprove(user)}
-        >
-          {approving ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <UserCheck className="h-3.5 w-3.5" />
-          )}
-          Approve
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 p-6">
+        <Button variant="outline" className="text-danger-foreground" onClick={onReject}>
+          Reject…
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="text-destructive hover:bg-destructive/10"
-          onClick={() => onReject(user)}
-        >
-          <XCircle className="h-3.5 w-3.5" />
-        </Button>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">Sends a welcome email</span>
+          <Button onClick={onApprove} disabled={approving}>
+            {approving ? <Loader2 className="animate-spin" /> : <Check />}
+            Approve
+          </Button>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 
-// ─── Recently approved banner ─────────────────────────────────────────────────
-
-function ApprovedBanner({
-  userId,
-  name,
-  onDismiss,
-}: {
-  userId: string;
-  name: string;
-  onDismiss: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-800/40 dark:bg-emerald-950/20 px-4 py-3">
-      <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-          {name} approved
-        </p>
-        <p className="text-xs text-emerald-600/80 dark:text-emerald-500/70">
-          Welcome email sent. Create their intern record to get them started.
-        </p>
-      </div>
-      <Button size="sm" asChild className="shrink-0 gap-1.5">
-        <Link href={`/interns/new?userId=${userId}`}>
-          <UserPlus className="h-3.5 w-3.5" />
-          Add intern record
-        </Link>
-      </Button>
-      <button
-        onClick={onDismiss}
-        className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200 shrink-0"
-        aria-label="Dismiss"
-      >
-        <XCircle className="h-4 w-4" />
-      </button>
-    </div>
-  );
-}
-
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function VerificationQueuePage() {
-  const { data, isLoading, isError } = useVerificationQueue();
-  const { data: unlinkedData, isLoading: isLoadingUnlinked } = useUnlinkedInternUsers();
+  const { data, isLoading, isError, refetch } = useVerificationQueue();
+  const { data: unlinkedData } = useUnlinkedInternUsers();
   const approve = useApproveUser();
 
-  const [rejectUser_, setRejectUser] = useState<PendingUser | null>(null);
-  const [recentlyApproved, setRecentlyApproved] = useState<
-    { userId: string; name: string } | null
-  >(null);
+  const [tab, setTab] = useState<"pending" | "onboarding">("pending");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [rejecting, setRejecting] = useState<PendingUser | null>(null);
+  const [recentlyApproved, setRecentlyApproved] = useState<{ userId: string; name: string } | null>(null);
 
   const users = data?.data ?? [];
   const total = data?.total ?? 0;
-  const unlinkedUsers = unlinkedData?.data?.users ?? [];
+  const unlinked = unlinkedData?.data?.users ?? [];
+  const selected = users.find((u) => u._id === selectedId) ?? users[0] ?? null;
+
+  // Keep a valid selection as the queue changes
+  useEffect(() => {
+    if (!selectedId && users[0]) setSelectedId(users[0]._id);
+  }, [selectedId, users]);
+
+  const nextAfter = (id: string) => {
+    const i = users.findIndex((u) => u._id === id);
+    return users[i + 1]?._id ?? users[i - 1]?._id ?? null;
+  };
 
   const handleApprove = (user: PendingUser) => {
     approve.mutate(user._id, {
       onSuccess: () => {
-        setRecentlyApproved({
-          userId: user._id,
-          name: `${user.firstName} ${user.lastName}`,
-        });
+        setRecentlyApproved({ userId: user._id, name: `${user.firstName} ${user.lastName}` });
+        setSelectedId(nextAfter(user._id));
       },
     });
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-xl font-semibold">Verification Queue</h2>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          {!isLoading && `${total} account${total !== 1 ? "s" : ""} pending HR approval`}
-        </p>
-      </div>
-
-      {/* Recently approved */}
-      {recentlyApproved && (
-        <ApprovedBanner
-          userId={recentlyApproved.userId}
-          name={recentlyApproved.name}
-          onDismiss={() => setRecentlyApproved(null)}
-        />
-      )}
-
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {/* Error */}
-      {isError && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/5 py-12 text-center">
-          <p className="text-sm font-medium text-destructive">
-            Failed to load verification queue.
-          </p>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoading && !isError && users.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center">
-          <CheckCircle2 className="mb-3 h-10 w-10 text-emerald-500/40" />
-          <p className="text-sm font-semibold">No pending accounts</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            When interns sign up, their accounts will appear here for approval.
-          </p>
-        </div>
-      )}
-
-      {/* Queue */}
-      {!isLoading && !isError && users.length > 0 && (
-        <div className="space-y-3">
-          {users.map((user) => (
-            <PendingUserCard
-              key={user._id}
-              user={user}
-              onApprove={handleApprove}
-              onReject={setRejectUser}
-              approving={approve.isPending && approve.variables === user._id}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Unlinked Interns Section */}
-      {!isLoadingUnlinked && unlinkedUsers.length > 0 && (
-        <div className="mt-10 space-y-4 pt-6 border-t border-border/60">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-semibold text-foreground">
-                  Approved – Awaiting Onboarding
-                </h3>
-                <Badge variant="secondary" className="px-2 py-0.5 text-xs font-semibold">
-                  {unlinkedUsers.length}
-                </Badge>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                These users have approved accounts but do not yet have an intern profile created.
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {unlinkedUsers.map((unlinkedUser) => (
-              <div
-                key={unlinkedUser._id}
-                className="flex items-center justify-between gap-4 rounded-xl border border-amber-200/60 bg-amber-50/30 dark:border-amber-900/40 dark:bg-amber-950/10 p-4 transition-all hover:shadow-sm"
+      <PageHeader
+        title="Verification"
+        description="New sign-ups who have confirmed their email. Check the name and email match someone you expect, then approve."
+        actions={
+          <div role="tablist" aria-label="Accounts" className="flex rounded-lg bg-muted p-1 text-[13px] font-medium">
+            {([["pending", `Pending · ${total}`], ["onboarding", `Approved, not set up · ${unlinked.length}`]] as const).map(([k, label]) => (
+              <button
+                key={k}
+                role="tab"
+                aria-selected={tab === k}
+                onClick={() => setTab(k)}
+                className={cn("h-8 rounded-md px-3 transition-colors", tab === k ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30 text-sm font-bold text-amber-700 dark:text-amber-400">
-                    {initials(unlinkedUser.firstName, unlinkedUser.lastName)}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground">
-                      {unlinkedUser.firstName} {unlinkedUser.lastName}
-                    </p>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Mail className="h-3 w-3" />
-                        {unlinkedUser.email}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {fmtDate(unlinkedUser.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <Button size="sm" asChild className="shrink-0 gap-1.5">
-                  <Link href={`/interns/new?userId=${unlinkedUser._id}`}>
-                    <UserPlus className="h-3.5 w-3.5" />
-                    Complete Onboarding
-                  </Link>
-                </Button>
-              </div>
+                {label}
+              </button>
             ))}
           </div>
+        }
+      />
+
+      {recentlyApproved && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-success/30 bg-success-soft px-4 py-3">
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
+          <div className="min-w-0 flex-1 text-sm text-success-foreground">
+            <span className="font-medium">{recentlyApproved.name} approved.</span> Welcome email sent. Create their intern record to get them started.
+          </div>
+          <Button size="sm" asChild>
+            <Link href={`/interns/new?userId=${recentlyApproved.userId}`}><UserPlus /> Add intern record</Link>
+          </Button>
+          <button onClick={() => setRecentlyApproved(null)} aria-label="Dismiss" className="flex h-8 w-8 items-center justify-center rounded-lg text-success-foreground hover:bg-success/10">
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 
-      {/* Reject dialog */}
+      {tab === "pending" ? (
+        isLoading ? (
+          <div className="grid gap-4 lg:grid-cols-[minmax(300px,1fr)_2fr]">
+            <Skeleton className="h-[420px] rounded-xl" />
+            <Skeleton className="h-[420px] rounded-xl" />
+          </div>
+        ) : isError ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-danger/30 bg-danger-soft px-5 py-4 text-sm text-danger-foreground">
+            Couldn&apos;t load the verification queue.
+            <Button variant="outline" size="sm" onClick={() => refetch()}>Try again</Button>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="rounded-xl border border-dashed py-16 text-center">
+            <CheckCircle2 className="mx-auto mb-3 h-8 w-8 text-success" />
+            <p className="text-sm font-medium">No one is waiting for approval</p>
+            <p className="mt-1 text-xs text-muted-foreground">New sign-ups appear here after they confirm their email.</p>
+          </div>
+        ) : (
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(300px,1fr)_2fr]">
+            <ul className="overflow-hidden rounded-xl border" aria-label="Pending accounts">
+              {users.map((u, i) => {
+                const active = selected?._id === u._id;
+                return (
+                  <li key={u._id} className={cn(i > 0 && "border-t")}>
+                    <button
+                      onClick={() => setSelectedId(u._id)}
+                      aria-current={active ? "true" : undefined}
+                      className={cn(
+                        "flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors",
+                        active ? "bg-accent/60 shadow-[inset_3px_0_0_hsl(var(--primary))]" : "hover:bg-muted/50"
+                      )}
+                    >
+                      <PersonAvatar firstName={u.firstName} lastName={u.lastName} size="md" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium">{u.firstName} {u.lastName}</span>
+                        <span className="block truncate text-xs text-muted-foreground">{u.email}</span>
+                      </span>
+                      <span className="font-mono text-xs text-muted-foreground tabular">{fmtWhen(u.createdAt)}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {selected && (
+              <Detail
+                user={selected}
+                approving={approve.isPending && approve.variables === selected._id}
+                onApprove={() => handleApprove(selected)}
+                onReject={() => setRejecting(selected)}
+              />
+            )}
+          </div>
+        )
+      ) : unlinked.length === 0 ? (
+        <div className="rounded-xl border border-dashed py-16 text-center">
+          <p className="text-sm font-medium">Everyone approved has an intern record</p>
+          <p className="mt-1 text-xs text-muted-foreground">Approved accounts without a record show up here.</p>
+        </div>
+      ) : (
+        <ul className="overflow-hidden rounded-xl border">
+          {unlinked.map((u, i) => (
+            <li key={u._id} className={cn("flex flex-wrap items-center gap-3 px-5 py-3.5", i > 0 && "border-t")}>
+              <PersonAvatar firstName={u.firstName} lastName={u.lastName} size="md" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium">{u.firstName} {u.lastName}</span>
+                <span className="block truncate text-xs text-muted-foreground">{u.email} · approved {fmtDate(u.updatedAt)}</span>
+              </span>
+              <Button size="sm" asChild>
+                <Link href={`/interns/new?userId=${u._id}`}><UserPlus /> Create intern record</Link>
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+
       <RejectDialog
-        user={rejectUser_}
-        open={!!rejectUser_}
-        onClose={() => setRejectUser(null)}
+        user={rejecting}
+        open={!!rejecting}
+        onClose={() => setRejecting(null)}
+        onDone={() => rejecting && setSelectedId(nextAfter(rejecting._id))}
       />
     </div>
   );
