@@ -1,44 +1,25 @@
-"use client";
-
 import Image from "next/image";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 
 interface WhippieLogoProps {
   className?: string;
   size?: number;
+  /** "white" for use on the blue brand panel. */
+  tone?: "blue" | "white";
 }
 
 /**
- * WhippieLogo — shows dark.png on dark mode, light.png on light mode.
- * Handles the hydration flash by waiting for theme to mount.
+ * The Whippie mark, cropped tight. The blue mark reads on both light and dark
+ * backgrounds, so it doesn't wait for the theme (no placeholder flash).
  */
-export function WhippieLogo({ className, size = 48 }: WhippieLogoProps) {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  // Before mount, render a placeholder the same size to avoid layout shift
-  if (!mounted) {
-    return (
-      <div
-        style={{ width: size, height: size }}
-        className={cn("bg-muted animate-pulse rounded-lg", className)}
-      />
-    );
-  }
-
-  const src = resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png";
-
+export function WhippieLogo({ className, size = 48, tone = "blue" }: WhippieLogoProps) {
   return (
     <Image
-      src={src}
+      src={tone === "white" ? "/mark-white.png" : "/mark.png"}
       alt="Whippie"
       width={size}
       height={size}
-      style={{ width: "auto", height: "auto" }}
-      className={cn("object-contain", className)}
+      className={cn("shrink-0 object-contain", className)}
       priority
     />
   );

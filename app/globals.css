@@ -2,65 +2,103 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Plus Jakarta Sans is loaded via next/font/google in layout.tsx */
+/* ─── "Calm Signal" design tokens ──────────────────────────────────────────────
+   One accent (Whippie blue, from the logo) on quiet neutrals. Status colours
+   (success / warning / danger / info) are only for status, always with a label.
+   Geist + Geist Mono are loaded via next/font/google in layout.tsx.
+   Every text/background pair here has been checked for ≥ 4.5:1 contrast.   */
 
 @layer base {
   :root {
-    --background:       270 60% 98%;
-    --foreground:       270 80% 12%;
+    --canvas:           220 16% 96%;   /* #F4F5F7 — app frame around the content panel */
+    --background:       0 0% 100%;
+    --foreground:       224 42% 9%;    /* #0D1220 ink */
     --card:             0 0% 100%;
-    --card-foreground:  270 80% 12%;
+    --card-foreground:  224 42% 9%;
     --popover:          0 0% 100%;
-    --popover-foreground: 270 80% 12%;
-    --primary:          262 83% 58%;
+    --popover-foreground: 224 42% 9%;
+    --primary:          221 100% 54%;  /* #1660FF Whippie blue */
+    --primary-hover:    221 87% 46%;   /* #0F4FDB */
     --primary-foreground: 0 0% 100%;
-    --secondary:        262 100% 93%;
-    --secondary-foreground: 262 83% 40%;
-    --muted:            270 30% 95%;
-    --muted-foreground: 270 20% 48%;
-    --accent:           270 40% 94%;
-    --accent-foreground: 262 83% 40%;
-    --destructive:      0 84% 60%;
+    --secondary:        225 17% 95%;   /* neutral fill */
+    --secondary-foreground: 223 17% 28%;
+    --muted:            225 17% 95%;   /* #F1F2F5 */
+    --muted-foreground: 222 13% 42%;   /* #5E6679 */
+    --accent:           222 100% 97%;  /* #EEF3FF blue soft */
+    --accent-foreground: 221 87% 46%;
+    --destructive:      4 74% 49%;     /* #D92D20 */
     --destructive-foreground: 0 0% 100%;
-    --border:           270 30% 88%;
-    --input:            270 30% 88%;
-    --ring:             262 83% 58%;
-    --radius:           0.75rem;
-    --card-violet:      262 100% 97%;
-    --card-emerald:     152 76% 96%;
-    --card-amber:       45 100% 96%;
-    --card-blue:        213 100% 96%;
-    --card-orange:      25 100% 96%;
-    --card-rose:        350 100% 96%;
+    --border:           223 17% 92%;   /* #E7E9EE */
+    --input:            218 17% 87%;   /* #D9DDE4 */
+    --ring:             221 100% 54%;
+    --radius:           0.625rem;
+
+    --success:          148 74% 36%;   /* dot / icon */
+    --success-soft:     143 45% 94%;
+    --success-foreground: 148 73% 24%;
+    --warning:          38 92% 50%;
+    --warning-soft:     41 100% 94%;
+    --warning-foreground: 36 100% 27%;
+    --danger:           358 75% 59%;
+    --danger-soft:      4 81% 96%;
+    --danger-foreground: 3 71% 41%;
+    --info:             221 100% 54%;
+    --info-soft:        222 100% 97%;
+    --info-foreground:  221 87% 46%;
+
+    /* Legacy tint names, kept so older markup still renders; now quiet neutrals. */
+    --card-violet:      222 100% 97%;
+    --card-emerald:     143 45% 94%;
+    --card-amber:       41 100% 94%;
+    --card-blue:        222 100% 97%;
+    --card-orange:      41 100% 94%;
+    --card-rose:        4 81% 96%;
   }
 
   .dark {
-    --background:       270 40% 6%;
-    --foreground:       270 20% 96%;
-    --card:             270 35% 10%;
-    --card-foreground:  270 20% 96%;
-    --popover:          270 35% 10%;
-    --popover-foreground: 270 20% 96%;
-    --primary:          262 83% 65%;
-    --primary-foreground: 0 0% 100%;
-    --secondary:        262 30% 18%;
-    --secondary-foreground: 262 80% 80%;
-    --muted:            270 25% 16%;
-    --muted-foreground: 270 15% 58%;
-    --accent:           270 25% 16%;
-    --accent-foreground: 270 20% 96%;
-    --destructive:      0 62% 40%;
-    --destructive-foreground: 0 0% 100%;
-    --border:           270 25% 18%;
-    --input:            270 25% 18%;
-    --ring:             262 83% 65%;
-    /* Dark card tints — enough contrast against dark card bg (270 35% 10%) */
-    --card-violet:      262 45% 17%;
-    --card-emerald:     152 35% 14%;
-    --card-amber:       40  45% 15%;
-    --card-blue:        213 45% 16%;
-    --card-orange:      25  45% 15%;
-    --card-rose:        350 45% 15%;
+    --canvas:           225 36% 4%;
+    --background:       223 33% 8%;
+    --foreground:       225 21% 93%;
+    --card:             223 33% 8%;
+    --card-foreground:  225 21% 93%;
+    --popover:          223 30% 10%;
+    --popover-foreground: 225 21% 93%;
+    /* Lighter blue with dark text: white on any blue dark enough for a dark UI
+       fails contrast, so dark mode flips the button text instead. */
+    --primary:          222 100% 75%;  /* #7FA6FF */
+    --primary-hover:    222 100% 82%;
+    --primary-foreground: 224 42% 7%;
+    --secondary:        223 28% 13%;
+    --secondary-foreground: 225 21% 93%;
+    --muted:            223 28% 13%;
+    --muted-foreground: 221 16% 65%;
+    --accent:           223 52% 17%;
+    --accent-foreground: 222 100% 75%;
+    --destructive:      358 100% 74%;
+    --destructive-foreground: 224 42% 7%;
+    --border:           226 23% 18%;
+    --input:            224 21% 22%;
+    --ring:             222 100% 75%;
+
+    --success:          142 69% 58%;
+    --success-soft:     147 41% 11%;
+    --success-foreground: 142 69% 58%;
+    --warning:          43 96% 56%;
+    --warning-soft:     41 68% 10%;
+    --warning-foreground: 43 96% 56%;
+    --danger:           358 100% 74%;
+    --danger-soft:      355 38% 13%;
+    --danger-foreground: 358 100% 74%;
+    --info:             222 100% 75%;
+    --info-soft:        223 52% 17%;
+    --info-foreground:  222 100% 75%;
+
+    --card-violet:      223 52% 17%;
+    --card-emerald:     147 41% 11%;
+    --card-amber:       41 68% 10%;
+    --card-blue:        223 52% 17%;
+    --card-orange:      41 68% 10%;
+    --card-rose:        355 38% 13%;
   }
 }
 
@@ -71,9 +109,13 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-family: var(--font-geist), system-ui, sans-serif;
+    font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
   }
+
+  /* Numbers line up in tables and stats */
+  .tabular { font-variant-numeric: tabular-nums; }
 
   /* ── Theme transition — smooth colour crossfade on mode switch ── */
   html {
@@ -112,24 +154,22 @@
 
 /* ─── Keyframes ──────────────────────────────────────────────────────────────── */
 
-/* Entrance: slides up with a slight scale — feels like it has weight */
+/* Entrance: a short, quiet rise. No overshoot. */
 @keyframes fade-up {
-  0%   { opacity: 0; transform: translateY(22px) scale(0.97); }
-  60%  { opacity: 1; transform: translateY(-3px) scale(1.005); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Simple opacity fade */
 @keyframes fade-in {
-  from { opacity: 0; transform: scale(0.96); }
-  to   { opacity: 1; transform: scale(1); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-/* Badge/chip pop — overshoots then settles */
+/* Badge/chip appear */
 @keyframes scale-in {
-  0%   { opacity: 0; transform: scale(0.5) rotate(-8deg); }
-  65%  { opacity: 1; transform: scale(1.15) rotate(2deg); }
-  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* Slide from left */
@@ -138,10 +178,10 @@
   to   { transform: translateX(0);     opacity: 1; }
 }
 
-/* Stat number reveal — blurs in from below */
+/* Stat number reveal */
 @keyframes count-in {
-  from { opacity: 0; transform: translateY(12px); filter: blur(6px); }
-  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* Notification dot throb */
@@ -150,10 +190,9 @@
   50%       { transform: scale(1.6); opacity: 0.5; }
 }
 
-/* Icon float on hover — gentle bob */
+/* Retired: icons no longer bob. Kept so existing class names stay valid. */
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-5px); }
+  0%, 100% { transform: none; }
 }
 
 /* Sparkline draw */
@@ -162,11 +201,10 @@
   to   { stroke-dashoffset: 0;    opacity: 1; }
 }
 
-/* Card icon pop when card enters */
+/* Card icon appear */
 @keyframes icon-pop {
-  0%   { transform: scale(0.6) rotate(-12deg); }
-  65%  { transform: scale(1.12) rotate(4deg); }
-  100% { transform: scale(1) rotate(0deg); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* Shimmer for skeleton loaders */
@@ -180,15 +218,15 @@
 @layer utilities {
 
   .animate-fade-up {
-    animation: fade-up 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation: fade-up 0.22s ease-out both;
   }
 
   .animate-fade-in {
-    animation: fade-in 0.25s ease-out both;
+    animation: fade-in 0.18s ease-out both;
   }
 
   .animate-scale-in {
-    animation: scale-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation: scale-in 0.16s ease-out both;
   }
 
   .animate-slide-right {
@@ -196,7 +234,7 @@
   }
 
   .animate-count-in {
-    animation: count-in 0.45s ease-out both;
+    animation: count-in 0.2s ease-out both;
   }
 
   .animate-pulse-dot {
@@ -208,7 +246,7 @@
   }
 
   .animate-icon-pop {
-    animation: icon-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation: icon-pop 0.2s ease-out both;
   }
 
   /* Shimmer skeleton */
@@ -220,16 +258,13 @@
 
   /* ── Hover interactions ── */
 
-  /* Cards: lift + shadow grow */
+  /* Cards: border darkens on hover; no lifting */
   .hover-lift {
-    transition: transform 0.2s cubic-bezier(0.34, 1.2, 0.64, 1), box-shadow 0.2s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .hover-lift:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 32px -8px hsl(var(--primary) / 0.15), 0 4px 12px -4px hsl(0 0% 0% / 0.08);
-  }
-  .hover-lift:active {
-    transform: translateY(-1px);
+    border-color: hsl(var(--input));
+    box-shadow: 0 4px 14px -8px hsl(224 42% 9% / 0.18);
   }
 
   /* Buttons: press down on click */
@@ -237,12 +272,7 @@
     transform: scale(0.97);
   }
 
-  /* Icon: scale up on hover */
-  .hover-icon:hover > svg,
-  .hover-icon:hover .icon {
-    transform: scale(1.15);
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
+  /* Icon hover: no movement (kept for existing class names) */
 
   /* Stagger delays */
   .delay-0   { animation-delay: 0ms; }
