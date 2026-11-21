@@ -1,31 +1,17 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Pencil,
-  X,
-  ChevronsUpDown,
-  Loader2,
-  Calendar,
-  Building2,
-  UserCheck,
-  GraduationCap,
-  Briefcase,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  FileText,
-  Upload,
+  Check,
   Download,
-  ClipboardList,
-  Phone,
-  MapPin,
-  ExternalLink,
-  ChevronRight,
-  ShieldCheck,
-  Star
+  FileText,
+  Loader2,
+  Minus,
+  Pencil,
+  Upload,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import { EditInternSheet } from "@/features/interns/components/EditInternSheet";
@@ -47,89 +33,123 @@ import { toast } from "sonner";
 import { useReports } from "@/features/reports/hooks";
 import { useEvaluations } from "@/features/evaluations/hooks";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import type { InternshipStatus } from "@/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Section } from "@/components/shared/PageHeader";
+import { PersonAvatar } from "@/components/shared/PersonAvatar";
+import { StatusBadge, statusLabel } from "@/components/shared/StatusBadge";
+import { cn } from "@/lib/utils/cn";
+import { fmtDate, fmtShortDate, fmtTime, fmtMeters, programmeProgress, INTERNSHIP_TYPE_LABEL } from "@/lib/utils/format";
+import type { AttendanceObject } from "@/types";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+type Tab = "overview" | "tasks" | "attendance" | "documents" | "reports";
 
-const STATUS_CONFIG: Record<
-  InternshipStatus,
-  { label: string; badgeClass: string; dotClass: string }
-> = {
-  SCREENED: {
-    label: "Screened",
-    badgeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-    dotClass: "bg-amber-500",
-  },
-  ONBOARDING: {
-    label: "Onboarding",
-    badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-    dotClass: "bg-blue-500 animate-pulse",
-  },
-  ACTIVE: {
-    label: "Active Intern",
-    badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-    dotClass: "bg-emerald-500",
-  },
-  COMPLETED: {
-    label: "Completed",
-    badgeClass: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-zinc-500/20",
-    dotClass: "bg-zinc-400",
-  },
-};
+// ─── Attendance grid: last 6 weeks of weekdays ────────────────────────────────
 
-function fmt(iso?: string) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+type DayState = "ontime" | "late" | "issue" | "missed" | "upcoming" | "before";
+
+function buildAttendanceGrid(records: AttendanceObject[], startDate?: string) {
+  const byDay = new Map<string, AttendanceObject>();
+  for (const r of records) if (r.checkType === "CHECK_IN") byDay.set(r.date.slice(0, 10), r);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // Monday of the week five weeks ago
+  const monday = new Date(today);
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7) - 35);
+  const start = startDate ? new Date(startDate) : null;
+
+  const weeks: { key: string; state: DayState; label: string }[][] = [];
+  for (let w = 0; w < 6; w++) {
+    const week: { key: string; state: DayState; label: string }[] = [];
+    for (let d = 0; d < 5; d++) {
+      const day = new Date(monday);
+      day.setDate(monday.getDate() + w * 7 + d);
+      const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+      const rec = byDay.get(key);
+      let state: DayState;
+      if (day > today) state = "upcoming";
+      else if (start && day < new Date(start.toDateString())) state = "before";
+      else if (!rec) state = "missed";
+      else if (rec.status !== "ACCEPTED") state = "issue";
+      else state = new Date(rec.submittedAt).getHours() < 9 ? "ontime" : "late";
+      const label = `${day.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}: ${
+        { ontime: `in at ${fmtTime(rec?.submittedAt)}`, late: `in at ${fmtTime(rec?.submittedAt)}`, issue: statusLabel(rec?.status), missed: "no check-in", upcoming: "upcoming", before: "before start" }[state]
+      }`;
+      week.push({ key, state, label });
+    }
+    weeks.push(week);
+  }
+  return weeks;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+const DAY_STYLE: Record<DayState, string> = {
+  ontime: "bg-primary",
+  late: "bg-primary/40",
+  issue: "bg-danger",
+  missed: "bg-muted-foreground/25",
+  upcoming: "border border-input bg-background",
+  before: "bg-muted",
+};
 
-export default function InternDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+// ─── Small pieces ─────────────────────────────────────────────────────────────
+
+function Detail({ k, v }: { k: string; v?: React.ReactNode }) {
+  return (
+    <div className="flex justify-between gap-4 border-t py-3 text-[13px] first:border-t-0">
+      <dt className="shrink-0 text-muted-foreground">{k}</dt>
+      <dd className="min-w-0 break-words text-right font-medium">{v || "—"}</dd>
+    </div>
+  );
+}
+
+function EmptyRow({ children }: { children: React.ReactNode }) {
+  return <p className="px-5 py-10 text-center text-sm text-muted-foreground">{children}</p>;
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function InternDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useAuth();
   const isHR = user?.role === "HR";
   const { data, isLoading, isError } = useIntern(id);
   const intern = data?.data?.intern;
 
-  // Active tab state
-  const [activeTab, setActiveTab] = useState<"overview" | "tasks" | "attendance" | "documents" | "reports">("overview");
-
-  // Assignment dialog state
+  const [tab, setTab] = useState<Tab>("overview");
   const [deptDialogOpen, setDeptDialogOpen] = useState(false);
   const [supervisorDialogOpen, setSvDialogOpen] = useState(false);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
-  const qc = useQueryClient();
+  const [selectedDept, setSelectedDept] = useState("");
+  const [selectedSv, setSelectedSv] = useState("");
   const [uploadingDocReqId, setUploadingDocReqId] = useState<string | null>(null);
+  const qc = useQueryClient();
+
+  const { data: deptData } = useDepartments({ limit: 100 });
+  const { data: svData } = useSupervisors({ limit: 100 });
+  const departments = deptData?.data ?? [];
+  const supervisors = svData?.data ?? [];
+
+  const { data: tasksData, isLoading: tasksLoading } = useTasks({ intern: id, limit: 50 });
+  const { data: attendanceData, isLoading: attLoading } = useAttendance({ intern: id, limit: 100 });
+  const { data: checklistData } = useChecklist(id);
+  const { data: reportsData } = useReports({ intern: id, limit: 20 });
+  const { data: evalData } = useEvaluations({ intern: id, limit: 10 });
+
+  const assignDept = useAssignDepartment(id);
+  const removeDept = useRemoveDepartment(id);
+  const assignSv = useAssignSupervisor(id);
+  const removeSv = useRemoveSupervisor(id);
+
+  const attendance = useMemo(() => attendanceData?.data ?? [], [attendanceData]);
+  const grid = useMemo(() => buildAttendanceGrid(attendance, intern?.startDate), [attendance, intern?.startDate]);
 
   const handleHRDocumentUpload = async (requirementId: string, existingDocId?: string, e?: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target.files?.[0];
     if (!file) return;
     if (file.size > 20 * 1024 * 1024) {
-      toast.error('File size must be under 20MB.');
+      toast.error("File size must be under 20MB.");
       return;
     }
     setUploadingDocReqId(requirementId);
@@ -147,830 +167,487 @@ export default function InternDetailPage({
       await confirmUpload(docId, {
         storageKey: info.fileId,
         originalFilename: file.name,
-        contentType: file.type || 'application/octet-stream',
+        contentType: file.type || "application/octet-stream",
         fileSizeBytes: file.size,
       });
       qc.invalidateQueries({ queryKey: documentKeys.checklist(id) });
-      toast.success('Document uploaded successfully');
+      toast.success("Document uploaded successfully");
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Failed to upload document');
+      toast.error(err instanceof Error ? err.message : "Failed to upload document");
     } finally {
       setUploadingDocReqId(null);
-      if (e?.target) e.target.value = '';
+      if (e?.target) e.target.value = "";
     }
   };
-  const [selectedDept, setSelectedDept] = useState("");
-  const [selectedSv, setSelectedSv] = useState("");
-
-  // Data queries
-  const { data: deptData } = useDepartments({ limit: 100 });
-  const { data: svData } = useSupervisors({ limit: 100 });
-  const departments = deptData?.data ?? [];
-  const supervisors = svData?.data ?? [];
-
-  // Related data for tabs & stats
-  const { data: tasksData } = useTasks({ intern: id, limit: 10 });
-  const { data: attendanceData } = useAttendance({ intern: id, limit: 15 });
-  const { data: checklistData } = useChecklist(id);
-  const { data: reportsData } = useReports({ intern: id, limit: 10 });
-  const { data: evalData } = useEvaluations({ intern: id, limit: 5 });
-
-  // Mutations
-  const assignDept = useAssignDepartment(id);
-  const removeDept = useRemoveDepartment(id);
-  const assignSv = useAssignSupervisor(id);
-  const removeSv = useRemoveSupervisor(id);
 
   const handleAssignDept = () => {
     if (!selectedDept) return;
-    assignDept.mutate(selectedDept, {
-      onSuccess: () => {
-        setDeptDialogOpen(false);
-        setSelectedDept("");
-      },
-    });
+    assignDept.mutate(selectedDept, { onSuccess: () => { setDeptDialogOpen(false); setSelectedDept(""); } });
   };
-
   const handleAssignSv = () => {
     if (!selectedSv) return;
-    assignSv.mutate(selectedSv, {
-      onSuccess: () => {
-        setSvDialogOpen(false);
-        setSelectedSv("");
-      },
-    });
+    assignSv.mutate(selectedSv, { onSuccess: () => { setSvDialogOpen(false); setSelectedSv(""); } });
   };
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 space-y-3">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground font-medium">Loading intern profile...</p>
+      <div className="space-y-6">
+        <Skeleton className="h-20 w-full rounded-xl" />
+        <div className="grid gap-4 lg:grid-cols-[2fr_1fr]"><Skeleton className="h-[480px] rounded-xl" /><Skeleton className="h-[480px] rounded-xl" /></div>
       </div>
     );
   }
 
   if (isError || !intern) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4">
-        <div className="rounded-full bg-destructive/10 p-3 text-destructive">
-          <AlertTriangle className="h-6 w-6" />
-        </div>
-        <div className="text-center">
-          <h3 className="font-semibold text-lg">Intern Record Not Found</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            The requested intern record may have been removed or does not exist.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/interns">Back to all interns</Link>
-        </Button>
+      <div className="mx-auto max-w-md py-24 text-center">
+        <p className="text-lg font-semibold">We couldn&apos;t find that intern</p>
+        <p className="mt-1 text-sm text-muted-foreground">The record may have been removed, or the link is wrong.</p>
+        <Button variant="outline" size="sm" asChild className="mt-5"><Link href="/interns">Back to interns</Link></Button>
       </div>
     );
   }
 
-  const statusConfig = STATUS_CONFIG[intern.status] ?? STATUS_CONFIG.SCREENED;
-  const initials = `${intern.firstName?.[0] ?? ""}${intern.lastName?.[0] ?? ""}`.toUpperCase();
-
-  // Summary counts
   const tasks = tasksData?.data ?? [];
-  const completedTasks = tasks.filter((t) => t.status === "COMPLETED").length;
-  const attendanceRecords = attendanceData?.data ?? [];
-  const flaggedAttendance = attendanceRecords.filter((a) => a.status === "FLAGGED").length;
+  const openTasks = tasks.filter((t) => t.status !== "COMPLETED").length;
+  const flagged = attendance.filter((a) => a.status === "FLAGGED").length;
   const checklist = checklistData?.data?.checklist ?? [];
   const verifiedDocs = checklist.filter((d) => d.document?.status === "VERIFIED").length;
+  const outstandingDocs = checklist.filter((d) => d.requirement.isRequired && d.document?.status !== "VERIFIED").length;
   const reports = reportsData?.data ?? [];
   const evaluations = evalData?.data ?? [];
+  const submittedEvals = evaluations.filter((e) => e.status === "SUBMITTED").length;
+  const progress = programmeProgress(intern.startDate, intern.endDate);
+  const checkIns = attendance.filter((a) => a.checkType === "CHECK_IN");
+  const presentDays = checkIns.filter((a) => a.status !== "REJECTED").length;
+  const email = typeof intern.user === "object" ? intern.user?.email : undefined;
+
+  const TABS: { key: Tab; label: string; count?: React.ReactNode }[] = [
+    { key: "overview", label: "Overview" },
+    { key: "tasks", label: "Tasks", count: tasks.length },
+    { key: "attendance", label: "Attendance", count: flagged > 0 ? <span className="text-warning-foreground">{flagged} flagged</span> : checkIns.length },
+    { key: "documents", label: "Documents", count: `${verifiedDocs}/${checklist.length}` },
+    { key: "reports", label: "Reports & evaluations", count: reports.length + evaluations.length },
+  ];
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top back breadcrumb */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground hover:text-foreground">
-          <Link href="/interns">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {isHR ? "All Interns" : "My Interns"}
-          </Link>
-        </Button>
-        {isHR && (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setEditSheetOpen(true)} className="gap-1.5">
-              <Pencil className="h-3.5 w-3.5" />
-              Edit Profile
-            </Button>
-          </div>
-        )}
-      </div>
+      <Link href="/interns" className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-3.5 w-3.5" /> {isHR ? "All interns" : "My interns"}
+      </Link>
 
-      {/* Hero Banner Header */}
-      <div className="relative overflow-hidden rounded-2xl border bg-card p-6 md:p-8 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20 text-xl font-bold tracking-tight text-primary">
-              {initials}
-              <span className={`absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-background ${statusConfig.dotClass}`} />
-            </div>
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                  {intern.firstName} {intern.lastName}
-                </h1>
-                <Badge variant="outline" className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${statusConfig.badgeClass}`}>
-                  {statusConfig.label}
-                </Badge>
-                <Badge variant="secondary" className="text-xs font-normal">
-                  {intern.internshipType === "NYSC_IT" ? "Corps Member" : "Standard Internship"}
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span>{intern.course}</span>
-                <span className="opacity-40">•</span>
-                <span>{intern.institution}</span>
-                {intern.level && (
-                  <>
-                    <span className="opacity-40">•</span>
-                    <span>{intern.level}</span>
-                  </>
-                )}
-              </p>
-            </div>
+      {/* Header */}
+      <div className="flex flex-wrap items-center gap-5">
+        <PersonAvatar firstName={intern.firstName} lastName={intern.lastName} size="xl" />
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">{intern.firstName} {intern.middleName ? `${intern.middleName} ` : ""}{intern.lastName}</h1>
+            <StatusBadge status={intern.status} />
           </div>
-
-          {/* Quick Metrics Header Pill */}
-          <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l pt-4 md:pt-0 md:pl-6">
-            <div className="text-left md:text-right">
-              <p className="text-xs text-muted-foreground">Placement Duration</p>
-              <p className="text-sm font-semibold mt-0.5 text-foreground">
-                {fmt(intern.startDate)} — {fmt(intern.endDate)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Action / Placement Status Strip */}
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-6 border-t">
-          {/* Department Card */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-accent/40 border">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2 rounded-lg bg-background border text-primary">
-                <Building2 className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Department</p>
-                <p className="text-sm font-semibold truncate text-foreground">
-                  {intern.department?.name ?? "Unassigned"}
-                </p>
-              </div>
-            </div>
-            {isHR && (
-              <div className="flex items-center gap-1 shrink-0 ml-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs"
-                  onClick={() => {
-                    setSelectedDept(intern.department?._id ?? "");
-                    setDeptDialogOpen(true);
-                  }}
-                >
-                  <ChevronsUpDown className="h-3 w-3 mr-1" />
-                  {intern.department ? "Change" : "Assign"}
-                </Button>
-                {intern.department && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeDept.mutate()}
-                    disabled={removeDept.isPending}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Supervisor Card */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-accent/40 border">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2 rounded-lg bg-background border text-primary">
-                <UserCheck className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Supervisor</p>
-                <p className="text-sm font-semibold truncate text-foreground">
-                  {intern.supervisor ? `${intern.supervisor.firstName} ${intern.supervisor.lastName}` : "Unassigned"}
-                </p>
-              </div>
-            </div>
-            {isHR && (
-              <div className="flex items-center gap-1 shrink-0 ml-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs"
-                  onClick={() => {
-                    setSelectedSv(intern.supervisor?._id ?? "");
-                    setSvDialogOpen(true);
-                  }}
-                >
-                  <ChevronsUpDown className="h-3 w-3 mr-1" />
-                  {intern.supervisor ? "Change" : "Assign"}
-                </Button>
-                {intern.supervisor && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeSv.mutate()}
-                    disabled={removeSv.isPending}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Tasks Progress Metric */}
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/40 border">
-            <div className="p-2 rounded-lg bg-background border text-primary">
-              <ClipboardList className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Tasks</p>
-              <p className="text-sm font-semibold text-foreground">
-                {completedTasks} / {tasks.length} Completed
-              </p>
-            </div>
-          </div>
-
-          {/* Document Verification Metric */}
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-accent/40 border">
-            <div className="p-2 rounded-lg bg-background border text-primary">
-              <ShieldCheck className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Verification</p>
-              <p className="text-sm font-semibold text-foreground">
-                {verifiedDocs} / {checklist.length || 0} Documents
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation Pills */}
-      <div className="flex items-center gap-2 border-b pb-3 overflow-x-auto">
-        <Button
-          variant={activeTab === "overview" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setActiveTab("overview")}
-          className="rounded-full text-xs"
-        >
-          Overview & Info
-        </Button>
-        <Button
-          variant={activeTab === "tasks" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setActiveTab("tasks")}
-          className="rounded-full text-xs"
-        >
-          Assigned Tasks ({tasks.length})
-        </Button>
-        <Button
-          variant={activeTab === "attendance" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setActiveTab("attendance")}
-          className="rounded-full text-xs"
-        >
-          Attendance ({attendanceRecords.length})
-          {flaggedAttendance > 0 && (
-            <span className="ml-1.5 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/20 text-amber-600 font-bold">
-              {flaggedAttendance}
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-secondary-foreground">
+            <span>{INTERNSHIP_TYPE_LABEL[intern.internshipType]}</span>
+            <span className="text-input" aria-hidden="true">|</span>
+            <span>{intern.department ? `${intern.department.name}${intern.department.subsidiary ? ` · ${intern.department.subsidiary}` : ""}` : "No department"}</span>
+            <span className="text-input" aria-hidden="true">|</span>
+            <span>
+              Supervisor:{" "}
+              {intern.supervisor ? (
+                <Link href={`/supervisors/${intern.supervisor._id}`} className="text-primary hover:underline">{intern.supervisor.firstName} {intern.supervisor.lastName}</Link>
+              ) : (
+                <span className="font-medium text-danger-foreground">Unassigned</span>
+              )}
             </span>
-          )}
-        </Button>
-        <Button
-          variant={activeTab === "documents" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setActiveTab("documents")}
-          className="rounded-full text-xs"
-        >
-          Documents ({checklist.length})
-        </Button>
-        <Button
-          variant={activeTab === "reports" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setActiveTab("reports")}
-          className="rounded-full text-xs"
-        >
-          Reports & Evals ({reports.length + evaluations.length})
-        </Button>
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {isHR && <Button variant="outline" onClick={() => setEditSheetOpen(true)}><Pencil /> Edit</Button>}
+          <Button variant="outline" asChild><Link href="/documents/generate">Generate letter</Link></Button>
+          <Button asChild><Link href="/tasks/new">Assign task</Link></Button>
+        </div>
       </div>
 
-      {/* TAB 1: OVERVIEW & INFO */}
-      {activeTab === "overview" && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Main Info Column */}
-          <div className="md:col-span-2 space-y-6">
-            {/* Academic & Placement Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4 text-primary" />
-                  Academic & Education Profile
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Institution</span>
-                  <p className="font-medium mt-0.5 text-foreground">{intern.institution || "—"}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">School Location</span>
-                  <p className="font-medium mt-0.5 text-foreground">{intern.institutionLocation || "—"}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Course of Study</span>
-                  <p className="font-medium mt-0.5 text-foreground">{intern.course || "—"}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Academic Level</span>
-                  <p className="font-medium mt-0.5 text-foreground">{intern.level || "—"}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Sex / Gender</span>
-                  <p className="font-medium mt-0.5 text-foreground">{intern.gender || "—"}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Program Type</span>
-                  <p className="font-medium mt-0.5 text-foreground">
-                    {intern.internshipType === "NYSC_IT" ? "Corps Member (NYSC)" : "Undergraduate Internship"}
-                  </p>
-                </div>
-                {intern.stateCode && (
-                  <div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider">NYSC State Code</span>
-                    <p className="font-medium mt-0.5 text-foreground">{intern.stateCode}</p>
-                  </div>
-                )}
-                {intern.callUpNumber && (
-                  <div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider">NYSC Call-Up No.</span>
-                    <p className="font-medium mt-0.5 text-foreground">{intern.callUpNumber}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+      {/* Tabs */}
+      <div role="tablist" aria-label="Profile sections" className="flex gap-6 overflow-x-auto border-b">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            aria-selected={tab === t.key}
+            onClick={() => setTab(t.key)}
+            className={cn(
+              "-mb-px h-10 whitespace-nowrap border-b-2 text-sm font-medium transition-colors",
+              tab === t.key ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {t.label}
+            {t.count !== undefined && <span className="ml-1.5 font-mono text-xs text-muted-foreground tabular">{t.count}</span>}
+          </button>
+        ))}
+      </div>
 
-            {/* Contact Details Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-primary" />
-                  Contact Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Phone Number</span>
-                  <p className="font-medium mt-0.5 text-foreground">{intern.phone || "—"}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Address</span>
-                  <p className="font-medium mt-0.5 text-foreground flex items-center gap-1.5">
-                    <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    {intern.address || "—"}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Completion Banner if completed */}
+      {/* ── Overview ─────────────────────────────────────────────────────────── */}
+      {tab === "overview" && (
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+          <div className="space-y-4">
             {intern.completedAt && (
-              <Card className="border-emerald-500/20 bg-emerald-500/5">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5" />
-                    Internship Completed
-                  </CardTitle>
-                  <CardDescription>
-                    This intern completed their placement on {fmt(intern.completedAt)}.
-                  </CardDescription>
-                </CardHeader>
-                {intern.completionNote && (
-                  <CardContent className="pt-2 text-sm text-foreground">
-                    <p className="font-medium text-xs text-muted-foreground uppercase tracking-wider">Completion Note:</p>
-                    <p className="mt-1 bg-background/80 p-3 rounded-lg border text-sm">{intern.completionNote}</p>
-                  </CardContent>
-                )}
-              </Card>
+              <div className="rounded-xl border border-success/30 bg-success-soft px-5 py-4 text-sm text-success-foreground">
+                <p className="font-medium">Completed on {fmtDate(intern.completedAt)}</p>
+                {intern.completionNote && <p className="mt-1">{intern.completionNote}</p>}
+              </div>
             )}
+
+            <Section title="Programme progress" bodyClassName="space-y-4 p-5">
+              {progress ? (
+                <>
+                  <div className="flex flex-wrap items-baseline justify-between gap-2 text-[13px] text-muted-foreground">
+                    <span><span className="font-mono text-foreground tabular">Week {progress.week}</span> of {progress.totalWeeks}</span>
+                    <span>{fmtDate(intern.startDate)} – {fmtDate(intern.endDate)}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${progress.percent}%` }} />
+                  </div>
+                  <dl className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
+                    {[["Joined", intern.createdAt], ["Started", intern.startDate], ["Ends", intern.endDate], ["Completed", intern.completedAt]].map(([k, v]) => (
+                      <div key={k}>
+                        <dt className="font-medium text-secondary-foreground">{k}</dt>
+                        <dd className="font-mono text-muted-foreground tabular">{v ? fmtShortDate(v) : "—"}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">Add start and end dates to track progress.</p>
+              )}
+            </Section>
+
+            <Section
+              title="Attendance · last 6 weeks"
+              action={<span className="text-[13px] text-muted-foreground"><span className="font-mono text-foreground tabular">{presentDays}</span> check-ins recorded</span>}
+              bodyClassName="space-y-4 p-5"
+            >
+              {attLoading ? (
+                <Skeleton className="h-36 w-full" />
+              ) : (
+                <>
+                  <div className="flex gap-2.5">
+                    <div className="grid grid-rows-5 gap-[5px] text-[11px] text-muted-foreground" aria-hidden="true">
+                      {["Mon", "Tue", "Wed", "Thu", "Fri"].map((d) => <span key={d} className="flex h-[22px] items-center">{d}</span>)}
+                    </div>
+                    <div className="flex gap-[5px]" role="img" aria-label="Check-ins over the last six weeks">
+                      {grid.map((week, wi) => (
+                        <div key={wi} className="grid grid-rows-5 gap-[5px]">
+                          {week.map((day) => (
+                            <span key={day.key} title={day.label} className={cn("h-[22px] w-[22px] rounded-[5px]", DAY_STYLE[day.state])} />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-secondary-foreground">
+                    {([["ontime", "Before 09:00"], ["late", "After 09:00"], ["issue", "Flagged or rejected"], ["missed", "No check-in"], ["upcoming", "Upcoming"]] as const).map(([s, l]) => (
+                      <li key={s} className="flex items-center gap-1.5"><span className={cn("h-3 w-3 rounded-[3px]", DAY_STYLE[s])} />{l}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </Section>
+
+            <Section title="Recent tasks" action={<button onClick={() => setTab("tasks")} className="text-[13px] font-medium text-primary hover:underline">All {tasks.length} tasks</button>}>
+              {tasksLoading ? <div className="p-5"><Skeleton className="h-24 w-full" /></div> : tasks.length === 0 ? (
+                <EmptyRow>No tasks assigned yet.</EmptyRow>
+              ) : (
+                <ul>
+                  {tasks.slice(0, 4).map((t, i) => (
+                    <li key={t._id} className={cn(i > 0 && "border-t")}>
+                      <Link href={`/tasks/${t._id}`} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/40">
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium">{t.title}</span>
+                          <span className="block text-xs text-muted-foreground">{t.deadline ? <>Due <span className="font-mono">{fmtShortDate(t.deadline)}</span></> : `Created ${fmtShortDate(t.createdAt)}`}</span>
+                        </span>
+                        <StatusBadge status={t.status} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
           </div>
 
-          {/* Right Sidebar: Timeline & Quick Audit */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                  Placement Milestones
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="relative pl-6 pb-4 border-l-2 border-primary/20 last:border-0 last:pb-0 space-y-1">
-                  <div className="absolute -left-[5px] top-0 h-2 w-2 rounded-full bg-primary" />
-                  <p className="text-xs font-semibold text-foreground">Registration</p>
-                  <p className="text-xs text-muted-foreground">Joined {fmt(intern.createdAt)}</p>
-                </div>
-                <div className="relative pl-6 pb-4 border-l-2 border-primary/20 last:border-0 last:pb-0 space-y-1">
-                  <div className="absolute -left-[5px] top-0 h-2 w-2 rounded-full bg-primary" />
-                  <p className="text-xs font-semibold text-foreground">Start Date</p>
-                  <p className="text-xs text-muted-foreground">{fmt(intern.startDate)}</p>
-                </div>
-                <div className="relative pl-6 pb-0 border-l-2 border-primary/20 last:border-0 last:pb-0 space-y-1">
-                  <div className="absolute -left-[5px] top-0 h-2 w-2 rounded-full bg-muted-foreground" />
-                  <p className="text-xs font-semibold text-foreground">Target Completion</p>
-                  <p className="text-xs text-muted-foreground">{fmt(intern.endDate)}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-primary" />
-                  Supervisor Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                {intern.supervisor ? (
-                  <div className="space-y-1">
-                    <p className="font-semibold text-foreground">
-                      {intern.supervisor.firstName} {intern.supervisor.lastName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Department: {intern.department?.name ?? "General"}
-                    </p>
-                    <div className="pt-2">
-                      <Button variant="outline" size="sm" asChild className="w-full text-xs h-8">
-                        <Link href={`/supervisors/${intern.supervisor._id}`}>
-                          View Supervisor Profile
-                          <ChevronRight className="ml-1 h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
-                    </div>
+          <div className="space-y-4">
+            {/* Placement */}
+            <Section title="Placement" bodyClassName="divide-y">
+              {[
+                { label: "Department", value: intern.department ? `${intern.department.name}${intern.department.subsidiary ? ` · ${intern.department.subsidiary}` : ""}` : null, onChange: () => { setSelectedDept(intern.department?._id ?? ""); setDeptDialogOpen(true); }, onRemove: () => removeDept.mutate(), removing: removeDept.isPending },
+                { label: "Supervisor", value: intern.supervisor ? `${intern.supervisor.firstName} ${intern.supervisor.lastName}` : null, onChange: () => { setSelectedSv(intern.supervisor?._id ?? ""); setSvDialogOpen(true); }, onRemove: () => removeSv.mutate(), removing: removeSv.isPending },
+              ].map((row) => (
+                <div key={row.label} className="flex items-center gap-3 px-5 py-3.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground">{row.label}</p>
+                    <p className={cn("truncate text-sm font-medium", !row.value && "text-danger-foreground")}>{row.value ?? "Not assigned"}</p>
                   </div>
-                ) : (
-                  <div className="text-center py-4 space-y-2">
-                    <p className="text-xs text-muted-foreground">No supervisor assigned to this intern yet.</p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs w-full"
-                      onClick={() => setSvDialogOpen(true)}
-                    >
-                      Assign Supervisor
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 2: TASKS */}
-      {activeTab === "tasks" && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <div>
-              <CardTitle className="text-base font-semibold">Assigned Tasks</CardTitle>
-              <CardDescription>Tasks created and assigned to this intern.</CardDescription>
-            </div>
-            <Button size="sm" asChild variant="outline" className="text-xs h-8">
-              <Link href="/tasks">View All Tasks</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {tasks.length === 0 ? (
-              <div className="text-center py-12 text-sm text-muted-foreground">
-                No tasks assigned to this intern yet.
-              </div>
-            ) : (
-              <div className="divide-y rounded-xl border">
-                {tasks.map((task) => (
-                  <div key={task._id} className="p-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Link href={`/tasks/${task._id}`} className="font-semibold text-sm hover:underline text-foreground">
-                          {task.title}
-                        </Link>
-                        <Badge variant="outline" className="text-[10px] uppercase">
-                          {task.status.replace("_", " ")}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground line-clamp-1">{task.description}</p>
-                    </div>
-                    <div className="text-right text-xs text-muted-foreground shrink-0 ml-4">
-                      {task.deadline ? `Due ${fmt(task.deadline)}` : `Created ${fmt(task.createdAt)}`}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* TAB 3: ATTENDANCE */}
-      {activeTab === "attendance" && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <div>
-              <CardTitle className="text-base font-semibold">Attendance History</CardTitle>
-              <CardDescription>Recent check-in and check-out logs.</CardDescription>
-            </div>
-            <Button size="sm" asChild variant="outline" className="text-xs h-8">
-              <Link href="/attendance">Full Attendance Log</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {attendanceRecords.length === 0 ? (
-              <div className="text-center py-12 text-sm text-muted-foreground">
-                No attendance logs found for this intern.
-              </div>
-            ) : (
-              <div className="divide-y rounded-xl border">
-                {attendanceRecords.map((att) => (
-                  <div key={att._id} className="p-3.5 flex items-center justify-between hover:bg-muted/40 transition-colors">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={att.status === "FLAGGED" ? "destructive" : "secondary"} className="text-[10px]">
-                          {att.status}
-                        </Badge>
-                        <span className="font-medium text-sm text-foreground">
-                          {att.checkType === "CHECK_IN" ? "Check In" : "Check Out"}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          ({new Date(att.submittedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})
-                        </span>
-                      </div>
-                      {att.flagReasons && att.flagReasons.length > 0 && (
-                        <p className="text-xs text-destructive">
-                          Flag reasons: {att.flagReasons.join(", ")}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right text-xs text-muted-foreground shrink-0 ml-4">
-                      {fmt(att.date)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* TAB 4: DOCUMENTS */}
-      {activeTab === "documents" && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <div>
-              <CardTitle className="text-base font-semibold">Required Documents Checklist</CardTitle>
-              <CardDescription>Onboarding & institutional documents status.</CardDescription>
-            </div>
-            <Button size="sm" asChild variant="outline" className="text-xs h-8">
-              <Link href="/documents">Document Management</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {checklist.length === 0 ? (
-              <div className="text-center py-12 text-sm text-muted-foreground">
-                No required documents configured.
-              </div>
-            ) : (
-              <div className="divide-y rounded-xl border">
-                {checklist.map((item) => (
-                  <div key={item.requirement._id} className="p-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-primary" />
-                        <span className="font-semibold text-sm text-foreground">{item.requirement.label}</span>
-                        {item.requirement.isRequired && (
-                          <Badge variant="outline" className="text-[9px] uppercase border-amber-500/30 text-amber-600">
-                            Required
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">{item.requirement.type}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={item.document?.status === "VERIFIED" ? "default" : item.document?.status === "REJECTED" ? "destructive" : "secondary"}
-                        className="text-xs"
-                      >
-                        {item.document?.status ?? "NOT UPLOADED"}
-                      </Badge>
-
-                      {/* Download link if document file exists */}
-                      {item.document && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 px-2 text-xs"
-                          asChild
-                        >
-                          <a
-                            href={getDownloadUrl(item.document._id)}
-                            target="_blank"
-                            rel="noreferrer"
-                            title="Download document"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                          </a>
+                  {isHR && (
+                    <>
+                      <Button variant="ghost" size="sm" onClick={row.onChange}>{row.value ? "Change" : "Assign"}</Button>
+                      {row.value && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-danger-foreground" onClick={row.onRemove} disabled={row.removing} aria-label={`Remove ${row.label.toLowerCase()}`}>
+                          <X />
                         </Button>
                       )}
+                    </>
+                  )}
+                </div>
+              ))}
+            </Section>
 
-                      {/* HR Upload / Replace document button */}
-                      {isHR && (
-                        <label className="cursor-pointer">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 text-xs cursor-pointer"
-                            disabled={uploadingDocReqId === item.requirement._id}
-                            asChild
-                          >
-                            <span>
-                              {uploadingDocReqId === item.requirement._id ? (
-                                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Upload className="mr-1 h-3.5 w-3.5" />
-                              )}
-                              {item.document ? "Replace" : "Upload"}
-                            </span>
-                          </Button>
-                          <input
-                            type="file"
-                            className="sr-only"
-                            disabled={uploadingDocReqId === item.requirement._id}
-                            onChange={(e) =>
-                              handleHRDocumentUpload(item.requirement._id, item.document?._id, e)
-                            }
-                          />
-                        </label>
-                      )}
-                    </div>
-                  </div>
+            <Section title="Details" bodyClassName="px-5 py-1">
+              <dl>
+                <Detail k="Email" v={email} />
+                <Detail k="Phone" v={intern.phone} />
+                <Detail k="Institution" v={intern.institution} />
+                <Detail k="Location" v={intern.institutionLocation} />
+                <Detail k="Course" v={intern.course} />
+                {intern.level && <Detail k="Level" v={intern.level} />}
+                {intern.stateCode && <Detail k="NYSC state code" v={<span className="font-mono">{intern.stateCode}</span>} />}
+                {intern.callUpNumber && <Detail k="Call-up number" v={<span className="font-mono">{intern.callUpNumber}</span>} />}
+                <Detail k="Gender" v={intern.gender ? intern.gender.charAt(0) + intern.gender.slice(1).toLowerCase() : undefined} />
+                <Detail k="Address" v={intern.address} />
+              </dl>
+            </Section>
+
+            <Section
+              title="Documents"
+              action={<span className="text-xs text-muted-foreground"><span className="font-mono tabular">{verifiedDocs}</span>/{checklist.length} verified</span>}
+            >
+              {checklist.length === 0 ? <EmptyRow>No required documents set up.</EmptyRow> : (
+                <ul>
+                  {checklist.map((item, i) => (
+                    <li key={item.requirement._id} className={cn("flex items-center gap-3 px-5 py-2.5", i > 0 && "border-t")}>
+                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{item.requirement.label}</span>
+                      <StatusBadge status={item.document?.status ?? "PENDING"} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
+
+            {isHR && intern.status !== "COMPLETED" && (
+              <Section title="Ready to complete?" bodyClassName="space-y-2.5 p-5">
+                {[
+                  { ok: tasks.length > 0 && openTasks === 0, text: openTasks === 0 ? "All tasks resolved" : `All tasks resolved · ${openTasks} open` },
+                  { ok: outstandingDocs === 0, text: outstandingDocs === 0 ? "No outstanding documents" : `No outstanding documents · ${outstandingDocs} left` },
+                  { ok: submittedEvals > 0, text: "At least one evaluation submitted" },
+                ].map((c) => (
+                  <p key={c.text} className="flex items-center gap-2.5 text-[13px] text-secondary-foreground">
+                    <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full", c.ok ? "bg-success-soft text-success-foreground" : "bg-muted text-muted-foreground")}>
+                      {c.ok ? <Check className="h-3 w-3" strokeWidth={3} /> : <Minus className="h-3 w-3" strokeWidth={3} />}
+                    </span>
+                    {c.text}
+                  </p>
                 ))}
-              </div>
+                <Button variant="outline" className="mt-2 w-full" asChild>
+                  <Link href={`/exit/${intern._id}`}>Go to exit &amp; completion</Link>
+                </Button>
+              </Section>
             )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* TAB 5: REPORTS & EVALS */}
-      {activeTab === "reports" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <FileText className="h-4 w-4 text-primary" />
-                Submitted Reports
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {reports.length === 0 ? (
-                <div className="text-center py-8 text-sm text-muted-foreground">
-                  No periodic reports submitted yet.
-                </div>
-              ) : (
-                <div className="divide-y rounded-xl border">
-                  {reports.map((rep) => (
-                    <div key={rep._id} className="p-3.5 flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-sm text-foreground">{rep.title}</p>
-                        <p className="text-xs text-muted-foreground">{rep.type} · {rep.status}</p>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{fmt(rep.createdAt)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Star className="h-4 w-4 text-primary" />
-                Performance Evaluations
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {evaluations.length === 0 ? (
-                <div className="text-center py-8 text-sm text-muted-foreground">
-                  No evaluations recorded yet.
-                </div>
-              ) : (
-                <div className="divide-y rounded-xl border">
-                  {evaluations.map((ev) => (
-                    <div key={ev._id} className="p-3.5 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline" className="text-xs">
-                          Status: {ev.status}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{fmt(ev.createdAt)}</span>
-                      </div>
-                      <p className="text-xs text-foreground font-medium mt-1">{ev.comments || "No comments."}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          </div>
         </div>
       )}
 
-      {/* Assign department dialog */}
+      {/* ── Tasks ────────────────────────────────────────────────────────────── */}
+      {tab === "tasks" && (
+        <Section title="Tasks" description="Work assigned to this intern" action={<Link href="/tasks" className="text-[13px] font-medium text-primary hover:underline">All tasks</Link>}>
+          {tasks.length === 0 ? <EmptyRow>No tasks assigned yet.</EmptyRow> : (
+            <ul>
+              {tasks.map((t, i) => (
+                <li key={t._id} className={cn(i > 0 && "border-t")}>
+                  <Link href={`/tasks/${t._id}`} className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-muted/40">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{t.title}</span>
+                      <span className="block truncate text-xs text-muted-foreground">{t.description}</span>
+                    </span>
+                    <span className="hidden font-mono text-xs text-muted-foreground tabular sm:block">{t.deadline ? `Due ${fmtShortDate(t.deadline)}` : ""}</span>
+                    <StatusBadge status={t.status} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+      )}
+
+      {/* ── Attendance ───────────────────────────────────────────────────────── */}
+      {tab === "attendance" && (
+        <Section title="Attendance history" action={<Link href="/attendance" className="text-[13px] font-medium text-primary hover:underline">Full attendance log</Link>}>
+          {attendance.length === 0 ? <EmptyRow>No check-ins yet.</EmptyRow> : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead>
+                  <tr className="bg-muted/50 text-left text-xs text-muted-foreground">
+                    <th className="px-5 py-2.5 font-medium">Date</th>
+                    <th className="px-5 py-2.5 font-medium">Type</th>
+                    <th className="px-5 py-2.5 font-medium">Time</th>
+                    <th className="px-5 py-2.5 font-medium">From HQ</th>
+                    <th className="px-5 py-2.5 font-medium">GPS accuracy</th>
+                    <th className="px-5 py-2.5 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attendance.map((a) => (
+                    <tr key={a._id} className="border-t">
+                      <td className="px-5 py-3">{fmtDate(a.date, { weekday: "short", day: "numeric", month: "short" })}</td>
+                      <td className="px-5 py-3 text-secondary-foreground">{a.checkType === "CHECK_IN" ? "Check in" : "Check out"}</td>
+                      <td className="px-5 py-3 font-mono text-[13px] tabular">{fmtTime(a.submittedAt)}</td>
+                      <td className="px-5 py-3 font-mono text-[13px] tabular">{fmtMeters(a.distanceFromOffice)}</td>
+                      <td className="px-5 py-3 font-mono text-[13px] tabular">{a.locationAccuracy !== undefined ? `±${Math.round(a.locationAccuracy)} m` : "—"}</td>
+                      <td className="px-5 py-3">
+                        <StatusBadge status={a.status} />
+                        {a.flagReasons && a.flagReasons.length > 0 && (
+                          <span className="ml-2 text-xs text-muted-foreground">{a.flagReasons.map((r) => r.replace(/_/g, " ").toLowerCase()).join(", ")}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* ── Documents ────────────────────────────────────────────────────────── */}
+      {tab === "documents" && (
+        <Section title="Required documents" description="Onboarding and institution documents" action={<Link href="/documents" className="text-[13px] font-medium text-primary hover:underline">All documents</Link>}>
+          {checklist.length === 0 ? <EmptyRow>No required documents set up.</EmptyRow> : (
+            <ul>
+              {checklist.map((item, i) => {
+                const busy = uploadingDocReqId === item.requirement._id;
+                return (
+                  <li key={item.requirement._id} className={cn("flex flex-wrap items-center gap-3 px-5 py-3.5", i > 0 && "border-t")}>
+                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-medium">
+                        {item.requirement.label}
+                        {item.requirement.isRequired && <span className="ml-2 text-xs font-normal text-muted-foreground">Required</span>}
+                      </span>
+                      {item.requirement.description && <span className="block text-xs text-muted-foreground">{item.requirement.description}</span>}
+                    </span>
+                    <StatusBadge status={item.document?.status ?? "PENDING"} />
+                    {item.document && (
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground" asChild>
+                        <a href={getDownloadUrl(item.document._id)} target="_blank" rel="noreferrer" aria-label={`Download ${item.requirement.label}`}>
+                          <Download />
+                        </a>
+                      </Button>
+                    )}
+                    {isHR && (
+                      <label className={cn("inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-input px-3 text-[13px] font-medium transition-colors hover:bg-muted", busy && "pointer-events-none opacity-60")}>
+                        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                        {item.document ? "Replace" : "Upload"}
+                        <input
+                          type="file"
+                          className="sr-only"
+                          disabled={busy}
+                          onChange={(e) => handleHRDocumentUpload(item.requirement._id, item.document?._id, e)}
+                        />
+                      </label>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Section>
+      )}
+
+      {/* ── Reports & evaluations ───────────────────────────────────────────── */}
+      {tab === "reports" && (
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          <Section title="Reports">
+            {reports.length === 0 ? <EmptyRow>No reports submitted yet.</EmptyRow> : (
+              <ul>
+                {reports.map((r, i) => (
+                  <li key={r._id} className={cn(i > 0 && "border-t")}>
+                    <Link href={`/reports/${r._id}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/40">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{r.title}</span>
+                        <span className="block text-xs text-muted-foreground">{r.type === "WEEKLY" ? "Weekly" : "Daily"} · {fmtShortDate(r.createdAt)}</span>
+                      </span>
+                      <StatusBadge status={r.status} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+          <Section title="Evaluations">
+            {evaluations.length === 0 ? <EmptyRow>No evaluations yet.</EmptyRow> : (
+              <ul>
+                {evaluations.map((ev, i) => {
+                  const s = ev.scores;
+                  const avg = s ? ((s.workQuality + s.reliability + s.communication + s.learningProgress + s.professionalism) / 5).toFixed(1) : null;
+                  return (
+                    <li key={ev._id} className={cn(i > 0 && "border-t")}>
+                      <Link href={`/evaluations/${ev._id}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/40">
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm">{ev.comments || "No comments"}</span>
+                          <span className="block text-xs text-muted-foreground">{fmtShortDate(ev.submittedAt ?? ev.createdAt)}</span>
+                        </span>
+                        {avg && <span className="font-mono text-sm tabular">{avg}<span className="text-xs text-muted-foreground">/5</span></span>}
+                        <StatusBadge status={ev.status} />
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Section>
+        </div>
+      )}
+
+      {/* Assign department */}
       <Dialog open={deptDialogOpen} onOpenChange={setDeptDialogOpen}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Assign Department</DialogTitle>
-          </DialogHeader>
-          <div className="py-2">
-            <Select value={selectedDept} onValueChange={setSelectedDept}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a department" />
-              </SelectTrigger>
-              <SelectContent>
-                {departments.map((d) => (
-                  <SelectItem key={d._id} value={d._id}>
-                    {d.name}{d.subsidiary ? ` — ${d.subsidiary}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <DialogHeader><DialogTitle>Assign department</DialogTitle></DialogHeader>
+          <Select value={selectedDept} onValueChange={setSelectedDept}>
+            <SelectTrigger aria-label="Department"><SelectValue placeholder="Choose a department" /></SelectTrigger>
+            <SelectContent>
+              {departments.map((d) => (
+                <SelectItem key={d._id} value={d._id}>{d.name}{d.subsidiary ? ` — ${d.subsidiary}` : ""}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <DialogFooter>
-            <Button
-              onClick={handleAssignDept}
-              disabled={!selectedDept || assignDept.isPending}
-              className="w-full"
-            >
-              {assignDept.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirm Assignment
+            <Button variant="outline" onClick={() => setDeptDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleAssignDept} disabled={!selectedDept || assignDept.isPending}>
+              {assignDept.isPending && <Loader2 className="animate-spin" />} Assign
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Assign supervisor dialog */}
+      {/* Assign supervisor */}
       <Dialog open={supervisorDialogOpen} onOpenChange={setSvDialogOpen}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Assign Supervisor</DialogTitle>
-          </DialogHeader>
-          <div className="py-2">
-            <Select value={selectedSv} onValueChange={setSelectedSv}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a supervisor" />
-              </SelectTrigger>
-              <SelectContent>
-                {supervisors
-                  .filter((s) => s.isActive)
-                  .map((s) => (
-                    <SelectItem key={s._id} value={s._id}>
-                      {s.firstName} {s.lastName}
-                      {s.department ? ` · ${s.department.name}` : ""}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <DialogHeader><DialogTitle>Assign supervisor</DialogTitle></DialogHeader>
+          <Select value={selectedSv} onValueChange={setSelectedSv}>
+            <SelectTrigger aria-label="Supervisor"><SelectValue placeholder="Choose a supervisor" /></SelectTrigger>
+            <SelectContent>
+              {supervisors.filter((s) => s.isActive).map((s) => (
+                <SelectItem key={s._id} value={s._id}>{s.firstName} {s.lastName}{s.department ? ` · ${s.department.name}` : ""}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <DialogFooter>
-            <Button
-              onClick={handleAssignSv}
-              disabled={!selectedSv || assignSv.isPending}
-              className="w-full"
-            >
-              {assignSv.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirm Assignment
+            <Button variant="outline" onClick={() => setSvDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleAssignSv} disabled={!selectedSv || assignSv.isPending}>
+              {assignSv.isPending && <Loader2 className="animate-spin" />} Assign
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Quick Edit Sheet */}
-      <EditInternSheet
-        intern={intern}
-        open={editSheetOpen}
-        onOpenChange={setEditSheetOpen}
-      />
+      <EditInternSheet intern={intern} open={editSheetOpen} onOpenChange={setEditSheetOpen} />
     </div>
   );
 }
