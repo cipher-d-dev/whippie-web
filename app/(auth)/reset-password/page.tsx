@@ -33,11 +33,11 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 const inputCls = (err?: boolean) =>
   cn(
-    "w-full rounded-2xl border bg-muted/40 pl-10 pr-11 py-3 text-sm font-medium outline-none",
-    "placeholder:text-muted-foreground/40 transition-all duration-150",
+    "h-11 w-full rounded-lg border bg-background pl-10 pr-11 text-[15px] outline-none",
+    "placeholder:text-muted-foreground transition-[border-color,box-shadow]",
     err
-      ? "border-destructive/50 bg-destructive/5"
-      : "border-transparent hover:border-border focus:border-primary/60 focus:bg-background focus:ring-2 focus:ring-primary/15"
+      ? "border-danger focus:ring-[3px] focus:ring-danger/20"
+      : "border-input focus:border-primary focus:ring-[3px] focus:ring-ring/20"
   );
 
 function ResetPasswordForm() {
@@ -79,11 +79,11 @@ function ResetPasswordForm() {
   if (!token) {
     return (
       <div className="space-y-4 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-danger-soft text-danger-foreground">
           <XCircle className="h-7 w-7" />
         </div>
         <div>
-          <h2 className="text-base font-bold text-foreground">Missing Token</h2>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em] text-foreground">Missing token</h1>
           <p className="text-xs text-muted-foreground mt-1">
             Invalid or missing password reset link. Please request a new password reset.
           </p>
@@ -104,12 +104,12 @@ function ResetPasswordForm() {
   if (isSuccess) {
     return (
       <div className="space-y-5 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-success-soft text-success-foreground">
           <CheckCircle2 className="h-7 w-7" />
         </div>
 
         <div className="space-y-1.5">
-          <h2 className="text-base font-bold text-foreground">Password Reset</h2>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em] text-foreground">Password reset</h1>
           <p className="text-xs text-muted-foreground leading-relaxed">
             Your password has been changed successfully. You can now sign in with your new password.
           </p>
@@ -118,7 +118,7 @@ function ResetPasswordForm() {
         <div className="pt-2">
           <Button
             onClick={() => router.push("/login")}
-            className="w-full h-11 rounded-2xl text-sm font-semibold"
+            className="h-11 w-full text-[15px]"
           >
             Sign In Now
           </Button>
@@ -137,7 +137,7 @@ function ResetPasswordForm() {
       className="space-y-4"
     >
       <div className="mb-2">
-        <h2 className="text-base font-bold text-foreground">Set New Password</h2>
+        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em] text-foreground">Set new password</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
           Choose a secure new password for your account.
         </p>
@@ -152,7 +152,7 @@ function ResetPasswordForm() {
           New Password
         </label>
         <div className="relative">
-          <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+          <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             id="password"
             type={showPassword ? "text" : "password"}
@@ -176,7 +176,7 @@ function ResetPasswordForm() {
           </button>
         </div>
         {errors.password && (
-          <p className="text-[11px] font-medium text-destructive">
+          <p className="text-xs font-medium text-danger-foreground">
             {errors.password.message}
           </p>
         )}
@@ -191,7 +191,7 @@ function ResetPasswordForm() {
           Confirm Password
         </label>
         <div className="relative">
-          <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+          <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             id="confirmPassword"
             type={showConfirmPassword ? "text" : "password"}
@@ -215,7 +215,7 @@ function ResetPasswordForm() {
           </button>
         </div>
         {errors.confirmPassword && (
-          <p className="text-[11px] font-medium text-destructive">
+          <p className="text-xs font-medium text-danger-foreground">
             {errors.confirmPassword.message}
           </p>
         )}
@@ -224,7 +224,7 @@ function ResetPasswordForm() {
       {/* Submit Button */}
       <Button
         type="submit"
-        className="group w-full h-12 rounded-2xl text-[15px] font-bold shadow-md shadow-primary/20 cursor-pointer"
+        className="h-11 w-full text-[15px]"
         disabled={busy}
       >
         {busy ? (
@@ -232,7 +232,7 @@ function ResetPasswordForm() {
         ) : (
           <>
             <span>Reset Password</span>
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <ArrowRight className="ml-2 h-4 w-4" />
           </>
         )}
       </Button>

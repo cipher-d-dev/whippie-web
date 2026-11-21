@@ -20,11 +20,11 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 
 const inputCls = (err?: boolean) =>
   cn(
-    "w-full rounded-2xl border bg-muted/40 pl-10 pr-4 py-3 text-sm font-medium outline-none",
-    "placeholder:text-muted-foreground/40 transition-all duration-150",
+    "h-11 w-full rounded-lg border bg-background pl-10 pr-4 text-[15px] outline-none",
+    "placeholder:text-muted-foreground transition-[border-color,box-shadow]",
     err
-      ? "border-destructive/50 bg-destructive/5"
-      : "border-transparent hover:border-border focus:border-primary/60 focus:bg-background focus:ring-2 focus:ring-primary/15"
+      ? "border-danger focus:ring-[3px] focus:ring-danger/20"
+      : "border-input focus:border-primary focus:ring-[3px] focus:ring-ring/20"
   );
 
 export default function ForgotPasswordPage() {
@@ -60,12 +60,12 @@ export default function ForgotPasswordPage() {
   if (submittedEmail) {
     return (
       <div className="space-y-5 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-success-soft text-success-foreground">
           <CheckCircle2 className="h-7 w-7" />
         </div>
 
         <div className="space-y-1.5">
-          <h2 className="text-base font-bold text-foreground">Check your email</h2>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em] text-foreground">Check your email</h1>
           <p className="text-xs text-muted-foreground leading-relaxed">
             If an account exists for <span className="font-semibold text-foreground">{submittedEmail}</span>, we&apos;ve sent a password reset link to your inbox.
           </p>
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
       className="space-y-4"
     >
       <div className="mb-2">
-        <h2 className="text-base font-bold text-foreground">Forgot Password</h2>
+        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em] text-foreground">Forgot password</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
           Enter your registered email and we&apos;ll send you a link to reset your password.
         </p>
@@ -106,7 +106,7 @@ export default function ForgotPasswordPage() {
           Official Email
         </label>
         <div className="relative">
-          <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+          <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             id="email"
             type="email"
@@ -118,7 +118,7 @@ export default function ForgotPasswordPage() {
           />
         </div>
         {errors.email && (
-          <p className="text-[11px] font-medium text-destructive">
+          <p className="text-xs font-medium text-danger-foreground">
             {errors.email.message}
           </p>
         )}
@@ -127,7 +127,7 @@ export default function ForgotPasswordPage() {
       {/* Submit Button */}
       <Button
         type="submit"
-        className="group w-full h-12 rounded-2xl text-[15px] font-bold shadow-md shadow-primary/20 cursor-pointer"
+        className="h-11 w-full text-[15px]"
         disabled={busy}
       >
         {busy ? (
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
         ) : (
           <>
             <span>Send Reset Link</span>
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <ArrowRight className="ml-2 h-4 w-4" />
           </>
         )}
       </Button>

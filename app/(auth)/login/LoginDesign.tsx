@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, ArrowRight, Loader2, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,11 +23,11 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const inputCls = (err?: boolean) =>
   cn(
-    "w-full rounded-2xl border bg-muted/40 pl-10 pr-4 py-3 text-sm font-medium outline-none",
-    "placeholder:text-muted-foreground/40 transition-all duration-150",
+    "h-11 w-full rounded-lg border bg-background pl-10 pr-4 text-[15px] outline-none",
+    "placeholder:text-muted-foreground transition-[border-color,box-shadow]",
     err
-      ? "border-destructive/50 bg-destructive/5"
-      : "border-transparent hover:border-border focus:border-primary/60 focus:bg-background focus:ring-2 focus:ring-primary/15"
+      ? "border-danger focus:ring-[3px] focus:ring-danger/20"
+      : "border-input focus:border-primary focus:ring-[3px] focus:ring-ring/20"
   );
 
 export function HRLoginPage() {
@@ -65,23 +65,23 @@ export function HRLoginPage() {
     <form
       onSubmit={form.handleSubmit((v) => mutation.mutate(v))}
       noValidate
-      className="space-y-4"
+      className="space-y-5"
     >
-      <div className="mb-2">
-        <h2 className="text-base font-bold text-foreground">Sign In</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">Enter your official credentials to access HR administration</p>
+      <div className="mb-2 space-y-2">
+        <h1 className="text-[30px] font-semibold leading-tight tracking-[-0.03em] text-foreground">Sign in</h1>
+        <p className="text-[15px] text-muted-foreground">For HR and supervisors at DAAR Communications.</p>
       </div>
 
       {/* Email */}
       <div className="space-y-1.5">
         <label
           htmlFor="email"
-          className="block text-[13px] font-semibold text-foreground"
+          className="block text-[13px] font-medium text-secondary-foreground"
         >
-          Official Email
+          Work email
         </label>
         <div className="relative">
-          <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+          <Mail className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             id="email"
             type="email"
@@ -93,7 +93,7 @@ export function HRLoginPage() {
           />
         </div>
         {errors.email && (
-          <p className="text-[11px] font-medium text-destructive">
+          <p className="text-xs font-medium text-danger-foreground">
             {errors.email.message}
           </p>
         )}
@@ -104,19 +104,19 @@ export function HRLoginPage() {
         <div className="flex items-center justify-between">
           <label
             htmlFor="password"
-            className="block text-[13px] font-semibold text-foreground"
+            className="block text-[13px] font-medium text-secondary-foreground"
           >
             Password
           </label>
           <Link
             href="/forgot-password"
-            className="text-[11px] font-semibold text-primary hover:underline underline-offset-4"
+            className="text-[13px] font-medium text-primary hover:underline underline-offset-4"
           >
             Forgot password?
           </Link>
         </div>
         <div className="relative">
-          <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+          <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             id="password"
             type={showPassword ? "text" : "password"}
@@ -129,7 +129,7 @@ export function HRLoginPage() {
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (
@@ -140,7 +140,7 @@ export function HRLoginPage() {
           </button>
         </div>
         {errors.password && (
-          <p className="text-[11px] font-medium text-destructive">
+          <p className="text-xs font-medium text-danger-foreground">
             {errors.password.message}
           </p>
         )}
@@ -149,18 +149,16 @@ export function HRLoginPage() {
       {/* Submit Button */}
       <Button
         type="submit"
-        className="group w-full h-12 rounded-2xl text-[15px] font-bold shadow-md shadow-primary/20 cursor-pointer"
+        className="h-11 w-full text-[15px]"
         disabled={busy}
       >
         {busy ? (
           <Loader2 className="h-5 w-5 animate-spin" />
         ) : (
-          <>
-            <span>Sign In</span>
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </>
+          <span>Sign in</span>
         )}
       </Button>
+      <p className="text-[13px] text-muted-foreground">Interns sign in on the Whippie Intern app.</p>
     </form>
   );
 }
