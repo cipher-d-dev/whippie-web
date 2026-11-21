@@ -152,7 +152,7 @@ export interface ExitChecklist {
 
 // ─── Attendance ───────────────────────────────────────────────────────────────
 
-export type AttendanceStatus  = "ACCEPTED" | "FLAGGED" | "REJECTED";
+export type AttendanceStatus  = "ACCEPTED" | "FLAGGED" | "REJECTED" | "CORRECTED";
 export type AttendanceCheckType = "CHECK_IN" | "CHECK_OUT";
 
 export interface AttendanceObject {
