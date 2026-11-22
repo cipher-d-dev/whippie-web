@@ -15,12 +15,12 @@ import { Section } from "@/components/shared/PageHeader";
 import { PersonAvatar } from "@/components/shared/PersonAvatar";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils/cn";
-import { fmtDate, fmtTime, fmtMeters, fullName } from "@/lib/utils/format";
+import { fmtDate, fmtTime, fmtMeters, fullName, flagReasonText } from "@/lib/utils/format";
 import type { AttendanceStatus } from "@/types";
 
 const EXPLAIN: Record<AttendanceStatus, string> = {
   ACCEPTED: "Inside the geofence with good location accuracy.",
-  FLAGGED: "Inside the geofence, but the phone's location accuracy was poor (worse than 50 m).",
+  FLAGGED: "Inside the office zone, but the phone's GPS signal was weak (accuracy worse than 50 m), so the location is less exact. Most of the time the intern is at work. Correct it to count the day for stipends.",
   REJECTED: "Outside the DAAR Communications geofence.",
   CORRECTED: "HR changed the automatic result. See the note below.",
 };
@@ -92,7 +92,7 @@ export default function AttendanceDetailPage({ params }: { params: Promise<{ id:
         <div className="flex items-center gap-2"><StatusBadge status={record.status} /></div>
         <p className="mt-2 text-sm">{EXPLAIN[record.status]}</p>
         {record.flagReasons && record.flagReasons.length > 0 && (
-          <p className="mt-1 text-xs">Reasons: {record.flagReasons.map((r) => r.replace(/_/g, " ").toLowerCase()).join(", ")}</p>
+          <p className="mt-1 text-xs">Reason: {flagReasonText(record.flagReasons)}</p>
         )}
       </div>
 
@@ -100,7 +100,7 @@ export default function AttendanceDetailPage({ params }: { params: Promise<{ id:
         <dl>
           <Row k="Submitted" v={`${fmtDate(record.submittedAt)} · ${fmtTime(record.submittedAt)}`} />
           <Row k="Inside geofence" v={record.withinGeofence == null ? "—" : record.withinGeofence ? "Yes" : "No"} />
-          <Row k="Distance from HQ" v={fmtMeters(record.distanceFromOffice)} mono />
+          <Row k="Distance from DAAR Lagos" v={fmtMeters(record.distanceFromOffice)} mono />
           <Row k="GPS accuracy" v={record.locationAccuracy != null ? `±${Math.round(record.locationAccuracy)} m` : "—"} mono />
           {intern && <Row k="Intern" v={<Link href={`/interns/${intern._id}`} className="text-primary hover:underline">View profile</Link>} />}
         </dl>

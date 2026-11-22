@@ -238,7 +238,7 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="sheet-course">Course of Study</Label>
+                  <Label htmlFor="sheet-course">Course of Study/Discipline</Label>
                   <Input
                     id="sheet-course"
                     placeholder="e.g. Mass Communication"
@@ -246,7 +246,7 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="sheet-level">Level</Label>
+                  <Label htmlFor="sheet-level">Qualification/Level of Study</Label>
                   <Input id="sheet-level" placeholder="e.g. 400L" {...register("level")} />
                 </div>
               </div>

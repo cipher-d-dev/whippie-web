@@ -64,6 +64,7 @@ function getPageTitle(pathname: string): string {
     reports:       "Reports",
     supervisors:   "Supervisors",
     documents:     "Documents",
+    stipends:      "Stipends",
     evaluations:   "Evaluations",
     exit:          "Exit & Completion",
     notifications: "Notifications",
@@ -76,7 +77,7 @@ function getPageTitle(pathname: string): string {
 const SECTION: Record<string, string> = {
   verification: "People", interns: "People", supervisors: "People", departments: "People",
   onboarding: "Programme", attendance: "Programme", tasks: "Programme", reports: "Programme",
-  evaluations: "Programme", documents: "Programme", exit: "Programme", configuration: "Admin",
+  evaluations: "Programme", documents: "Programme", exit: "Programme", stipends: "Programme", configuration: "Admin",
 };
 
 // ─── Notification entity link map ─────────────────────────────────────────────
@@ -87,7 +88,7 @@ const ENTITY_HREF: Partial<Record<NotificationType, (id: string) => string>> = {
   SUBMISSION_APPROVED:          (id) => `/tasks/${id}`,
   SUBMISSION_CHANGES_REQUESTED: (id) => `/tasks/${id}`,
   EVALUATION_SUBMITTED:         (id) => `/evaluations/${id}`,
-  DOCUMENT_STATUS_CHANGED:      (id) => `/documents/${id}`,
+  DOCUMENT_STATUS_CHANGED:      () => `/documents/generate`,
   REPORT_REVIEWED:              (id) => `/reports/${id}`,
 };
 

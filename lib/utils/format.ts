@@ -56,3 +56,16 @@ export const INTERNSHIP_TYPE_LABEL: Record<string, string> = {
   INTERNSHIP: "Intern",
   NYSC_IT: "Corps member",
 };
+
+/** Plain-English check-in flag reasons. */
+export const FLAG_REASON_TEXT: Record<string, string> = {
+  POOR_LOCATION_ACCURACY: "weak GPS signal",
+  OUTSIDE_GEOFENCE: "outside the office zone",
+};
+export const flagReasonText = (reasons?: string[]) =>
+  (reasons ?? []).map((r) => FLAG_REASON_TEXT[r] ?? r.replace(/_/g, " ").toLowerCase()).join(", ");
+
+/** What "Flagged" means, for HR. Shown wherever flagged check-ins are listed. */
+export const FLAGGED_HELP =
+  "Flagged means the intern was inside the office zone, but their phone's GPS signal was weak, so the location is less exact. " +
+  "Most of the time they are at work. Flagged days don't count towards stipends until you correct them.";

@@ -6,12 +6,9 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Check,
-  Download,
-  FileText,
   Loader2,
   Minus,
   Pencil,
-  Upload,
   X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
@@ -27,10 +24,6 @@ import { useDepartments } from "@/features/departments/hooks";
 import { useSupervisors } from "@/features/supervisors/hooks";
 import { useTasks } from "@/features/tasks/hooks";
 import { useAttendance } from "@/features/attendance/hooks";
-import { useChecklist, documentKeys } from "@/features/documents/hooks";
-import { createDocument, getUploadInfo, uploadDocumentFileToAppwrite, confirmUpload, getDownloadUrl } from "@/features/documents/api";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { useReports } from "@/features/reports/hooks";
 import { useEvaluations } from "@/features/evaluations/hooks";
 import { Button } from "@/components/ui/button";
@@ -41,10 +34,10 @@ import { Section } from "@/components/shared/PageHeader";
 import { PersonAvatar } from "@/components/shared/PersonAvatar";
 import { StatusBadge, statusLabel } from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils/cn";
-import { fmtDate, fmtShortDate, fmtTime, fmtMeters, programmeProgress } from "@/lib/utils/format";
+import { fmtDate, fmtShortDate, fmtTime, fmtMeters, programmeProgress, flagReasonText } from "@/lib/utils/format";
 import type { AttendanceObject } from "@/types";
 
-type Tab = "overview" | "tasks" | "attendance" | "documents" | "reports";
+type Tab = "overview" | "tasks" | "attendance" | "reports";
 
 // ─── Attendance grid: last 6 weeks of weekdays ────────────────────────────────
 
@@ -124,8 +117,6 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
   const [editSheetOpen, setEditSheetOpen] = useState(false);
   const [selectedDept, setSelectedDept] = useState("");
   const [selectedSv, setSelectedSv] = useState("");
-  const [uploadingDocReqId, setUploadingDocReqId] = useState<string | null>(null);
-  const qc = useQueryClient();
 
   const { data: deptData } = useDepartments({ limit: 100 });
   const { data: svData } = useSupervisors({ limit: 100 });
@@ -134,7 +125,6 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
 
   const { data: tasksData, isLoading: tasksLoading } = useTasks({ intern: id, limit: 50 });
   const { data: attendanceData, isLoading: attLoading } = useAttendance({ intern: id, limit: 100 });
-  const { data: checklistData } = useChecklist(id);
   const { data: reportsData } = useReports({ intern: id, limit: 20 });
   const { data: evalData } = useEvaluations({ intern: id, limit: 10 });
 
@@ -145,41 +135,6 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
 
   const attendance = useMemo(() => attendanceData?.data ?? [], [attendanceData]);
   const grid = useMemo(() => buildAttendanceGrid(attendance, intern?.startDate), [attendance, intern?.startDate]);
-
-  const handleHRDocumentUpload = async (requirementId: string, existingDocId?: string, e?: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e?.target.files?.[0];
-    if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error("File size must be under 20MB.");
-      return;
-    }
-    setUploadingDocReqId(requirementId);
-    try {
-      let docId = existingDocId;
-      if (!docId) {
-        const created = await createDocument({ internId: id, requirementId });
-        if (!created.data?.document?._id) throw new Error("Failed to create document record");
-        docId = created.data.document._id;
-      }
-      const infoRes = await getUploadInfo(docId);
-      if (!infoRes.data?.uploadInfo) throw new Error("Failed to obtain upload ticket");
-      const info = infoRes.data.uploadInfo;
-      await uploadDocumentFileToAppwrite(info, file);
-      await confirmUpload(docId, {
-        storageKey: info.fileId,
-        originalFilename: file.name,
-        contentType: file.type || "application/octet-stream",
-        fileSizeBytes: file.size,
-      });
-      qc.invalidateQueries({ queryKey: documentKeys.checklist(id) });
-      toast.success("Document uploaded successfully");
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to upload document");
-    } finally {
-      setUploadingDocReqId(null);
-      if (e?.target) e.target.value = "";
-    }
-  };
 
   const handleAssignDept = () => {
     if (!selectedDept) return;
@@ -212,9 +167,6 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
   const tasks = tasksData?.data ?? [];
   const openTasks = tasks.filter((t) => t.status !== "COMPLETED").length;
   const flagged = attendance.filter((a) => a.status === "FLAGGED").length;
-  const checklist = checklistData?.data?.checklist ?? [];
-  const verifiedDocs = checklist.filter((d) => d.document?.status === "VERIFIED").length;
-  const outstandingDocs = checklist.filter((d) => d.requirement.isRequired && d.document?.status !== "VERIFIED").length;
   const reports = reportsData?.data ?? [];
   const evaluations = evalData?.data ?? [];
   const submittedEvals = evaluations.filter((e) => e.status === "SUBMITTED").length;
@@ -227,7 +179,6 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
     { key: "overview", label: "Overview" },
     { key: "tasks", label: "Tasks", count: tasks.length },
     { key: "attendance", label: "Attendance", count: flagged > 0 ? <span className="text-warning-foreground">{flagged} flagged</span> : checkIns.length },
-    { key: "documents", label: "Documents", count: `${verifiedDocs}/${checklist.length}` },
     { key: "reports", label: "Reports & evaluations", count: reports.length + evaluations.length },
   ];
 
@@ -405,9 +356,9 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
                 <Detail k="Email" v={email} />
                 <Detail k="Phone" v={intern.phone} />
                 <Detail k="Institution" v={intern.institution} />
-                <Detail k="Location" v={intern.institutionLocation} />
-                <Detail k="Course" v={intern.course} />
-                {intern.level && <Detail k="Level" v={intern.level} />}
+                <Detail k="Institution location" v={intern.institutionLocation} />
+                <Detail k="Course of study/discipline" v={intern.course} />
+                {intern.level && <Detail k="Qualification/level of study" v={intern.level} />}
                 {intern.stateCode && <Detail k="NYSC state code" v={<span className="font-mono">{intern.stateCode}</span>} />}
                 {intern.callUpNumber && <Detail k="Call-up number" v={<span className="font-mono">{intern.callUpNumber}</span>} />}
                 <Detail k="Gender" v={intern.gender ? intern.gender.charAt(0) + intern.gender.slice(1).toLowerCase() : undefined} />
@@ -415,28 +366,10 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
               </dl>
             </Section>
 
-            <Section
-              title="Documents"
-              action={<span className="text-xs text-muted-foreground"><span className="font-mono tabular">{verifiedDocs}</span>/{checklist.length} verified</span>}
-            >
-              {checklist.length === 0 ? <EmptyRow>No required documents set up.</EmptyRow> : (
-                <ul>
-                  {checklist.map((item, i) => (
-                    <li key={item.requirement._id} className={cn("flex items-center gap-3 px-5 py-2.5", i > 0 && "border-t")}>
-                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{item.requirement.label}</span>
-                      <StatusBadge status={item.document?.status ?? "PENDING"} />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Section>
-
             {isHR && intern.status !== "COMPLETED" && (
               <Section title="Ready to complete?" bodyClassName="space-y-2.5 p-5">
                 {[
                   { ok: tasks.length > 0 && openTasks === 0, text: openTasks === 0 ? "All tasks resolved" : `All tasks resolved · ${openTasks} open` },
-                  { ok: outstandingDocs === 0, text: outstandingDocs === 0 ? "No outstanding documents" : `No outstanding documents · ${outstandingDocs} left` },
                   { ok: submittedEvals > 0, text: "At least one evaluation submitted" },
                 ].map((c) => (
                   <p key={c.text} className="flex items-center gap-2.5 text-[13px] text-secondary-foreground">
@@ -488,7 +421,7 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
                     <th className="px-5 py-2.5 font-medium">Date</th>
                     <th className="px-5 py-2.5 font-medium">Type</th>
                     <th className="px-5 py-2.5 font-medium">Time</th>
-                    <th className="px-5 py-2.5 font-medium">From HQ</th>
+                    <th className="px-5 py-2.5 font-medium">From DAAR Lagos</th>
                     <th className="px-5 py-2.5 font-medium">GPS accuracy</th>
                     <th className="px-5 py-2.5 font-medium">Status</th>
                   </tr>
@@ -504,7 +437,7 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
                       <td className="px-5 py-3">
                         <StatusBadge status={a.status} />
                         {a.flagReasons && a.flagReasons.length > 0 && (
-                          <span className="ml-2 text-xs text-muted-foreground">{a.flagReasons.map((r) => r.replace(/_/g, " ").toLowerCase()).join(", ")}</span>
+                          <span className="ml-2 text-xs text-muted-foreground">{flagReasonText(a.flagReasons)}</span>
                         )}
                       </td>
                     </tr>
@@ -512,51 +445,6 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
                 </tbody>
               </table>
             </div>
-          )}
-        </Section>
-      )}
-
-      {/* ── Documents ────────────────────────────────────────────────────────── */}
-      {tab === "documents" && (
-        <Section title="Required documents" description="Onboarding and institution documents" action={<Link href="/documents" className="text-[13px] font-medium text-primary hover:underline">All documents</Link>}>
-          {checklist.length === 0 ? <EmptyRow>No required documents set up.</EmptyRow> : (
-            <ul>
-              {checklist.map((item, i) => {
-                const busy = uploadingDocReqId === item.requirement._id;
-                return (
-                  <li key={item.requirement._id} className={cn("flex flex-wrap items-center gap-3 px-5 py-3.5", i > 0 && "border-t")}>
-                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-medium">
-                        {item.requirement.label}
-                        {item.requirement.isRequired && <span className="ml-2 text-xs font-normal text-muted-foreground">Required</span>}
-                      </span>
-                      {item.requirement.description && <span className="block text-xs text-muted-foreground">{item.requirement.description}</span>}
-                    </span>
-                    <StatusBadge status={item.document?.status ?? "PENDING"} />
-                    {item.document && (
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground" asChild>
-                        <a href={getDownloadUrl(item.document._id)} target="_blank" rel="noreferrer" aria-label={`Download ${item.requirement.label}`}>
-                          <Download />
-                        </a>
-                      </Button>
-                    )}
-                    {isHR && (
-                      <label className={cn("inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-input px-3 text-[13px] font-medium transition-colors hover:bg-muted", busy && "pointer-events-none opacity-60")}>
-                        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                        {item.document ? "Replace" : "Upload"}
-                        <input
-                          type="file"
-                          className="sr-only"
-                          disabled={busy}
-                          onChange={(e) => handleHRDocumentUpload(item.requirement._id, item.document?._id, e)}
-                        />
-                      </label>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
           )}
         </Section>
       )}

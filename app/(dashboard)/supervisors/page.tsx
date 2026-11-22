@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useSupervisors, useCreateSupervisor } from "@/features/supervisors/hooks";
 import { useDepartments } from "@/features/departments/hooks";
+import { DepartmentPicker, supervisorDepartments } from "@/components/shared/DepartmentPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,13 +20,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -42,7 +36,7 @@ const schema = z.object({
   firstName:  z.string().min(1, "First name is required"),
   lastName:   z.string().min(1, "Last name is required"),
   phone:      z.string().optional(),
-  department: z.string().optional(),
+  departments: z.array(z.string()).optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -132,9 +126,7 @@ export default function SupervisorsPage() {
                     </Link>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {sv.department
-                      ? `${sv.department.name}${sv.department.subsidiary ? ` · ${sv.department.subsidiary}` : ""}`
-                      : "—"}
+                    {supervisorDepartments(sv) || "—"}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {sv.phone ?? "—"}
@@ -184,22 +176,8 @@ export default function SupervisorsPage() {
             <Field label="Phone" error={errors.phone?.message}>
               <Input placeholder="08098765432" {...register("phone")} />
             </Field>
-            <Field label="Department / SBU" error={errors.department?.message}>
-              <Select
-                value={watch("department") ?? ""}
-                onValueChange={(v) => setValue("department", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Assign to department (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((d) => (
-                    <SelectItem key={d._id} value={d._id}>
-                      {d.name}{d.subsidiary ? ` — ${d.subsidiary}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Field label="Departments (tick all they cover)">
+              <DepartmentPicker departments={departments} value={watch("departments") ?? []} onChange={(v) => setValue("departments", v)} />
             </Field>
             <DialogFooter className="pt-2">
               <Button type="submit" disabled={createMut.isPending} className="w-full">

@@ -32,11 +32,11 @@ const ENTITY_HREF: Partial<Record<NotificationType, (id: string) => string>> = {
   SUBMISSION_APPROVED:          (id) => `/tasks/${id}`,
   SUBMISSION_CHANGES_REQUESTED: (id) => `/tasks/${id}`,
   EVALUATION_SUBMITTED:         (id) => `/evaluations/${id}`,
-  DOCUMENT_STATUS_CHANGED:      (id) => `/documents/${id}`,
+  DOCUMENT_STATUS_CHANGED:      () => `/documents/generate`,
   REPORT_REVIEWED:              (id) => `/reports/${id}`,
   NEW_INTERN_PENDING:           () => `/verification`,
   ATTENDANCE_FLAGGED:           (id) => `/attendance/${id}`,
-  DOCUMENT_UPLOADED:            (id) => `/documents/${id}`,
+  DOCUMENT_UPLOADED:            () => `/documents/generate`,
   REPORT_SUBMITTED:             (id) => `/reports/${id}`,
   BROADCAST:                    () => `/notifications`,
 };

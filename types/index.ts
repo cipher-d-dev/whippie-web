@@ -35,7 +35,7 @@ export interface InternObject {
   address?: string;
   institution?: string;
   institutionLocation?: string;
-  course: string;
+  course?: string;
   level?: string;
   stateCode?: string;
   callUpNumber?: string;
@@ -65,7 +65,7 @@ export interface CreateInternInput {
   address?: string;
   institution?: string;
   institutionLocation?: string;
-  course: string;
+  course?: string;
   level?: string;
   stateCode?: string;
   callUpNumber?: string;
@@ -369,6 +369,7 @@ export interface SupervisorObject {
   lastName: string;
   phone?: string;
   department?: { _id: string; name: string; subsidiary?: string } | null;
+  departments?: { _id: string; name: string; subsidiary?: string }[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -382,6 +383,7 @@ export interface CreateSupervisorInput {
   lastName: string;
   phone?: string;
   department?: string;
+  departments?: string[];
 }
 
 export interface UpdateSupervisorInput {
@@ -389,6 +391,7 @@ export interface UpdateSupervisorInput {
   lastName?: string;
   phone?: string;
   department?: string;
+  departments?: string[];
   isActive?: boolean;
 }
 

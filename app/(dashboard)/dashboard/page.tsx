@@ -67,7 +67,6 @@ function NeedsAttention({ stats }: { stats: DashboardStats }) {
   const items = [
     { n: stats.pending.verifications, t: "accounts to approve", s: "Confirmed their email, waiting for you", href: "/verification", icon: UserCheck, tone: "warning" as const },
     { n: stats.today.flagged, t: "flagged check-ins", s: "Low GPS accuracy today", href: "/attendance", icon: AlertTriangle, tone: "danger" as const },
-    { n: stats.pending.documentsToVerify, t: "documents to verify", s: "Uploaded or handed in", href: "/documents", icon: FileText, tone: "info" as const },
   ].filter((i) => i.n > 0);
 
   if (items.length === 0) {
@@ -115,7 +114,7 @@ function WeekChart({ stats }: { stats: DashboardStats }) {
   return (
     <Section
       title="Check-ins this week"
-      description={`Interns checked in at DAAR HQ, out of ${stats.interns.byStatus.ACTIVE} active`}
+      description={`Interns checked in at DAAR Lagos, out of ${stats.interns.byStatus.ACTIVE} active`}
       className="flex-[2_1_460px]"
       bodyClassName="px-5 pb-5 pt-6"
     >
@@ -320,7 +319,7 @@ function HRDashboard({ firstName }: { firstName: string }) {
               label="Onboarding"
               value={stats.interns.byStatus.ONBOARDING}
               sub="Finishing their setup"
-              href="/onboarding"
+              href="/interns?status=ONBOARDING"
             />
             <StatTile
               label="Waiting for review"
