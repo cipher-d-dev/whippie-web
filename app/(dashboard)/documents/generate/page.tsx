@@ -751,12 +751,6 @@ export default function DocumentGenerationPage() {
       {/* Header */}
       <div className="no-print flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1.5">
-          <Link
-            href="/documents"
-            className="inline-flex items-center gap-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" /> Documents
-          </Link>
           <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em] text-foreground">Generate a letter</h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
             Exact replicas of DAAR Communications&apos; official templates, for printing straight onto letterhead stationery.
