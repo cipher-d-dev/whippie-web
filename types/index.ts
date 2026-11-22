@@ -334,7 +334,8 @@ export interface UploadInfo {
 
 // ─── Departments ──────────────────────────────────────────────────────────────
 
-export type Subsidiary = "AIT" | "Raypower" | "Faaji" | "Corporate";
+/** Station / subsidiary name. HR manages the list on the Configuration page. */
+export type Subsidiary = string;
 
 export interface DepartmentObject {
   _id: string;

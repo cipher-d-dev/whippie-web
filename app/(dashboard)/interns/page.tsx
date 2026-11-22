@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeLabel } from "@/components/shared/TypeLabel";
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus, Search, MoreHorizontal, Pencil, Eye } from "lucide-react";
@@ -18,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils/cn";
-import { fmtTime, programmeProgress, INTERNSHIP_TYPE_LABEL } from "@/lib/utils/format";
+import { fmtTime, programmeProgress } from "@/lib/utils/format";
 import type { AttendanceObject, Intern, InternshipStatus, InternshipType } from "@/types";
 
 const TABS: { value: InternshipStatus | "ALL"; label: string }[] = [
@@ -150,8 +151,8 @@ export default function InternsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All types</SelectItem>
-            <SelectItem value="INTERNSHIP">Interns</SelectItem>
-            <SelectItem value="NYSC_IT">Corps members</SelectItem>
+            <SelectItem value="INTERNSHIP"><TypeLabel type="INTERNSHIP" plural /></SelectItem>
+            <SelectItem value="NYSC_IT"><TypeLabel type="NYSC_IT" plural /></SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -200,7 +201,7 @@ export default function InternsPage() {
                           />
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-secondary-foreground">{INTERNSHIP_TYPE_LABEL[intern.internshipType]}</td>
+                      <td className="px-4 py-3 text-secondary-foreground"><TypeLabel type={intern.internshipType} /></td>
                       <td className="px-4 py-3">
                         {intern.department ? (
                           <span className="flex flex-col">

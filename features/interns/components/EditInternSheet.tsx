@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeLabel } from "@/components/shared/TypeLabel";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -192,8 +193,8 @@ export function EditInternSheet({ intern, open, onOpenChange }: EditInternSheetP
                       <SelectValue placeholder="Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="INTERNSHIP">Internship</SelectItem>
-                      <SelectItem value="NYSC_IT">Corps Member (NYSC)</SelectItem>
+                      <SelectItem value="INTERNSHIP"><TypeLabel type="INTERNSHIP" /> (SIWES / IT)</SelectItem>
+                      <SelectItem value="NYSC_IT"><TypeLabel type="NYSC_IT" /> (NYSC)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

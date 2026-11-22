@@ -8,6 +8,8 @@ import {
   rejectUser,
   listUsers,
   getUnlinkedInternUsers,
+  inviteHr,
+  deleteUser,
 } from "./api";
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
@@ -99,5 +101,32 @@ export function useUnlinkedInternUsers() {
     queryKey: ["users", "unlinked-interns"],
     queryFn: getUnlinkedInternUsers,
     staleTime: 30 * 1000,
+  });
+}
+
+// ─── HR team ──────────────────────────────────────────────────────────────────
+
+export function useInviteHr(onSuccess?: () => void) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: inviteHr,
+    onSuccess: (_, v) => {
+      qc.invalidateQueries({ queryKey: ["users", "list"] });
+      toast.success(`Invitation sent to ${v.email}`);
+      onSuccess?.();
+    },
+    onError: (err: Error) => toast.error(err.message || "Couldn't add them. Try again."),
+  });
+}
+
+export function useRemoveUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users", "list"] });
+      toast.success("Removed.");
+    },
+    onError: (err: Error) => toast.error(err.message || "Couldn't remove them."),
   });
 }

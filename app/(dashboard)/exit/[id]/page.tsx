@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeLabel } from "@/components/shared/TypeLabel";
 import { use, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, XCircle, AlertCircle, Send, Loader2, DoorOpen } from "lucide-react";
@@ -99,7 +100,7 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
           {[
             ["Institution",  intern.institution],
             ["Course",       intern.course],
-            ["Type",         intern.internshipType === "NYSC_IT" ? "NYSC IT" : "Internship"],
+            ["Type",         <TypeLabel key="type" type={intern.internshipType} />],
             ["Start date",   fmt(intern.startDate)],
             ["End date",     fmt(intern.endDate)],
             ["Department",   intern.department?.name],
@@ -107,7 +108,7 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
               ? `${intern.supervisor.firstName} ${intern.supervisor.lastName}`
               : undefined],
           ].map(([label, value]) => (
-            <div key={label} className="grid grid-cols-2 gap-2 py-2">
+            <div key={String(label)} className="grid grid-cols-2 gap-2 py-2">
               <span className="text-sm text-muted-foreground">{label}</span>
               <span className="text-sm font-medium">{value ?? "—"}</span>
             </div>

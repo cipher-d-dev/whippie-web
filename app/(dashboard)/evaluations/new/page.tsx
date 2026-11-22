@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeLabel } from "@/components/shared/TypeLabel";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -19,7 +20,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader, Section } from "@/components/shared/PageHeader";
 import { PersonAvatar } from "@/components/shared/PersonAvatar";
-import { INTERNSHIP_TYPE_LABEL } from "@/lib/utils/format";
 import type { EvaluationScores } from "@/types";
 
 const schema = z.object({
@@ -135,7 +135,7 @@ export default function NewEvaluationPage() {
                 <PersonAvatar firstName={intern.firstName} lastName={intern.lastName} size="lg" />
                 <div className="min-w-0">
                   <p className="font-semibold">{intern.firstName} {intern.lastName}</p>
-                  <p className="truncate text-[13px] text-muted-foreground">{INTERNSHIP_TYPE_LABEL[intern.internshipType]}{intern.department ? ` · ${intern.department.name}` : ""}</p>
+                  <p className="truncate text-[13px] text-muted-foreground"><TypeLabel type={intern.internshipType} />{intern.department ? ` · ${intern.department.name}` : ""}</p>
                 </div>
               </div>
             ) : (

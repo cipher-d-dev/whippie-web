@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPatch } from "@/lib/api/client";
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api/client";
 import type {
   DocumentObject,
   RequirementObject,
@@ -14,8 +14,19 @@ const BASE = "/api/v1/documents";
 
 // ─── Requirements ─────────────────────────────────────────────────────────────
 
-export async function listRequirements(): Promise<ApiPaginatedResponse<RequirementObject>> {
-  return apiGet<ApiPaginatedResponse<RequirementObject>>(`${BASE}/requirements`);
+export async function listRequirements(): Promise<ApiResponse<{ requirements: RequirementObject[] }>> {
+  return apiGet<ApiResponse<{ requirements: RequirementObject[] }>>(`${BASE}/requirements`);
+}
+
+export async function updateRequirement(
+  id: string,
+  input: { label?: string; description?: string; isRequired?: boolean },
+): Promise<ApiResponse<{ requirement: RequirementObject }>> {
+  return apiPatch<ApiResponse<{ requirement: RequirementObject }>>(`${BASE}/requirements/${id}`, input);
+}
+
+export async function deleteRequirement(id: string): Promise<ApiResponse<null>> {
+  return apiDelete<ApiResponse<null>>(`${BASE}/requirements/${id}`);
 }
 
 export async function createRequirement(input: {
