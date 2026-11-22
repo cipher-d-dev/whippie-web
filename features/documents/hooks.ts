@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import {
   listRequirements,
   createRequirement,
+  updateRequirement,
+  deleteRequirement,
   getChecklist,
   listDocuments,
   getDocument,
@@ -33,10 +35,36 @@ export function useCreateRequirement(onSuccess?: () => void) {
     mutationFn: createRequirement,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: documentKeys.requirements() });
-      toast.success("Requirement created.");
+      toast.success("Added to the checklist.");
       onSuccess?.();
     },
     onError: (err: Error) => toast.error(err.message ?? "Failed to create requirement."),
+  });
+}
+
+export function useUpdateRequirement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...input }: { id: string; label?: string; description?: string; isRequired?: boolean }) =>
+      updateRequirement(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: documentKeys.requirements() });
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("Checklist updated.");
+    },
+    onError: (err: Error) => toast.error(err.message || "Couldn't update the checklist."),
+  });
+}
+
+export function useDeleteRequirement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteRequirement(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: documentKeys.requirements() });
+      toast.success("Removed from the checklist.");
+    },
+    onError: (err: Error) => toast.error(err.message || "Couldn't remove it."),
   });
 }
 

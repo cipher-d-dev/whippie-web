@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeLabel } from "@/components/shared/TypeLabel";
 import { use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -196,8 +197,8 @@ export default function EditInternPage({
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="INTERNSHIP">Internship</SelectItem>
-                  <SelectItem value="NYSC_IT">NYSC IT</SelectItem>
+                  <SelectItem value="INTERNSHIP"><TypeLabel type="INTERNSHIP" /> (SIWES / IT)</SelectItem>
+                  <SelectItem value="NYSC_IT"><TypeLabel type="NYSC_IT" /> (NYSC)</SelectItem>
                 </SelectContent>
               </Select>
             </Field>

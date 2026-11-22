@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeLabel } from "@/components/shared/TypeLabel";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, FileText, Plus, UserCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
@@ -16,7 +17,7 @@ import { PageHeader, Section } from "@/components/shared/PageHeader";
 import { PersonCell } from "@/components/shared/PersonAvatar";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils/cn";
-import { fmtWhen, programmeProgress, INTERNSHIP_TYPE_LABEL } from "@/lib/utils/format";
+import { fmtWhen, programmeProgress } from "@/lib/utils/format";
 import type { TaskObject, ReportObject } from "@/types";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -305,7 +306,7 @@ function HRDashboard({ firstName }: { firstName: string }) {
             <StatTile
               label="Active interns"
               value={stats.interns.byStatus.ACTIVE}
-              sub={`${stats.interns.activeByType.INTERNSHIP} interns · ${stats.interns.activeByType.NYSC_IT} corps members`}
+              sub={<>{stats.interns.activeByType.INTERNSHIP} <span className="lowercase"><TypeLabel type="INTERNSHIP" plural /></span> · {stats.interns.activeByType.NYSC_IT} <span className="lowercase"><TypeLabel type="NYSC_IT" plural /></span></>}
               href="/interns"
             />
             <StatTile
@@ -388,7 +389,7 @@ function SupervisorDashboard({ firstName }: { firstName: string }) {
                   <li key={i._id} className={cn(k > 0 && "border-t")}>
                     <Link href={`/interns/${i._id}`} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3 text-sm transition-colors hover:bg-muted/40">
                       <span className="min-w-[200px] flex-1">
-                        <PersonCell firstName={i.firstName} lastName={i.lastName} sub={`${INTERNSHIP_TYPE_LABEL[i.internshipType]} · ${i.department?.name ?? "No department"}`} />
+                        <PersonCell firstName={i.firstName} lastName={i.lastName} sub={<><TypeLabel type={i.internshipType} /> · {i.department?.name ?? "No department"}</>} />
                       </span>
                       {p && <span className="font-mono text-xs text-muted-foreground tabular">Wk {p.week}/{p.totalWeeks}</span>}
                       <StatusBadge status={i.status} />

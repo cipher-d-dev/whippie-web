@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeLabel } from "@/components/shared/TypeLabel";
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -40,7 +41,7 @@ import { Section } from "@/components/shared/PageHeader";
 import { PersonAvatar } from "@/components/shared/PersonAvatar";
 import { StatusBadge, statusLabel } from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils/cn";
-import { fmtDate, fmtShortDate, fmtTime, fmtMeters, programmeProgress, INTERNSHIP_TYPE_LABEL } from "@/lib/utils/format";
+import { fmtDate, fmtShortDate, fmtTime, fmtMeters, programmeProgress } from "@/lib/utils/format";
 import type { AttendanceObject } from "@/types";
 
 type Tab = "overview" | "tasks" | "attendance" | "documents" | "reports";
@@ -245,7 +246,7 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
             <StatusBadge status={intern.status} />
           </div>
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-secondary-foreground">
-            <span>{INTERNSHIP_TYPE_LABEL[intern.internshipType]}</span>
+            <span><TypeLabel type={intern.internshipType} /></span>
             <span className="text-input" aria-hidden="true">|</span>
             <span>{intern.department ? `${intern.department.name}${intern.department.subsidiary ? ` · ${intern.department.subsidiary}` : ""}` : "No department"}</span>
             <span className="text-input" aria-hidden="true">|</span>

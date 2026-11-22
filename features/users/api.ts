@@ -1,4 +1,4 @@
-import { apiGet, apiPatch, apiPost } from "@/lib/api/client";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api/client";
 import type { ApiResponse, ApiPaginatedResponse } from "@/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -56,6 +56,14 @@ export async function rejectUser(
     `/api/v1/users/${userId}/reject`,
     { reason }
   );
+}
+
+export async function inviteHr(input: { firstName: string; lastName: string; email: string }) {
+  return apiPost<ApiResponse<{ user: PendingUser }>>("/api/v1/users/hr", input);
+}
+
+export async function deleteUser(userId: string) {
+  return apiDelete<ApiResponse<null>>(`/api/v1/users/${userId}`);
 }
 
 export async function listUsers(params: {

@@ -71,6 +71,12 @@ const hrNav: NavGroup[] = [
       { label: "Exit",        href: "/exit",               icon: DoorOpen },
     ],
   },
+  {
+    label: "Admin",
+    items: [
+      { label: "Configuration", href: "/configuration",    icon: SlidersHorizontal },
+    ],
+  },
 ];
 
 const supervisorNav: NavGroup[] = [

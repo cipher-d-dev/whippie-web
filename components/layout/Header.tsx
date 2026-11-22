@@ -76,7 +76,7 @@ function getPageTitle(pathname: string): string {
 const SECTION: Record<string, string> = {
   verification: "People", interns: "People", supervisors: "People", departments: "People",
   onboarding: "Programme", attendance: "Programme", tasks: "Programme", reports: "Programme",
-  evaluations: "Programme", documents: "Programme", exit: "Programme",
+  evaluations: "Programme", documents: "Programme", exit: "Programme", configuration: "Admin",
 };
 
 // ─── Notification entity link map ─────────────────────────────────────────────

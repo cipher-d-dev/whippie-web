@@ -1,5 +1,6 @@
 "use client";
 
+import { TypeLabel } from "@/components/shared/TypeLabel";
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { useReactToPrint } from "react-to-print";
@@ -825,7 +826,7 @@ export default function DocumentGenerationPage() {
                 <SelectContent className="max-h-72">
                   {interns.map((i) => (
                     <SelectItem key={i._id} value={i._id}>
-                      {i.firstName} {i.lastName} · {i.internshipType === "NYSC_IT" ? "NYSC" : "IT"} ({i.department?.name ?? "General"})
+                      {i.firstName} {i.lastName} · <TypeLabel type={i.internshipType} /> ({i.department?.name ?? "General"})
                     </SelectItem>
                   ))}
                 </SelectContent>
