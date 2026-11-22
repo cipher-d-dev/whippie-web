@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
-  ClipboardCheck,
   CalendarDays,
   CheckSquare,
   FileText,
@@ -18,6 +17,7 @@ import {
   Bell,
   UserCheck,
   SlidersHorizontal,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/context";
@@ -62,11 +62,11 @@ const hrNav: NavGroup[] = [
   {
     label: "Programme",
     items: [
-      { label: "Onboarding",  href: "/onboarding",         icon: ClipboardCheck },
       { label: "Attendance",  href: "/attendance",         icon: CalendarDays },
       { label: "Tasks",       href: "/tasks",              icon: CheckSquare },
       { label: "Reports",     href: "/reports",            icon: FileText },
       { label: "Evaluations", href: "/evaluations",        icon: Star },
+      { label: "Stipends",    href: "/stipends",           icon: Wallet },
       { label: "Documents",   href: "/documents/generate", icon: FolderOpen },
       { label: "Exit",        href: "/exit",               icon: DoorOpen },
     ],

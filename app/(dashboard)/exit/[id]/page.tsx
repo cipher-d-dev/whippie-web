@@ -99,7 +99,7 @@ export default function ExitDetailPage({ params }: { params: Promise<{ id: strin
         <CardContent className="divide-y">
           {[
             ["Institution",  intern.institution],
-            ["Course",       intern.course],
+            ["Course of study/discipline", intern.course],
             ["Type",         <TypeLabel key="type" type={intern.internshipType} />],
             ["Start date",   fmt(intern.startDate)],
             ["End date",     fmt(intern.endDate)],

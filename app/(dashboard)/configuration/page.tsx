@@ -5,15 +5,15 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/context";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DepartmentsManager } from "@/features/configuration/DepartmentsManager";
-import { ChecklistManager } from "@/features/configuration/ChecklistManager";
+import { StipendManager } from "@/features/configuration/StipendManager";
 import { LabelsManager } from "@/features/configuration/LabelsManager";
 import { HrTeam } from "@/features/configuration/HrTeam";
 import { cn } from "@/lib/utils/cn";
 
 const TABS = [
   { key: "departments", label: "Departments" },
-  { key: "checklist", label: "Document checklist" },
   { key: "labels", label: "Labels & stations" },
+  { key: "stipends", label: "Stipends" },
   { key: "team", label: "HR team" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
@@ -62,7 +62,7 @@ export default function ConfigurationPage() {
       </div>
       <div role="tabpanel" className="max-w-3xl">
         {tab === "departments" && <DepartmentsManager />}
-        {tab === "checklist" && <ChecklistManager />}
+        {tab === "stipends" && <StipendManager />}
         {tab === "labels" && <LabelsManager />}
         {tab === "team" && <HrTeam />}
       </div>

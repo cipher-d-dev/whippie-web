@@ -54,7 +54,7 @@ function CorrectDialog({
         <DialogHeader>
           <DialogTitle>{verb} {name}&apos;s check-in?</DialogTitle>
           <DialogDescription>
-            {fmtDate(record.date, { weekday: "long", day: "numeric", month: "long" })} at {fmtTime(record.submittedAt)} · {fmtMeters(record.distanceFromOffice)} from HQ
+            {fmtDate(record.date, { weekday: "long", day: "numeric", month: "long" })} at {fmtTime(record.submittedAt)} · {fmtMeters(record.distanceFromOffice)} from DAAR Lagos
             {record.locationAccuracy !== undefined && `, GPS ±${Math.round(record.locationAccuracy)} m`}
           </DialogDescription>
         </DialogHeader>
@@ -123,7 +123,7 @@ export default function AttendancePage() {
     <div className="space-y-5">
       <PageHeader
         title="Attendance"
-        description={<span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> DAAR Communications HQ geofence</span>}
+        description={<span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> DAAR Lagos office zone</span>}
         actions={
           <div className="flex flex-wrap items-center gap-1.5">
             <Button variant="outline" size="icon" aria-label="Previous day" onClick={() => setDay(shiftDay(day || today, -1))}><ChevronLeft /></Button>
@@ -205,7 +205,7 @@ export default function AttendancePage() {
                 {!day && <th className="px-4 py-2.5 font-medium">Date</th>}
                 <th className="px-4 py-2.5 font-medium">Type</th>
                 <th className="px-4 py-2.5 font-medium">Time</th>
-                <th className="px-4 py-2.5 font-medium">From HQ</th>
+                <th className="px-4 py-2.5 font-medium">From DAAR Lagos</th>
                 <th className="px-4 py-2.5 font-medium">GPS accuracy</th>
                 <th className="px-4 py-2.5 font-medium">Status</th>
                 <th className="px-4 py-2.5 text-right font-medium">Action</th>
@@ -249,9 +249,14 @@ export default function AttendancePage() {
         </div>
       )}
 
-      <p className="text-[13px] text-muted-foreground">
-        Check-ins outside the geofence are rejected automatically. GPS accuracy worse than {POOR_ACCURACY_METERS} m is flagged for you to decide.
-      </p>
+      <div className="space-y-1.5 text-[13px] text-muted-foreground">
+        <p>Check-ins outside the office zone are rejected automatically.</p>
+        <p>
+          <span className="font-medium text-warning-foreground">Flagged</span>: the intern was inside the office zone, but their phone&apos;s GPS
+          signal was weak (worse than {POOR_ACCURACY_METERS} m), so the location is less exact. Most of the time they are at work.
+          Accept it to count the day towards their stipend.
+        </p>
+      </div>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-[13px] text-muted-foreground">

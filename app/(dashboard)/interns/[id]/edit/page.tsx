@@ -221,13 +221,13 @@ export default function EditInternPage({
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Field label="Surname / Last name" error={errors.lastName?.message}>
-              <Input placeholder="e.g. Okafor" {...register("lastName")} />
+              <Input placeholder="e.g. Abubakar" {...register("lastName")} />
             </Field>
             <Field label="First name" error={errors.firstName?.message}>
-              <Input placeholder="e.g. Ada" {...register("firstName")} />
+              <Input placeholder="e.g. Tolani" {...register("firstName")} />
             </Field>
             <Field label="Middle name" error={errors.middleName?.message}>
-              <Input placeholder="e.g. Chinyere" {...register("middleName")} />
+              <Input placeholder="e.g. Chiamaka" {...register("middleName")} />
             </Field>
             <Field label="Sex / Gender" error={errors.gender?.message}>
               <Select
@@ -270,13 +270,13 @@ export default function EditInternPage({
             <Field label="Institution" error={errors.institution?.message}>
               <Input {...register("institution")} />
             </Field>
-            <Field label="University / School Location" error={errors.institutionLocation?.message}>
+            <Field label="Institution Location" error={errors.institutionLocation?.message}>
               <Input placeholder="e.g. OJO, LAGOS STATE" {...register("institutionLocation")} />
             </Field>
-            <Field label="Course" error={errors.course?.message}>
+            <Field label="Course of Study/Discipline" error={errors.course?.message}>
               <Input {...register("course")} />
             </Field>
-            <Field label="Level / Year" error={errors.level?.message}>
+            <Field label="Qualification/Level of Study" error={errors.level?.message}>
               <Input placeholder="300L" {...register("level")} />
             </Field>
             <Field label="NYSC State Code (Optional)" error={errors.stateCode?.message}>

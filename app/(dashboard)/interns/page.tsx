@@ -1,7 +1,7 @@
 "use client";
 
 import { TypeLabel } from "@/components/shared/TypeLabel";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus, Search, MoreHorizontal, Pencil, Eye } from "lucide-react";
 import { useInterns } from "@/features/interns/hooks";
@@ -57,6 +57,11 @@ export default function InternsPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebounced] = useState("");
   const [status, setStatus] = useState<InternshipStatus | "ALL">(isHR ? "ACTIVE" : "ALL");
+  // Allow links like /interns?status=ONBOARDING
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("status");
+    if (q && ["SCREENED", "ONBOARDING", "ACTIVE", "COMPLETED", "ALL"].includes(q)) setStatus(q as InternshipStatus | "ALL");
+  }, []);
   const [internshipType, setType] = useState<InternshipType | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);

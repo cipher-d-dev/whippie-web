@@ -12,6 +12,7 @@ import {
   useUpdateSupervisor,
 } from "@/features/supervisors/hooks";
 import { useDepartments } from "@/features/departments/hooks";
+import { DepartmentPicker, supervisorDepartments } from "@/components/shared/DepartmentPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,7 +41,7 @@ const schema = z.object({
   firstName:  z.string().min(1),
   lastName:   z.string().min(1),
   phone:      z.string().optional(),
-  department: z.string().optional(),
+  departments: z.array(z.string()).optional(),
   isActive:   z.boolean().optional(),
 });
 
@@ -101,7 +102,7 @@ export default function SupervisorDetailPage({
       firstName:  supervisor.firstName,
       lastName:   supervisor.lastName,
       phone:      supervisor.phone ?? "",
-      department: supervisor.department?._id ?? "",
+      departments: supervisor.departments?.length ? supervisor.departments.map((d) => d._id) : supervisor.department ? [supervisor.department._id] : [],
       isActive:   supervisor.isActive,
     });
     setEditOpen(true);
@@ -169,13 +170,7 @@ export default function SupervisorDetailPage({
         <CardContent className="divide-y">
           <Row label="Full name" value={`${supervisor.firstName} ${supervisor.lastName}`} />
           <Row label="Phone"     value={supervisor.phone} />
-          <Row label="Department"
-            value={
-              supervisor.department
-                ? `${supervisor.department.name}${supervisor.department.subsidiary ? ` · ${supervisor.department.subsidiary}` : ""}`
-                : undefined
-            }
-          />
+          <Row label="Departments" value={supervisorDepartments(supervisor) || undefined} />
           <Row label="User account" value={supervisor.user?.email} />
         </CardContent>
       </Card>
@@ -236,22 +231,8 @@ export default function SupervisorDetailPage({
             <Field label="Phone">
               <Input placeholder="08098765432" {...register("phone")} />
             </Field>
-            <Field label="Department">
-              <Select
-                value={watch("department") ?? ""}
-                onValueChange={(v) => setValue("department", v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((d) => (
-                    <SelectItem key={d._id} value={d._id}>
-                      {d.name}{d.subsidiary ? ` — ${d.subsidiary}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Field label="Departments (tick all they cover)">
+              <DepartmentPicker departments={departments} value={watch("departments") ?? []} onChange={(v) => setValue("departments", v)} />
             </Field>
             <Field label="Status">
               <Select

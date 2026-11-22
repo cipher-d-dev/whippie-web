@@ -11,13 +11,17 @@ export const SETTINGS_KEY = ["settings"] as const;
 export const DEFAULT_SETTINGS: AppSettings = {
   labels: { INTERNSHIP: "Intern", NYSC_IT: "Corps member" },
   stations: ["AIT", "Raypower", "Faaji", "DAAR Corporate"],
+  stipend: { INTERNSHIP: { days: 20, amount: 40_000 }, NYSC_IT: { days: 16, amount: 50_000 } },
   updatedAt: null,
 };
 
 export function useSettings() {
   const q = useQuery({
     queryKey: SETTINGS_KEY,
-    queryFn: async () => (await getSettings()).data?.settings ?? DEFAULT_SETTINGS,
+    queryFn: async () => {
+      const s = (await getSettings()).data?.settings;
+      return s ? { ...DEFAULT_SETTINGS, ...s, stipend: s.stipend ?? DEFAULT_SETTINGS.stipend } : DEFAULT_SETTINGS;
+    },
     staleTime: 10 * 60 * 1000,
     retry: 1,
   });

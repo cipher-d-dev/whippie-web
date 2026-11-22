@@ -38,7 +38,7 @@ const schema = z.object({
   gender:              z.enum(["MALE", "FEMALE"]).optional(),
   institution:         z.string().optional(),
   institutionLocation: z.string().optional(),
-  course:              z.string().min(1, "Course is required"),
+  course:              z.string().optional(),
   level:               z.string().optional(),
   stateCode:           z.string().optional(),
   callUpNumber:        z.string().optional(),
@@ -57,9 +57,12 @@ const schema = z.object({
     return true;
   },
   {
-    message: "Institution is required for standard interns",
+    message: "Institution is required for students on industrial training",
     path: ["institution"],
   }
+).refine(
+  (data) => data.internshipType !== "INTERNSHIP" || !!data.course?.trim(),
+  { message: "Course of study/discipline is required for students on industrial training", path: ["course"] },
 );
 
 type FormValues = z.infer<typeof schema>;
@@ -172,13 +175,13 @@ function NewInternForm() {
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <Field label="Surname / Last name" required error={errors.lastName?.message}>
-              <Input placeholder="e.g. Okafor" {...register("lastName")} />
+              <Input placeholder="e.g. Abubakar" {...register("lastName")} />
             </Field>
             <Field label="First name" required error={errors.firstName?.message}>
-              <Input placeholder="e.g. Ada" {...register("firstName")} />
+              <Input placeholder="e.g. Tolani" {...register("firstName")} />
             </Field>
             <Field label="Middle name (Optional)" error={errors.middleName?.message}>
-              <Input placeholder="e.g. Chinyere" {...register("middleName")} />
+              <Input placeholder="e.g. Chiamaka" {...register("middleName")} />
             </Field>
             <Field label="Sex / Gender" error={errors.gender?.message}>
               <Select
@@ -232,14 +235,18 @@ function NewInternForm() {
                 {...register("institution")}
               />
             </Field>
-            <Field label="University / School Location" error={errors.institutionLocation?.message}>
+            <Field label="Institution Location" error={errors.institutionLocation?.message}>
               <Input placeholder="e.g. OJO, LAGOS STATE" {...register("institutionLocation")} />
             </Field>
-            <Field label="Course" required error={errors.course?.message}>
-              <Input placeholder="Computer Science" {...register("course")} />
+            <Field
+              label={watch("internshipType") === "NYSC_IT" ? "Course of Study/Discipline (Optional)" : "Course of Study/Discipline"}
+              required={watch("internshipType") !== "NYSC_IT"}
+              error={errors.course?.message}
+            >
+              <Input placeholder="e.g. Mass Communication" {...register("course")} />
             </Field>
             <Field
-              label={watch("internshipType") === "NYSC_IT" ? "Level / Year (Optional)" : "Level / Year"}
+              label={watch("internshipType") === "NYSC_IT" ? "Qualification/Level of Study (Optional)" : "Qualification/Level of Study"}
               error={errors.level?.message}
             >
               <Input
