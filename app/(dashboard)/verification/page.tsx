@@ -1,5 +1,7 @@
 "use client";
 
+import { FacePhotoQueue } from "@/features/face/FacePhotoQueue";
+import { useFacePhotos } from "@/features/face/hooks";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, CheckCircle2, Loader2, UserPlus, X } from "lucide-react";
@@ -151,7 +153,12 @@ export default function VerificationQueuePage() {
   const { data: unlinkedData } = useUnlinkedInternUsers();
   const approve = useApproveUser();
 
-  const [tab, setTab] = useState<"pending" | "onboarding">("pending");
+  const [tab, setTab] = useState<"pending" | "onboarding" | "face">("pending");
+  const { data: facePending } = useFacePhotos("PENDING");
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (t === "face" || t === "onboarding") setTab(t);
+  }, []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<PendingUser | null>(null);
   const [recentlyApproved, setRecentlyApproved] = useState<{ userId: string; name: string } | null>(null);
@@ -187,7 +194,7 @@ export default function VerificationQueuePage() {
         description="New sign-ups who have confirmed their email. Check the name and email match someone you expect, then approve."
         actions={
           <div role="tablist" aria-label="Accounts" className="flex rounded-lg bg-muted p-1 text-[13px] font-medium">
-            {([["pending", `Pending · ${total}`], ["onboarding", `Approved, not set up · ${unlinked.length}`]] as const).map(([k, label]) => (
+            {([["pending", `Pending · ${total}`], ["onboarding", `Approved, not set up · ${unlinked.length}`], ["face", `Face photos · ${facePending?.length ?? 0}`]] as const).map(([k, label]) => (
               <button
                 key={k}
                 role="tab"
@@ -217,7 +224,9 @@ export default function VerificationQueuePage() {
         </div>
       )}
 
-      {tab === "pending" ? (
+      {tab === "face" ? (
+        <div className="space-y-4"><FacePhotoQueue /></div>
+      ) : tab === "pending" ? (
         isLoading ? (
           <div className="grid gap-4 lg:grid-cols-[minmax(300px,1fr)_2fr]">
             <Skeleton className="h-[420px] rounded-xl" />

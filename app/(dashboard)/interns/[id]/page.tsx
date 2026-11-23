@@ -1,5 +1,6 @@
 "use client";
 
+import { InternFacePanel } from "@/features/face/InternFacePanel";
 import { TypeLabel } from "@/components/shared/TypeLabel";
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
@@ -350,6 +351,8 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
                 </div>
               ))}
             </Section>
+
+            {isHR && <InternFacePanel internId={intern._id} />}
 
             <Section title="Details" bodyClassName="px-5 py-1">
               <dl>

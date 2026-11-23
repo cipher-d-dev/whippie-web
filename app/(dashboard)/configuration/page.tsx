@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth/context";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DepartmentsManager } from "@/features/configuration/DepartmentsManager";
 import { StipendManager } from "@/features/configuration/StipendManager";
+import { FaceCheckManager } from "@/features/configuration/FaceCheckManager";
 import { LabelsManager } from "@/features/configuration/LabelsManager";
 import { HrTeam } from "@/features/configuration/HrTeam";
 import { cn } from "@/lib/utils/cn";
@@ -14,6 +15,7 @@ const TABS = [
   { key: "departments", label: "Departments" },
   { key: "labels", label: "Labels & stations" },
   { key: "stipends", label: "Stipends" },
+  { key: "face", label: "Face check" },
   { key: "team", label: "HR team" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
@@ -63,6 +65,7 @@ export default function ConfigurationPage() {
       <div role="tabpanel" className="max-w-3xl">
         {tab === "departments" && <DepartmentsManager />}
         {tab === "stipends" && <StipendManager />}
+        {tab === "face" && <FaceCheckManager />}
         {tab === "labels" && <LabelsManager />}
         {tab === "team" && <HrTeam />}
       </div>
