@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   stations: ["AIT", "Raypower", "Faaji", "DAAR Corporate"],
   stipend: { INTERNSHIP: { days: 20, amount: 40_000 }, NYSC_IT: { days: 16, amount: 50_000 } },
   faceCheck: { enabled: false, threshold: 0.5 },
+  allowance: { INTERNSHIP: false, NYSC_IT: true },
   updatedAt: null,
 };
 
@@ -21,7 +22,7 @@ export function useSettings() {
     queryKey: SETTINGS_KEY,
     queryFn: async () => {
       const s = (await getSettings()).data?.settings;
-      return s ? { ...DEFAULT_SETTINGS, ...s, stipend: s.stipend ?? DEFAULT_SETTINGS.stipend, faceCheck: s.faceCheck ?? DEFAULT_SETTINGS.faceCheck } : DEFAULT_SETTINGS;
+      return s ? { ...DEFAULT_SETTINGS, ...s, stipend: s.stipend ?? DEFAULT_SETTINGS.stipend, faceCheck: s.faceCheck ?? DEFAULT_SETTINGS.faceCheck, allowance: s.allowance ?? DEFAULT_SETTINGS.allowance } : DEFAULT_SETTINGS;
     },
     staleTime: 10 * 60 * 1000,
     retry: 1,

@@ -23,6 +23,8 @@ export interface StipendReport {
   rules: { INTERNSHIP: { days: number; amount: number }; NYSC_IT: { days: number; amount: number } };
   rows: StipendRow[];
   totals: { suggestedAmount: number; people: number };
+  /** On the programme in the period but not on payroll (e.g. SIWES), so not listed. */
+  notOnAllowance?: number;
 }
 
 export function getStipendReport(from: string, to: string) {

@@ -26,6 +26,8 @@ export type InternshipType = "INTERNSHIP" | "NYSC_IT";
 
 export interface InternObject {
   _id: string;
+  /** On payroll? Unset/null = the default for their type (Configuration > Stipends). */
+  receivesAllowance?: boolean | null;
   userId?: string;
   firstName: string;
   middleName?: string;
@@ -77,6 +79,7 @@ export interface CreateInternInput {
 
 export interface UpdateInternInput {
   // HR-only fields
+  receivesAllowance?: boolean | null;
   status?: InternshipStatus;
   startDate?: string;
   endDate?: string;
@@ -104,6 +107,7 @@ export interface InternsListParams {
   internshipType?: InternshipType;
   department?: string;
   supervisor?: string;
+  allowance?: "yes" | "no";
 }
 
 // ─── Notifications ────────────────────────────────────────────────────────────
