@@ -61,6 +61,10 @@ export const INTERNSHIP_TYPE_LABEL: Record<string, string> = {
 export const FLAG_REASON_TEXT: Record<string, string> = {
   POOR_LOCATION_ACCURACY: "weak GPS signal",
   OUTSIDE_GEOFENCE: "outside the office zone",
+  FACE_MISMATCH: "face didn't match their photo",
+  LIVENESS_FAILED: "selfie didn't pass the live-person check",
+  NO_SELFIE: "no selfie taken",
+  SHARED_DEVICE: "same phone as another intern's check-in today",
 };
 export const flagReasonText = (reasons?: string[]) =>
   (reasons ?? []).map((r) => FLAG_REASON_TEXT[r] ?? r.replace(/_/g, " ").toLowerCase()).join(", ");

@@ -7,6 +7,7 @@ export interface AppSettings {
   labels: { INTERNSHIP: string; NYSC_IT: string };
   stations: string[];
   stipend: { INTERNSHIP: StipendRule; NYSC_IT: StipendRule };
+  faceCheck: { enabled: boolean; threshold: number };
   updatedAt: string | null;
 }
 
@@ -14,6 +15,7 @@ export type UpdateSettingsInput = {
   labels?: Partial<AppSettings["labels"]>;
   stations?: string[];
   stipend?: { INTERNSHIP?: Partial<StipendRule>; NYSC_IT?: Partial<StipendRule> };
+  faceCheck?: { enabled?: boolean; threshold?: number };
 };
 
 export function getSettings() {

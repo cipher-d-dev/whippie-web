@@ -189,3 +189,19 @@ export function apiPut<T>(path: string, body?: unknown): Promise<T> {
 export function apiDelete<T>(path: string): Promise<T> {
   return request<T>(path, { method: "DELETE" });
 }
+
+// ─── Authenticated binary download (e.g. face photos) ─────────────────────────
+// <img src> can't send the Bearer token, so images behind auth are fetched
+// here and shown from an object URL.
+
+export async function apiGetBlob(path: string): Promise<Blob> {
+  const go = () =>
+    fetch(`${API_BASE}${path}`, {
+      credentials: "include",
+      headers: _accessToken ? { Authorization: `Bearer ${_accessToken}` } : {},
+    });
+  let res = await go();
+  if (res.status === 401 && (await silentRefresh())) res = await go();
+  if (!res.ok) throw new ApiError(res.status === 404 ? "Not found" : "Couldn't load the image", res.status, []);
+  return res.blob();
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { FaceCompare } from "@/components/face/AuthImage";
 import { use, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Pencil } from "lucide-react";
@@ -95,6 +96,13 @@ export default function AttendanceDetailPage({ params }: { params: Promise<{ id:
           <p className="mt-1 text-xs">Reason: {flagReasonText(record.flagReasons)}</p>
         )}
       </div>
+
+      {record.hasSelfie && intern && (
+        <Section title="Face check" bodyClassName="p-5">
+          <div className="max-w-sm"><FaceCompare internId={intern._id} attendanceId={record._id} score={record.faceScore} /></div>
+          {record.livenessPassed === false && <p className="mt-3 text-[13px] text-warning-foreground">The selfie didn&apos;t pass the live-person check.</p>}
+        </Section>
+      )}
 
       <Section title="Details" bodyClassName="px-5 py-1">
         <dl>

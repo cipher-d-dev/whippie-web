@@ -1,5 +1,6 @@
 "use client";
 
+import { FaceCompare } from "@/components/face/AuthImage";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Loader2, MapPin } from "lucide-react";
@@ -17,7 +18,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { PersonCell } from "@/components/shared/PersonAvatar";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils/cn";
-import { fmtDate, fmtTime, fmtMeters, fullName } from "@/lib/utils/format";
+import { fmtDate, fmtTime, fmtMeters, fullName, flagReasonText } from "@/lib/utils/format";
 import type { AttendanceObject, AttendanceStatus, AttendanceCheckType } from "@/types";
 
 const PAGE_SIZE = 30;
@@ -58,6 +59,10 @@ function CorrectDialog({
             {record.locationAccuracy !== undefined && `, GPS ±${Math.round(record.locationAccuracy)} m`}
           </DialogDescription>
         </DialogHeader>
+        {record.hasSelfie && typeof record.intern !== "string" && (
+          <FaceCompare internId={record.intern._id} attendanceId={record._id} score={record.faceScore} />
+        )}
+        {record.flagReasons?.length ? <p className="text-[13px] text-muted-foreground">Flagged: {flagReasonText(record.flagReasons)}</p> : null}
         <div className="space-y-2">
           <Label htmlFor="correction-note">Note for the record</Label>
           <Textarea

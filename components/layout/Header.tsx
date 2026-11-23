@@ -90,6 +90,9 @@ const ENTITY_HREF: Partial<Record<NotificationType, (id: string) => string>> = {
   EVALUATION_SUBMITTED:         (id) => `/evaluations/${id}`,
   DOCUMENT_STATUS_CHANGED:      () => `/documents/generate`,
   REPORT_REVIEWED:              (id) => `/reports/${id}`,
+  NEW_INTERN_PENDING:           () => `/verification`,
+  FACE_PHOTO_SUBMITTED:         () => `/verification?tab=face`,
+  ATTENDANCE_FLAGGED:           (id) => `/attendance/${id}`,
 };
 
 function getEntityHref(n: NotificationObject): string | null {

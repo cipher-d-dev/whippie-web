@@ -123,7 +123,9 @@ export type NotificationType =
   | "ATTENDANCE_FLAGGED"
   | "DOCUMENT_UPLOADED"
   | "REPORT_SUBMITTED"
-  | "BROADCAST";
+  | "BROADCAST"
+  | "FACE_PHOTO_SUBMITTED"
+  | "FACE_PHOTO_REVIEWED";
 
 export interface NotificationObject {
   _id: string;
@@ -166,6 +168,10 @@ export interface AttendanceObject {
   withinGeofence?: boolean;
   locationAccuracy?: number;
   flagReasons?: string[];
+  /** Face check: similarity to the approved photo (0–1), liveness, and whether a selfie was saved */
+  faceScore?: number;
+  livenessPassed?: boolean;
+  hasSelfie?: boolean;
   correctionNote?: string;
   correctedBy?: string;
   correctedAt?: string;
