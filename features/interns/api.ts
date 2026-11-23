@@ -23,6 +23,7 @@ export async function listInterns(
   if (params.internshipType) qs.set("internshipType", params.internshipType);
   if (params.department)     qs.set("department",     params.department);
   if (params.supervisor)     qs.set("supervisor",     params.supervisor);
+  if (params.allowance)      qs.set("allowance",      params.allowance);
 
   const query = qs.toString() ? `?${qs.toString()}` : "";
   return apiGet<ApiPaginatedResponse<InternObject>>(`${BASE}${query}`);

@@ -125,6 +125,13 @@ export default function StipendsPage() {
         <Tile label="To pay (after your changes)" value={isLoading ? "–" : naira(totals.pay)} />
       </div>
 
+      {!!report?.notOnAllowance && (
+        <p className="text-[13px] text-muted-foreground">
+          {report.notOnAllowance} {report.notOnAllowance === 1 ? "person isn't" : "people aren't"} on allowance (for example SIWES students), so {report.notOnAllowance === 1 ? "isn't" : "aren't"} listed.{" "}
+          <Link href="/interns?allowance=no" className="text-primary hover:underline">See who</Link>
+        </p>
+      )}
+
       {totals.flagged > 0 && (
         <p className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-soft px-4 py-3 text-[13px] text-warning-foreground">
           <Info className="mt-0.5 h-4 w-4 shrink-0" />

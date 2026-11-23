@@ -1,5 +1,6 @@
 "use client";
 
+import { AllowancePanel } from "@/features/interns/AllowancePanel";
 import { InternFacePanel } from "@/features/face/InternFacePanel";
 import { TypeLabel } from "@/components/shared/TypeLabel";
 import { use, useMemo, useState } from "react";
@@ -351,6 +352,8 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
                 </div>
               ))}
             </Section>
+
+            {isHR && <AllowancePanel intern={intern} />}
 
             {isHR && <InternFacePanel internId={intern._id} />}
 

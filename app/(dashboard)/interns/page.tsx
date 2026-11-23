@@ -61,8 +61,11 @@ export default function InternsPage() {
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get("status");
     if (q && ["SCREENED", "ONBOARDING", "ACTIVE", "COMPLETED", "ALL"].includes(q)) setStatus(q as InternshipStatus | "ALL");
+    const a = new URLSearchParams(window.location.search).get("allowance");
+    if (a === "yes" || a === "no") { setAllowance(a); setStatus("ALL"); }
   }, []);
   const [internshipType, setType] = useState<InternshipType | "ALL">("ALL");
+  const [allowance, setAllowance] = useState<"ALL" | "yes" | "no">("ALL");
   const [page, setPage] = useState(1);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -82,6 +85,7 @@ export default function InternsPage() {
     ...(debouncedSearch && { search: debouncedSearch }),
     ...(status !== "ALL" && { status }),
     ...(internshipType !== "ALL" && { internshipType }),
+    ...(allowance !== "ALL" && { allowance }),
     ...(!isHR && supervisorId && { supervisor: supervisorId }),
   });
 
@@ -160,6 +164,18 @@ export default function InternsPage() {
             <SelectItem value="NYSC_IT"><TypeLabel type="NYSC_IT" plural /></SelectItem>
           </SelectContent>
         </Select>
+        {isHR && (
+          <Select value={allowance} onValueChange={(v) => { setAllowance(v as "ALL" | "yes" | "no"); setPage(1); }}>
+            <SelectTrigger className="h-9 w-auto min-w-[160px]" aria-label="Allowance">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Allowance: all</SelectItem>
+              <SelectItem value="yes">On allowance</SelectItem>
+              <SelectItem value="no">No allowance</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {isLoading ? (
