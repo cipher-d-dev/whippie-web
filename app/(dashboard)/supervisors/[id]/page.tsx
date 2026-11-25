@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
+import { MessageButton } from "@/components/chat/MessageButton";
 import { ArrowLeft, Pencil, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -154,10 +155,13 @@ export default function SupervisorDetailPage({
             </Badge>
           </div>
         </div>
-        <Button size="sm" onClick={openEdit}>
-          <Pencil className="mr-2 h-4 w-4" />
-          Edit
-        </Button>
+        <div className="flex gap-2">
+          {supervisor.user && <MessageButton size="sm" userId={typeof supervisor.user === "string" ? supervisor.user : supervisor.user._id} />}
+          <Button size="sm" onClick={openEdit}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
+          </Button>
+        </div>
       </div>
 
       {/* Profile */}

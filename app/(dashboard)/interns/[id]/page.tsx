@@ -5,6 +5,7 @@ import { InternFacePanel } from "@/features/face/InternFacePanel";
 import { TypeLabel } from "@/components/shared/TypeLabel";
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
+import { MessageButton } from "@/components/chat/MessageButton";
 import {
   ArrowLeft,
   Check,
@@ -214,6 +215,7 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {isHR && intern.user && <MessageButton internId={intern._id} />}
           {isHR && <Button variant="outline" onClick={() => setEditSheetOpen(true)}><Pencil /> Edit</Button>}
           <Button variant="outline" asChild><Link href="/documents/generate">Generate letter</Link></Button>
           <Button asChild><Link href="/tasks/new">Assign task</Link></Button>
