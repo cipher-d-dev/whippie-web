@@ -12,7 +12,7 @@ export const attendanceKeys = {
 export function useAttendance(params?: {
   page?: number; limit?: number;
   intern?: string; status?: AttendanceStatus;
-  checkType?: AttendanceCheckType; date?: string;
+  checkType?: AttendanceCheckType; date?: string; late?: boolean;
 }) {
   return useQuery({
     queryKey: attendanceKeys.list(params),

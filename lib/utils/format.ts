@@ -73,3 +73,10 @@ export const flagReasonText = (reasons?: string[]) =>
 export const FLAGGED_HELP =
   "Flagged means the intern was inside the office zone, but their phone's GPS signal was weak, so the location is less exact. " +
   "Most of the time they are at work. Flagged days don't count towards stipends until you correct them.";
+
+/** "10:00" → "10:00am", "13:30" → "1:30pm" (a time of day typed in Configuration). */
+export function fmtClock(hhmm: string) {
+  const [h, m] = hhmm.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return hhmm;
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")}${h < 12 ? "am" : "pm"}`;
+}

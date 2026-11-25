@@ -69,9 +69,9 @@ function buildAttendanceGrid(records: AttendanceObject[], startDate?: string) {
       else if (start && day < new Date(start.toDateString())) state = "before";
       else if (!rec) state = "missed";
       else if (rec.status !== "ACCEPTED") state = "issue";
-      else state = new Date(rec.submittedAt).getHours() < 9 ? "ontime" : "late";
+      else state = rec.isLate ? "late" : "ontime";
       const label = `${day.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}: ${
-        { ontime: `in at ${fmtTime(rec?.submittedAt)}`, late: `in at ${fmtTime(rec?.submittedAt)}`, issue: statusLabel(rec?.status), missed: "no check-in", upcoming: "upcoming", before: "before start" }[state]
+        { ontime: `in at ${fmtTime(rec?.submittedAt)}`, late: `in late at ${fmtTime(rec?.submittedAt)}`, issue: statusLabel(rec?.status), missed: "no check-in", upcoming: "upcoming", before: "before start" }[state]
       }`;
       week.push({ key, state, label });
     }
@@ -298,7 +298,7 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
                     </div>
                   </div>
                   <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-secondary-foreground">
-                    {([["ontime", "Before 09:00"], ["late", "After 09:00"], ["issue", "Flagged or rejected"], ["missed", "No check-in"], ["upcoming", "Upcoming"]] as const).map(([s, l]) => (
+                    {([["ontime", "On time"], ["late", "Late"], ["issue", "Flagged or rejected"], ["missed", "No check-in"], ["upcoming", "Upcoming"]] as const).map(([s, l]) => (
                       <li key={s} className="flex items-center gap-1.5"><span className={cn("h-3 w-3 rounded-[3px]", DAY_STYLE[s])} />{l}</li>
                     ))}
                   </ul>
@@ -437,7 +437,10 @@ export default function InternDetailPage({ params }: { params: Promise<{ id: str
                     <tr key={a._id} className="border-t">
                       <td className="px-5 py-3">{fmtDate(a.date, { weekday: "short", day: "numeric", month: "short" })}</td>
                       <td className="px-5 py-3 text-secondary-foreground">{a.checkType === "CHECK_IN" ? "Check in" : "Check out"}</td>
-                      <td className="px-5 py-3 font-mono text-[13px] tabular">{fmtTime(a.submittedAt)}</td>
+                      <td className="px-5 py-3 font-mono text-[13px] tabular">
+                        {fmtTime(a.submittedAt)}
+                        {a.isLate && <span className="ml-2 rounded-full bg-info-soft px-2 py-0.5 font-sans text-[11px] font-medium text-info-foreground">Late</span>}
+                      </td>
                       <td className="px-5 py-3 font-mono text-[13px] tabular">{fmtMeters(a.distanceFromOffice)}</td>
                       <td className="px-5 py-3 font-mono text-[13px] tabular">{a.locationAccuracy !== undefined ? `±${Math.round(a.locationAccuracy)} m` : "—"}</td>
                       <td className="px-5 py-3">

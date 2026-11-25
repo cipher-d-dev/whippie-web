@@ -15,7 +15,7 @@ const TABS = [
   { key: "departments", label: "Departments" },
   { key: "labels", label: "Labels & stations" },
   { key: "stipends", label: "Stipends" },
-  { key: "face", label: "Face check" },
+  { key: "face", label: "Check-in" },
   { key: "team", label: "HR team" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];

@@ -16,6 +16,7 @@ export async function listAttendance(params: {
   status?: AttendanceStatus;
   checkType?: AttendanceCheckType;
   date?: string; // ISO date string e.g. "2026-10-14"
+  late?: boolean;
 } = {}): Promise<ApiPaginatedResponse<AttendanceObject>> {
   const qs = new URLSearchParams();
   if (params.page)      qs.set("page",      String(params.page));
@@ -24,6 +25,7 @@ export async function listAttendance(params: {
   if (params.status)    qs.set("status",    params.status);
   if (params.checkType) qs.set("checkType", params.checkType);
   if (params.date)      qs.set("date",      params.date);
+  if (params.late)      qs.set("late",      "true");
   const query = qs.toString() ? `?${qs}` : "";
   return apiGet<ApiPaginatedResponse<AttendanceObject>>(`${BASE}${query}`);
 }

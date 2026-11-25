@@ -18,7 +18,8 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { PersonCell } from "@/components/shared/PersonAvatar";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { cn } from "@/lib/utils/cn";
-import { fmtDate, fmtTime, fmtMeters, fullName, flagReasonText } from "@/lib/utils/format";
+import { fmtDate, fmtTime, fmtMeters, fullName, flagReasonText, fmtClock } from "@/lib/utils/format";
+import { useSettings } from "@/features/settings/hooks";
 import type { AttendanceObject, AttendanceStatus, AttendanceCheckType } from "@/types";
 
 const PAGE_SIZE = 30;
@@ -97,7 +98,8 @@ export default function AttendancePage() {
   const isHR = user?.role === "HR";
   const today = localDay();
   const [day, setDay] = useState<string>(today); // "" = all dates
-  const [status, setStatus] = useState<AttendanceStatus | "ALL">("ALL");
+  const [status, setStatus] = useState<AttendanceStatus | "ALL" | "LATE">("ALL");
+  const { settings } = useSettings();
   const [checkType, setCheckType] = useState<AttendanceCheckType | "ALL">("CHECK_IN");
   const [page, setPage] = useState(1);
   const [correcting, setCorrecting] = useState<{ record: AttendanceObject; to: AttendanceStatus } | null>(null);
@@ -107,21 +109,27 @@ export default function AttendancePage() {
   const { data, isLoading, isError, refetch } = useAttendance({
     ...(day ? { date: day, limit: 300 } : { page, limit: PAGE_SIZE }),
     ...(checkType !== "ALL" && { checkType }),
+    // All dates are paged, so ask the server for late ones; one day is filtered here.
+    ...(!day && status === "LATE" && { late: true }),
   });
   const all = useMemo(() => data?.data ?? [], [data]);
   const counts = useMemo(() => {
-    const c: Record<string, number> = { ALL: all.length, ACCEPTED: 0, FLAGGED: 0, REJECTED: 0, CORRECTED: 0 };
-    for (const r of all) c[r.status] = (c[r.status] ?? 0) + 1;
+    const c: Record<string, number> = { ALL: all.length, ACCEPTED: 0, FLAGGED: 0, REJECTED: 0, CORRECTED: 0, LATE: 0 };
+    for (const r of all) {
+      c[r.status] = (c[r.status] ?? 0) + 1;
+      if (r.isLate) c.LATE++;
+    }
     return c;
   }, [all]);
-  const records = status === "ALL" ? all : all.filter((r) => r.status === status);
+  const records = status === "ALL" ? all : status === "LATE" ? all.filter((r) => r.isLate) : all.filter((r) => r.status === status);
   const totalPages = day ? 1 : data?.totalPages ?? 1;
 
-  const SEGMENTS: { key: AttendanceStatus | "ALL"; label: string; dot: string }[] = [
+  const SEGMENTS: { key: AttendanceStatus | "ALL" | "LATE"; label: string; dot: string }[] = [
     { key: "ALL", label: "All", dot: "bg-foreground" },
     { key: "ACCEPTED", label: "Accepted", dot: "bg-success" },
     { key: "FLAGGED", label: "Flagged", dot: "bg-warning" },
     { key: "REJECTED", label: "Rejected", dot: "bg-danger" },
+    { key: "LATE", label: `Late (after ${fmtClock(settings.lateAfter)})`, dot: "bg-info" },
   ];
 
   return (
@@ -148,7 +156,7 @@ export default function AttendancePage() {
       />
 
       {/* Status segments */}
-      <div role="tablist" aria-label="Filter by status" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+      <div role="tablist" aria-label="Filter by status" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
         {SEGMENTS.map((s) => {
           const on = status === s.key;
           return (
@@ -156,14 +164,14 @@ export default function AttendancePage() {
               key={s.key}
               role="tab"
               aria-selected={on}
-              onClick={() => setStatus(s.key)}
+              onClick={() => { setStatus(s.key); setPage(1); }}
               className={cn(
                 "flex flex-col gap-1.5 rounded-xl border bg-card px-4 py-3.5 text-left transition-colors",
                 on ? "border-primary ring-[3px] ring-ring/20" : "hover:border-input"
               )}
             >
               <span className="flex items-center gap-1.5 text-[13px] text-secondary-foreground"><span className={cn("h-2 w-2 rounded-full", s.dot)} />{s.label}</span>
-              <span className="font-mono text-2xl font-medium tracking-[-0.02em] tabular">{isLoading ? "–" : counts[s.key] ?? 0}</span>
+              <span className="font-mono text-2xl font-medium tracking-[-0.02em] tabular">{isLoading ? "–" : s.key === "LATE" && !day ? (status === "LATE" ? data?.total ?? "–" : "–") : counts[s.key] ?? 0}</span>
             </button>
           );
         })}
@@ -230,7 +238,10 @@ export default function AttendancePage() {
                     </td>
                     {!day && <td className="px-4 py-3 text-secondary-foreground">{fmtDate(r.date, { weekday: "short", day: "numeric", month: "short" })}</td>}
                     <td className="px-4 py-3 text-secondary-foreground">{r.checkType === "CHECK_IN" ? "In" : "Out"}</td>
-                    <td className="px-4 py-3 font-mono text-[13px] tabular">{fmtTime(r.submittedAt)}</td>
+                    <td className="px-4 py-3 font-mono text-[13px] tabular">
+                      {fmtTime(r.submittedAt)}
+                      {r.isLate && <span className="ml-2 rounded-full bg-info-soft px-2 py-0.5 font-sans text-[11px] font-medium text-info-foreground">Late</span>}
+                    </td>
                     <td className={cn("px-4 py-3 font-mono text-[13px] tabular", r.withinGeofence === false && "text-danger-foreground")}>{fmtMeters(r.distanceFromOffice)}</td>
                     <td className={cn("px-4 py-3 font-mono text-[13px] tabular", poor && "text-warning-foreground")}>
                       {r.locationAccuracy !== undefined ? `±${Math.round(r.locationAccuracy)} m` : "—"}
@@ -260,6 +271,10 @@ export default function AttendancePage() {
           <span className="font-medium text-warning-foreground">Flagged</span>: the intern was inside the office zone, but their phone&apos;s GPS
           signal was weak (worse than {POOR_ACCURACY_METERS} m), so the location is less exact. Most of the time they are at work.
           Accept it to count the day towards their stipend.
+        </p>
+        <p>
+          <span className="font-medium text-info-foreground">Late</span>: checked in after {fmtClock(settings.lateAfter)}. The day still counts towards the stipend.{" "}
+          {isHR && <Link href="/configuration?tab=face" className="text-primary hover:underline">Change the time</Link>}
         </p>
       </div>
 

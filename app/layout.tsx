@@ -26,7 +26,7 @@ export const metadata: Metadata = {
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
     ],
     shortcut: "/favicon.png",
-    apple: "/icon-192.png",
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
   },
 };
 

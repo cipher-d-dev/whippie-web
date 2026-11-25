@@ -1,6 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { fmtClock } from "@/lib/utils/format";
 import { useSettings, useUpdateSettings } from "@/features/settings/hooks";
 import { Section } from "@/components/shared/PageHeader";
 import { cn } from "@/lib/utils/cn";
@@ -20,6 +25,7 @@ export function FaceCheckManager() {
 
   return (
     <div className="space-y-6">
+      <LateTime />
       <Section title="Face check at check-in" bodyClassName="space-y-4 p-5">
         <p className="text-sm text-muted-foreground">
           Interns take a quick selfie when they check in. It&apos;s compared with the face photo you approved, so nobody can check in for a friend.
@@ -63,4 +69,41 @@ export function FaceCheckManager() {
       </Section>
     </div>
   );
+}
+
+/** The time after which a check-in is labelled Late. */
+function LateTime() {
+  const { settings } = useSettings();
+  const save = useUpdateSettings();
+  const [value, setValue] = useState(settings.lateAfter);
+  useEffect(() => setValue(settings.lateAfter), [settings.lateAfter]);
+  const changed = value && value !== settings.lateAfter;
+
+  return (
+    <Section title="Late check-ins" bodyClassName="space-y-4 p-5">
+      <p className="text-sm text-muted-foreground">
+        Anyone who checks in after this time (Lagos time) is marked <strong className="font-medium text-foreground">Late</strong> on Attendance.
+        It&apos;s only a label: the day still counts towards their stipend, and it isn&apos;t flagged.
+      </p>
+      <form
+        className="flex flex-wrap items-end gap-3"
+        onSubmit={(e) => { e.preventDefault(); if (changed) save.mutate({ lateAfter: value }); }}
+      >
+        <div className="space-y-1.5">
+          <Label htmlFor="late-after">Late after</Label>
+          <Input id="late-after" type="time" step={60} value={value} onChange={(e) => setValue(e.target.value)} className="h-9 w-[140px]" />
+        </div>
+        <Button type="submit" disabled={!changed || save.isPending}>Save</Button>
+        <p className="pb-2 text-[13px] text-muted-foreground">
+          Now: check-ins from {fmtClock(nextMinute(settings.lateAfter))} are late.
+        </p>
+      </form>
+    </Section>
+  );
+}
+
+function nextMinute(hhmm: string) {
+  const [h, m] = hhmm.split(":").map(Number);
+  const t = (h * 60 + m + 1) % 1440;
+  return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 }
