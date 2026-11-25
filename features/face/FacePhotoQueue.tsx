@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, RotateCcw, ScanFace } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 import { useFacePhotos, useMissingFaces, useReviewFace } from "./hooks";
 import type { FacePhotoRow } from "./api";
 import { AuthImage } from "@/components/face/AuthImage";
@@ -17,12 +18,41 @@ const REASONS = ["Face is too dark", "Face is blurred", "Not the same person we 
 
 /** Face photos waiting for HR. Approve, or ask for a retake with a reason. */
 export function FacePhotoQueue() {
-  const { data, isLoading } = useFacePhotos("PENDING");
+  const [view, setView] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
+  const { data, isLoading, isError, error, refetch, isFetching } = useFacePhotos(view);
   const { data: missing } = useMissingFaces();
   const review = useReviewFace();
   const [retake, setRetake] = useState<FacePhotoRow | null>(null);
   const [reason, setReason] = useState("");
   const rows = data ?? [];
+
+  const filter = (
+    <div role="tablist" aria-label="Which photos" className="flex w-fit rounded-lg border bg-card p-0.5 text-[13px] font-medium">
+      {([["PENDING", "Waiting"], ["APPROVED", "Approved"], ["REJECTED", "Retake asked"]] as const).map(([k, label]) => (
+        <button
+          key={k}
+          role="tab"
+          aria-selected={view === k}
+          onClick={() => setView(k)}
+          className={cn("h-8 rounded-md px-3", view === k ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground")}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (isError) {
+    return (
+      <>
+        {filter}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-danger/30 bg-danger-soft px-5 py-4 text-sm text-danger-foreground">
+          <span>Couldn&apos;t load face photos{error?.message ? `: ${error.message}` : "."}</span>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>Try again</Button>
+        </div>
+      </>
+    );
+  }
 
   if (isLoading) return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-80 rounded-xl" />)}</div>;
 
@@ -46,10 +76,11 @@ export function FacePhotoQueue() {
   if (rows.length === 0) {
     return (
       <>
+      {filter}
       {missingList}
       <div className="flex flex-col items-center rounded-xl border border-dashed py-16 text-center">
         <ScanFace className="h-7 w-7 text-muted-foreground" />
-        <p className="mt-3 text-sm font-medium">No face photos waiting</p>
+        <p className="mt-3 text-sm font-medium">{view === "PENDING" ? "No face photos waiting" : view === "APPROVED" ? "No approved face photos yet" : "No retakes asked for"}</p>
         <p className="mt-1 max-w-sm text-xs text-muted-foreground">When an intern sends their face photo for check-in, it appears here for you to approve.</p>
       </div>
       </>
@@ -58,9 +89,10 @@ export function FacePhotoQueue() {
 
   return (
     <>
+      {filter}
       {missingList}
       <p className="text-sm text-muted-foreground">
-        Approve the photo if it&apos;s clearly the person you met. Their check-in selfies are matched to it from then on.
+        {view !== "PENDING" ? (view === "APPROVED" ? "Check-in selfies are matched to these photos. Ask for a retake if one isn't right." : "These interns were asked for a new photo and haven't sent one yet.") : <>Approve the photo if it&apos;s clearly the person you met. Their check-in selfies are matched to it from then on.</>}
       </p>
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((r) => {
@@ -71,16 +103,24 @@ export function FacePhotoQueue() {
               <div className="space-y-3 p-4">
                 <div>
                   <Link href={`/interns/${r.internId}`} className="font-medium hover:underline">{name}</Link>
-                  <p className="text-xs text-muted-foreground">Sent {fmtDate(r.submittedAt)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Sent {fmtDate(r.submittedAt)}
+                    {r.status === "APPROVED" && r.reviewedAt && ` · approved ${fmtDate(r.reviewedAt)}`}
+                  </p>
+                  {r.status === "REJECTED" && r.rejectionReason && <p className="mt-1 text-xs text-warning-foreground">Asked: {r.rejectionReason}</p>}
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                {r.status !== "REJECTED" && (
+                <div className={cn("grid gap-2", r.status === "PENDING" ? "grid-cols-2" : "grid-cols-1")}>
                   <Button variant="outline" size="sm" onClick={() => { setRetake(r); setReason(""); }} disabled={review.isPending}>
                     <RotateCcw /> Retake
                   </Button>
+                  {r.status === "PENDING" && (
                   <Button size="sm" onClick={() => review.mutate({ internId: r.internId, action: "APPROVE" })} disabled={review.isPending}>
                     <Check /> Approve
                   </Button>
+                  )}
                 </div>
+                )}
               </div>
             </li>
           );
