@@ -205,3 +205,19 @@ export async function apiGetBlob(path: string): Promise<Blob> {
   if (!res.ok) throw new ApiError(res.status === 404 ? "Not found" : "Couldn't load the image", res.status, []);
   return res.blob();
 }
+
+// ─── Raw file upload (chat attachments) ───────────────────────────────────────
+// Sends the file's bytes as the body, so large files don't hit the JSON limit.
+
+export async function apiUploadFile<T>(path: string, file: Blob): Promise<T> {
+  const go = () =>
+    fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/octet-stream", ...(_accessToken ? { Authorization: `Bearer ${_accessToken}` } : {}) },
+      body: file,
+    });
+  let res = await go();
+  if (res.status === 401 && (await silentRefresh())) res = await go();
+  return handleResponse<T>(res);
+}

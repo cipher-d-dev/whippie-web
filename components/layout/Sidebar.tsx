@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  MessageCircle,
   LayoutDashboard,
   Users,
   CalendarDays,
@@ -23,12 +24,13 @@ import { cn } from "@/lib/utils/cn";
 import { useAuth } from "@/lib/auth/context";
 import { useUnreadCount } from "@/features/notifications/hooks";
 import { usePendingCount } from "@/features/users/hooks";
+import { useChatUnread } from "@/features/chat/hooks";
 import { WhippieLogo } from "@/components/shared/WhippieLogo";
 import { toast } from "sonner";
 
 // ─── Nav structure ────────────────────────────────────────────────────────────
 
-type BadgeKey = "notifications" | "verification";
+type BadgeKey = "notifications" | "verification" | "messages";
 
 interface NavItem {
   label: string;
@@ -48,6 +50,7 @@ const hrNav: NavGroup[] = [
     items: [
       { label: "Dashboard",     href: "/dashboard",     icon: LayoutDashboard },
       { label: "Notifications", href: "/notifications", icon: Bell, badge: "notifications" },
+      { label: "Messages",      href: "/messages",      icon: MessageCircle, badge: "messages" },
     ],
   },
   {
@@ -88,6 +91,7 @@ const supervisorNav: NavGroup[] = [
       { label: "Reports",       href: "/reports",            icon: FileText },
       { label: "Evaluations",   href: "/evaluations",        icon: Star },
       { label: "Documents",     href: "/documents/generate", icon: FolderOpen },
+      { label: "Messages",      href: "/messages",           icon: MessageCircle, badge: "messages" },
       { label: "Notifications", href: "/notifications",      icon: Bell, badge: "notifications" },
     ],
   },
@@ -109,11 +113,13 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const isHR = user?.role === "HR";
   const unreadCount  = useUnreadCount().data ?? 0;
   const pendingCount = usePendingCount().data ?? 0;
+  const chatUnread   = useChatUnread(!!user).data ?? 0;
 
   const groups = isHR ? hrNav : supervisorNav;
   const counts: Record<BadgeKey, number> = {
     notifications: unreadCount,
     verification: isHR ? pendingCount : 0,
+    messages: chatUnread,
   };
 
   const handleLogout = async () => {
@@ -173,7 +179,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                       {count > 0 && (
                         <span
                           className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 font-mono text-[11px] font-medium text-primary-foreground"
-                          aria-label={`${count} ${item.badge === "verification" ? "waiting" : "unread"}`}
+                          aria-label={`${count} ${item.badge === "verification" ? "waiting" : item.badge === "messages" ? "unread chats" : "unread"}`}
                         >
                           {count > 99 ? "99+" : count}
                         </span>

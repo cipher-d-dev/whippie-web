@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { useAuth } from "@/lib/auth/context";
+import { useChatConnection } from "@/features/chat/hooks";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 /**
@@ -13,6 +15,8 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuth();
+  useChatConnection(user?.id); // live chat updates and unread badges everywhere
 
   return (
     <div className="flex min-h-screen gap-2 bg-canvas p-0 lg:p-2">
