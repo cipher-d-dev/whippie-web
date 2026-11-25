@@ -12,8 +12,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   labels: { INTERNSHIP: "Intern", NYSC_IT: "Corps member" },
   stations: ["AIT", "Raypower", "Faaji", "DAAR Corporate"],
   stipend: { INTERNSHIP: { days: 20, amount: 40_000 }, NYSC_IT: { days: 16, amount: 50_000 } },
-  faceCheck: { enabled: false, threshold: 0.5 },
+  faceCheck: { enabled: true, threshold: 0.35 },
   allowance: { INTERNSHIP: false, NYSC_IT: true },
+  lateAfter: "10:00",
   updatedAt: null,
 };
 
@@ -22,7 +23,7 @@ export function useSettings() {
     queryKey: SETTINGS_KEY,
     queryFn: async () => {
       const s = (await getSettings()).data?.settings;
-      return s ? { ...DEFAULT_SETTINGS, ...s, stipend: s.stipend ?? DEFAULT_SETTINGS.stipend, faceCheck: s.faceCheck ?? DEFAULT_SETTINGS.faceCheck, allowance: s.allowance ?? DEFAULT_SETTINGS.allowance } : DEFAULT_SETTINGS;
+      return s ? { ...DEFAULT_SETTINGS, ...s, stipend: s.stipend ?? DEFAULT_SETTINGS.stipend, faceCheck: s.faceCheck ?? DEFAULT_SETTINGS.faceCheck, allowance: s.allowance ?? DEFAULT_SETTINGS.allowance, lateAfter: s.lateAfter || DEFAULT_SETTINGS.lateAfter } : DEFAULT_SETTINGS;
     },
     staleTime: 10 * 60 * 1000,
     retry: 1,

@@ -14,6 +14,8 @@ export interface StipendRow {
   daysWorked: number;
   flaggedDays: number;
   rejectedDays: number;
+  /** Days checked in late (already counted in days worked). */
+  lateDays?: number;
   fullAmount: number;
   suggestedAmount: number;
 }

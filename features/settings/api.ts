@@ -9,6 +9,8 @@ export interface AppSettings {
   stipend: { INTERNSHIP: StipendRule; NYSC_IT: StipendRule };
   faceCheck: { enabled: boolean; threshold: number };
   allowance: { INTERNSHIP: boolean; NYSC_IT: boolean };
+  /** Lagos time ("HH:MM") after which a check-in is marked Late. */
+  lateAfter: string;
   updatedAt: string | null;
 }
 
@@ -18,6 +20,7 @@ export type UpdateSettingsInput = {
   stipend?: { INTERNSHIP?: Partial<StipendRule>; NYSC_IT?: Partial<StipendRule> };
   faceCheck?: { enabled?: boolean; threshold?: number };
   allowance?: { INTERNSHIP?: boolean; NYSC_IT?: boolean };
+  lateAfter?: string;
 };
 
 export function getSettings() {

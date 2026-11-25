@@ -172,6 +172,8 @@ export interface AttendanceObject {
   withinGeofence?: boolean;
   locationAccuracy?: number;
   flagReasons?: string[];
+  /** Checked in after the late time in Configuration. A label only: the day still counts. */
+  isLate?: boolean;
   /** Face check: similarity to the approved photo (0–1), liveness, and whether a selfie was saved */
   faceScore?: number;
   livenessPassed?: boolean;

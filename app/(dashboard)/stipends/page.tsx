@@ -63,11 +63,11 @@ export default function StipendsPage() {
   }), [rows, overrides]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const exportCsv = () => {
-    const head = ["Name", "Type", "Department", "Supervisor", "On programme from", "To", "Days worked", "Days expected", "Flagged days (not counted)", "Full stipend", "Suggested", "To pay"];
+    const head = ["Name", "Type", "Department", "Supervisor", "On programme from", "To", "Days worked", "Days expected", "Flagged days (not counted)", "Late days (counted)", "Full stipend", "Suggested", "To pay"];
     const esc = (v: string | number | null) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const lines = rows.map((r) =>
       [`${r.firstName} ${r.lastName}`, typeLabel(r.internshipType), r.department, r.supervisor, r.activeFrom, r.activeTo,
-        r.daysWorked, r.expectedDays, r.flaggedDays, r.fullAmount, r.suggestedAmount, payOf(r)].map(esc).join(","));
+        r.daysWorked, r.expectedDays, r.flaggedDays, r.lateDays ?? 0, r.fullAmount, r.suggestedAmount, payOf(r)].map(esc).join(","));
     const csv = [head.map(esc).join(","), ...lines].join("\r\n");
     const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
     const a = Object.assign(document.createElement("a"), { href: url, download: `stipends-${period.from}-to-${period.to}.csv` });
@@ -161,6 +161,7 @@ export default function StipendsPage() {
                   <th className="px-4 py-2.5 font-medium">Department</th>
                   <th className="px-4 py-2.5 text-right font-medium">Days worked</th>
                   <th className="px-4 py-2.5 text-right font-medium">Flagged</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Late</th>
                   <th className="px-4 py-2.5 text-right font-medium">Suggested</th>
                   <th className="px-4 py-2.5 text-right font-medium">To pay (₦)</th>
                 </tr>
@@ -184,6 +185,7 @@ export default function StipendsPage() {
                         <span className="text-muted-foreground"> / {r.expectedDays}</span>
                       </td>
                       <td className="px-4 py-3 text-right font-mono tabular text-muted-foreground">{r.flaggedDays || "—"}</td>
+                      <td className="px-4 py-3 text-right font-mono tabular text-muted-foreground">{r.lateDays || "—"}</td>
                       <td className="px-4 py-3 text-right font-mono tabular">{naira(r.suggestedAmount)}</td>
                       <td className="px-4 py-2 text-right">
                         <Label htmlFor={`pay-${r.internId}`} className="sr-only">Amount to pay {r.firstName} {r.lastName}</Label>
@@ -205,7 +207,7 @@ export default function StipendsPage() {
       </Section>
 
       <p className="text-xs text-muted-foreground">
-        Days worked are days with an accepted or corrected check-in. Expected days and full amounts are set on{" "}
+        Days worked are days with an accepted or corrected check-in; late days are included. Expected days and full amounts are set on{" "}
         <Link href="/configuration?tab=stipends" className="text-primary hover:underline">Configuration</Link>{" "}
         ({report ? `${typeLabel("NYSC_IT")}: ${report.rules.NYSC_IT.days} days, ${naira(report.rules.NYSC_IT.amount)}; ${typeLabel("INTERNSHIP")}: ${report.rules.INTERNSHIP.days} days, ${naira(report.rules.INTERNSHIP.amount)}` : "…"}).
         Suggested = full stipend × days worked ÷ days expected, never more than the full stipend. Changes to &ldquo;To pay&rdquo; aren&apos;t saved; they go into the spreadsheet you download.
