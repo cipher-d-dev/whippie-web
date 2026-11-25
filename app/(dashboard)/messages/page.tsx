@@ -9,6 +9,7 @@ import { useChatModeration, useConversation, useConversations, useOpenConversati
 import type { ConversationSummary } from "@/features/chat/api";
 import { ConversationList } from "@/components/chat/ConversationList";
 import { ChatThread } from "@/components/chat/ChatThread";
+import { ChatInfo } from "@/components/chat/ChatInfo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 
@@ -22,6 +23,8 @@ function MessagesInner() {
   const { data: fetched, isError } = useConversation(selectedId && !fromList ? selectedId : null);
   const selected = fromList ?? fetched ?? null;
   const { open, pending } = useOpenConversation();
+  const [infoOpen, setInfoOpen] = useState(false);
+  useEffect(() => setInfoOpen(false), [selectedId]);
 
   const select = (id: string | null) => router.replace(id ? `/messages?c=${id}` : "/messages", { scroll: false });
 
@@ -48,15 +51,16 @@ function MessagesInner() {
           }}
         />
       </aside>
-      <section className={cn("min-w-0 flex-1", selectedId ? "block" : "hidden md:block")}>
+      <section className={cn("min-w-0 flex-1", selectedId && !infoOpen ? "block" : infoOpen ? "hidden xl:block" : "hidden md:block")}>
         {selected && selected.with.kind === "INTERN_PAIR" ? (
-          <ReportedChat key={selected.id} conversation={selected} me={me} onBack={() => select(null)} />
+          <ReportedChat key={selected.id} conversation={selected} me={me} onBack={() => select(null)} onOpenInfo={() => setInfoOpen(true)} />
         ) : selected ? (
           <ChatThread
             key={selected.id}
             conversation={selected}
             me={me}
             onBack={() => select(null)}
+            onOpenInfo={() => setInfoOpen(true)}
             headerExtra={internProfile && (
               <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex"><Link href={internProfile}>View profile</Link></Button>
             )}
@@ -69,12 +73,17 @@ function MessagesInner() {
           <Empty title="Your messages" body={user.role === "HR" ? "Pick a chat, or start one with an intern or a supervisor. Interns' chats are shared by the whole HR team." : "Pick a chat, or start one with someone in HR."} />
         )}
       </section>
+      {selected && infoOpen && (
+        <aside className="w-full shrink-0 border-l md:w-[360px]" aria-label="Chat info">
+          <ChatInfo conversationId={selected.id} onClose={() => setInfoOpen(false)} closeIcon="close" profileHref={internProfile} />
+        </aside>
+      )}
     </div>
   );
 }
 
 /** HR reading a private intern chat that one of them reported: read only, with the reports on top. */
-function ReportedChat({ conversation, me, onBack }: { conversation: ConversationSummary; me: { id: string; name: string; role: string }; onBack: () => void }) {
+function ReportedChat({ conversation, me, onBack, onOpenInfo }: { conversation: ConversationSummary; me: { id: string; name: string; role: string }; onBack: () => void; onOpenInfo: () => void }) {
   const [focus, setFocus] = useState<string | null>(null);
   const mod = useChatModeration(conversation.id);
   const reports = conversation.reports ?? [];
@@ -102,7 +111,7 @@ function ReportedChat({ conversation, me, onBack }: { conversation: Conversation
         <p className="mt-2 text-xs text-muted-foreground">Only the two interns can write here. You can read it because it was reported; they don&apos;t see that you&apos;ve opened it.</p>
       </div>
       <div className="min-h-0 flex-1">
-        <ChatThread conversation={conversation} me={me} onBack={onBack} focusMessageId={focus} footer="Read only: this is a private chat between two interns." />
+        <ChatThread conversation={conversation} me={me} onBack={onBack} onOpenInfo={onOpenInfo} focusMessageId={focus} footer="Read only: this is a private chat between two interns." />
       </div>
     </div>
   );

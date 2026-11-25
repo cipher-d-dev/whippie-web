@@ -81,9 +81,17 @@ export function useChatUnread(enabled = true) {
 
 // ─── One open chat ───────────────────────────────────────────────────────────
 
+/** What gets sent: text and/or files, a sticker, or a voice note. */
+export interface Outgoing {
+  text: string;
+  files: File[];
+  sticker?: string;
+  voice?: { file: File; duration: number };
+}
+
 export type ThreadMessage = ChatMessage & {
   /** Only on messages being sent from this device */
-  local?: { status: "sending" | "failed"; files: File[]; replyToId?: string };
+  local?: { status: "sending" | "failed"; files: File[]; replyToId?: string; out: Outgoing };
 };
 
 interface ThreadState {
@@ -262,43 +270,48 @@ export function useThread(
     return () => clearInterval(t);
   }, [live, conversationId]);
 
-  const deliver = useCallback(async (clientId: string, text: string, files: File[], replyToId?: string) => {
-    dispatch({ type: "local", clientId, patch: { local: { status: "sending", files, replyToId } } });
+  const deliver = useCallback(async (clientId: string, out: Outgoing, replyToId?: string) => {
+    const files = out.voice ? [out.voice.file] : out.files;
+    dispatch({ type: "local", clientId, patch: { local: { status: "sending", files, replyToId, out } } });
     try {
       const uploads: string[] = [];
-      for (const f of files) uploads.push((await api.uploadChatFile(f, f.name)).id);
-      const saved = await api.sendMessage(conversationId, { text, replyTo: replyToId, uploads, clientId });
+      if (out.voice) uploads.push((await api.uploadChatFile(out.voice.file, out.voice.file.name, { duration: out.voice.duration })).id);
+      else for (const f of out.files) uploads.push((await api.uploadChatFile(f, f.name)).id);
+      const saved = await api.sendMessage(conversationId, { text: out.text, replyTo: replyToId, uploads, sticker: out.sticker, clientId });
       dispatch({ type: "upsert", message: saved });
       void qc.invalidateQueries({ queryKey: ["chat", "conversations"] });
     } catch (e) {
-      dispatch({ type: "local", clientId, patch: { local: { status: "failed", files, replyToId } } });
+      dispatch({ type: "local", clientId, patch: { local: { status: "failed", files, replyToId, out } } });
       const msg = (e as Error).message;
       if (msg && !/fetch|network/i.test(msg)) toast.error(msg);
     }
   }, [conversationId, qc]);
 
-  const send = useCallback((text: string, files: File[], replyTo: ChatMessage | null) => {
+  const send = useCallback((out: Outgoing, replyTo: ChatMessage | null) => {
     const clientId = uid();
+    const files = out.voice ? [out.voice.file] : out.files;
     const optimistic: ThreadMessage = {
       id: `local-${clientId}`,
       conversationId,
       sender: { id: me.id, name: me.name, role: me.role },
-      text,
-      attachments: files.map((f, index) => ({ index, name: f.name, mime: f.type, size: f.size })),
+      text: out.text,
+      attachments: files.map((f, index) => ({ index, name: f.name, mime: f.type, size: f.size, duration: out.voice?.duration ?? null })),
+      sticker: out.sticker ?? null,
+      reactions: [],
       replyTo: replyTo ? { id: replyTo.id, senderName: replyTo.sender.name, text: replyTo.text || (replyTo.attachments[0]?.mime.startsWith("image/") ? "📷 Photo" : "📄 Document"), deleted: false } : null,
       clientId,
       editedAt: null,
       deletedAt: null,
       createdAt: new Date().toISOString(),
-      local: { status: "sending", files, replyToId: replyTo?.id },
+      local: { status: "sending", files, replyToId: replyTo?.id, out },
     };
     if (stateRef.current.windowed) void loadLatest();
     dispatch({ type: "upsert", message: optimistic });
-    void deliver(clientId, text, files, replyTo?.id);
+    void deliver(clientId, out, replyTo?.id);
   }, [conversationId, me, deliver, loadLatest]);
 
   const retry = useCallback((m: ThreadMessage) => {
-    if (m.local && m.clientId) void deliver(m.clientId, m.text, m.local.files, m.local.replyToId);
+    if (m.local && m.clientId) void deliver(m.clientId, m.local.out, m.local.replyToId);
   }, [deliver]);
 
   const discard = useCallback((m: ThreadMessage) => m.clientId && dispatch({ type: "remove", clientId: m.clientId }), []);
@@ -310,6 +323,23 @@ export function useThread(
       toast.error((e as Error).message || "Couldn't edit the message.");
     }
   }, []);
+
+  /** Toggle my reaction (shown straight away, corrected by the server's answer). */
+  const react = useCallback(async (m: ChatMessage, emoji: string) => {
+    const mine = m.reactions?.find((r) => r.users.some((u) => u.id === me.id));
+    const without = (m.reactions ?? []).map((r) => ({ ...r, users: r.users.filter((u) => u.id !== me.id) })).filter((r) => r.users.length);
+    const next = mine?.emoji === emoji ? without : (() => {
+      const g = without.find((r) => r.emoji === emoji);
+      return g ? without.map((r) => (r === g ? { ...r, users: [...r.users, { id: me.id, name: me.name }] } : r)) : [...without, { emoji, users: [{ id: me.id, name: me.name }] }];
+    })();
+    dispatch({ type: "upsert", message: { ...m, reactions: next } });
+    try {
+      dispatch({ type: "upsert", message: await api.reactToMessage(m.id, emoji) });
+    } catch (e) {
+      dispatch({ type: "upsert", message: m });
+      toast.error((e as Error).message || "Couldn't react.");
+    }
+  }, [me.id, me.name]);
 
   const remove = useCallback(async (m: ChatMessage) => {
     try {
@@ -343,8 +373,8 @@ export function useThread(
   }, [conversationId, qc]);
 
   return useMemo(() => ({
-    ...s, typing, live, loadLatest, loadOlder, ensureLoaded, send, retry, discard, edit, remove, notifyTyping, markRead,
-  }), [s, typing, live, loadLatest, loadOlder, ensureLoaded, send, retry, discard, edit, remove, notifyTyping, markRead]);
+    ...s, typing, live, loadLatest, loadOlder, ensureLoaded, send, retry, discard, edit, remove, react, notifyTyping, markRead,
+  }), [s, typing, live, loadLatest, loadOlder, ensureLoaded, send, retry, discard, edit, remove, react, notifyTyping, markRead]);
 }
 
 export function useOpenConversation() {
@@ -391,5 +421,15 @@ export function useChatModeration(conversationId: string) {
     report: (body: { reason: string; messageId?: string; block?: boolean }) =>
       run(() => api.reportConversation(conversationId, body), "Reported to HR. Thank you for telling us."),
     resolve: () => run(() => api.resolveReport(conversationId), "Marked as reviewed."),
+    mute: (period: "8h" | "1w" | "always" | "off") =>
+      run(() => api.muteConversation(conversationId, period), period === "off" ? "Notifications on." : "Notifications muted."),
   };
+}
+
+export function useChatInfo(conversationId: string | null) {
+  return useQuery({
+    queryKey: ["chat", "info", conversationId ?? ""],
+    queryFn: () => api.getChatInfo(conversationId!),
+    enabled: !!conversationId,
+  });
 }

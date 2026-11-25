@@ -1,7 +1,9 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ChevronDown, Loader2, MessageCircle, Wifi, WifiOff } from "lucide-react";
+import { ArrowLeft, BellOff, ChevronDown, Loader2, MessageCircle, Wifi, WifiOff } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { EmojiPanel } from "./EmojiPanel";
 import { Button } from "@/components/ui/button";
 import { PersonAvatar } from "@/components/shared/PersonAvatar";
 import { cn } from "@/lib/utils/cn";
@@ -30,6 +32,7 @@ export function ChatThread({
   footer,
   onReport,
   focusMessageId,
+  onOpenInfo,
 }: {
   conversation: ConversationSummary;
   me: ChatViewer;
@@ -41,6 +44,8 @@ export function ChatThread({
   onReport?: (m: ChatMessage) => void;
   /** Scroll to and highlight this message once loaded (e.g. the reported one) */
   focusMessageId?: string | null;
+  /** Tap the header (name/avatar) to see the chat info page */
+  onOpenInfo?: () => void;
 }) {
   const pair = conversation.with.kind === "INTERN_PAIR"; // HR reading two interns' reported chat
   const readOnly = conversation.canSend === false;
@@ -61,6 +66,7 @@ export function ChatThread({
   const [replyTo, setReplyTo] = useState<ThreadMessage | null>(null);
   const [editing, setEditing] = useState<ThreadMessage | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
+  const [reactingTo, setReactingTo] = useState<ThreadMessage | null>(null);
   const [atBottom, setAtBottom] = useState(true);
   const [unseenBelow, setUnseenBelow] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
@@ -190,18 +196,30 @@ export function ChatThread({
             <ArrowLeft className="h-5 w-5" />
           </button>
         )}
-        {w.kind === "HR" ? (
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground"><MessageCircle className="h-4 w-4" /></span>
-        ) : (
-          <PersonAvatar firstName={nm.firstName} lastName={nm.lastName} size="md" />
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-semibold">{w.name}</p>
-          <p className={cn("truncate text-[12.5px]", t.typing ? "text-primary" : "text-muted-foreground")}>
-            {status ?? w.subtitle ?? ""}
-            {!t.typing && status && w.subtitle ? ` · ${w.subtitle}` : ""}
-          </p>
-        </div>
+        <button
+          type="button"
+          onClick={onOpenInfo}
+          disabled={!onOpenInfo}
+          aria-label={onOpenInfo ? `Chat info: ${w.name}` : undefined}
+          className="-my-1 flex min-w-0 flex-1 items-center gap-3 rounded-lg py-1 text-left enabled:hover:bg-muted/50"
+        >
+          {w.kind === "HR" ? (
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><MessageCircle className="h-4 w-4" /></span>
+          ) : (
+            <PersonAvatar firstName={nm.firstName} lastName={nm.lastName} size="md" />
+          )}
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5">
+              <span className="truncate text-[15px] font-semibold">{w.name}</span>
+              {conversation.mutedUntil && <BellOff className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label="Muted" />}
+            </span>
+            <span className={cn("block truncate text-[12.5px]", t.typing ? "text-primary" : "text-muted-foreground")}>
+              {status ?? w.subtitle ?? ""}
+              {!t.typing && status && w.subtitle ? ` · ${w.subtitle}` : ""}
+              {!t.typing && onOpenInfo && !status && !w.subtitle ? "Tap for info" : ""}
+            </span>
+          </span>
+        </button>
         <span className="hidden items-center gap-1 text-[11px] text-muted-foreground sm:flex" title={t.live ? "Messages arrive instantly" : "Checking for new messages every few seconds"}>
           {t.live ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
         </span>
@@ -276,6 +294,9 @@ export function ChatThread({
                       onDiscard={t.discard}
                       onReport={onReport}
                       readOnly={readOnly}
+                      meId={me.id}
+                      onReact={(x, e) => void t.react(x, e)}
+                      onPickReaction={setReactingTo}
                     />
                   </Fragment>
                 );
@@ -317,11 +338,19 @@ export function ChatThread({
         editing={editing}
         onCancelReply={() => setReplyTo(null)}
         onCancelEdit={() => setEditing(null)}
-        onSend={(text, files) => { t.send(text, files, replyTo); setReplyTo(null); requestAnimationFrame(() => scrollToBottom(true)); }}
+        conversationId={conversation.id}
+        onSend={(out) => { t.send(out, replyTo); setReplyTo(null); requestAnimationFrame(() => scrollToBottom(true)); }}
         onSaveEdit={(m, text) => void t.edit(m, text)}
         onTyping={t.notifyTyping}
       />
       )}
+
+      <Dialog open={!!reactingTo} onOpenChange={(o) => !o && setReactingTo(null)}>
+        <DialogContent className="max-w-[min(92vw,420px)] overflow-hidden p-0">
+          <DialogTitle className="px-4 pt-4 text-base">React</DialogTitle>
+          <EmojiPanel compact onEmoji={(e) => { if (reactingTo) void t.react(reactingTo, e); setReactingTo(null); }} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
