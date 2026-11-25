@@ -12,7 +12,8 @@ import { getRealtimeToken, type ChatMessage } from "./api";
 export type ChatEvent =
   | { name: "message"; data: { type: "new" | "update"; message: ChatMessage } }
   | { name: "state"; data: { conversationId: string; userId: string; readAt: string | null; deliveredAt: string | null } }
-  | { name: "typing"; data: { conversationId: string; userId: string; name: string } };
+  | { name: "typing"; data: { conversationId: string; userId: string; name: string } }
+  | { name: "conversation"; data: { conversationId: string } };
 
 type Listener = (e: ChatEvent) => void;
 

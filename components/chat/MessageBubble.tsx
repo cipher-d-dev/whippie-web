@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useRef, useState } from "react";
-import { AlertCircle, Ban, Check, CheckCheck, Clock3, Copy, MoreHorizontal, Pencil, Reply, Trash2 } from "lucide-react";
+import { AlertCircle, Ban, Check, CheckCheck, Clock3, Copy, Flag, MoreHorizontal, Pencil, Reply, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -32,6 +32,10 @@ export interface BubbleProps {
   onDelete: (m: ThreadMessage) => void;
   onRetry: (m: ThreadMessage) => void;
   onDiscard: (m: ThreadMessage) => void;
+  /** Private intern chats: report someone else's message to HR */
+  onReport?: (m: ThreadMessage) => void;
+  /** Read-only view (HR reading a reported chat): no reply/edit/delete */
+  readOnly?: boolean;
 }
 
 function TickIcon({ tick }: { tick: Tick }) {
@@ -52,7 +56,7 @@ export const MessageBubble = memo(function MessageBubble(p: BubbleProps) {
 
   // Swipe right to reply (phones and touch screens)
   const onTouchStart = (e: React.TouchEvent) => {
-    if (deleted || local) return;
+    if (deleted || local || p.readOnly) return;
     const t = e.touches[0];
     start.current = { x: t.clientX, y: t.clientY, locked: null };
     // Long press opens the menu (reply, copy, edit, delete)
@@ -79,21 +83,24 @@ export const MessageBubble = memo(function MessageBubble(p: BubbleProps) {
   };
 
   const age = Date.now() - new Date(m.createdAt).getTime();
-  const canEdit = mine && !deleted && !local && !!m.text && age < EDIT_WINDOW_MS;
-  const canDelete = mine && !deleted && !local && age < DELETE_WINDOW_MS;
+  const canEdit = !p.readOnly && mine && !deleted && !local && !!m.text && age < EDIT_WINDOW_MS;
+  const canDelete = !p.readOnly && mine && !deleted && !local && age < DELETE_WINDOW_MS;
   const copy = () => navigator.clipboard?.writeText(m.text).then(() => toast.success("Copied"));
 
   const sideBtn = "hidden h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-0 hover:bg-muted hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 sm:flex";
   const actions = (
     <span className={cn("flex items-center", ours ? "flex-row-reverse" : "flex-row")}>
-      <button type="button" onClick={() => p.onReply(m)} aria-label="Reply" className={sideBtn}><Reply className="h-4 w-4" /></button>
+      {!p.readOnly && <button type="button" onClick={() => p.onReply(m)} aria-label="Reply" className={sideBtn}><Reply className="h-4 w-4" /></button>}
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
           <button type="button" aria-label="Message options" className={cn(sideBtn, "flex w-0 overflow-hidden sm:w-7", menuOpen && "sm:opacity-100")}><MoreHorizontal className="h-4 w-4" /></button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align={ours ? "end" : "start"} className="w-44">
-          <DropdownMenuItem onClick={() => p.onReply(m)}><Reply className="mr-2 h-4 w-4" /> Reply</DropdownMenuItem>
+          {!p.readOnly && <DropdownMenuItem onClick={() => p.onReply(m)}><Reply className="mr-2 h-4 w-4" /> Reply</DropdownMenuItem>}
           {m.text && <DropdownMenuItem onClick={copy}><Copy className="mr-2 h-4 w-4" /> Copy</DropdownMenuItem>}
+          {p.onReport && !mine && (
+            <DropdownMenuItem onClick={() => p.onReport!(m)} className="text-danger-foreground focus:text-danger-foreground"><Flag className="mr-2 h-4 w-4" /> Report to HR</DropdownMenuItem>
+          )}
           {canEdit && <DropdownMenuItem onClick={() => p.onEdit(m)}><Pencil className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>}
           {canDelete && (
             <DropdownMenuItem onClick={() => p.onDelete(m)} className="text-danger-foreground focus:text-danger-foreground">

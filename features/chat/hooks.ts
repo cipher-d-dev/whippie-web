@@ -33,6 +33,7 @@ export function useChatConnection(userId: string | undefined) {
       if (e.name === "typing") return;
       void qc.invalidateQueries({ queryKey: ["chat", "conversations"] });
       void qc.invalidateQueries({ queryKey: chatKeys.unread });
+      if (e.name === "conversation") void qc.invalidateQueries({ queryKey: chatKeys.conversation(e.data.conversationId) });
       if (e.name === "message" && e.data.type === "new" && e.data.message.sender.id !== userId) {
         clearTimeout(deliverTimer);
         deliverTimer = setTimeout(() => void api.markDelivered().catch(() => undefined), 800);
@@ -363,4 +364,32 @@ export function useOpenConversation() {
     }
   }, [qc]);
   return { open, pending };
+}
+
+/** Block/unblock and report (private intern chats), and HR marking a report reviewed. */
+export function useChatModeration(conversationId: string) {
+  const qc = useQueryClient();
+  const [pending, setPending] = useState(false);
+  const run = useCallback(async (fn: () => Promise<unknown>, ok: string) => {
+    setPending(true);
+    try {
+      await fn();
+      toast.success(ok);
+      void qc.invalidateQueries({ queryKey: ["chat"] });
+      return true;
+    } catch (e) {
+      toast.error((e as Error).message || "Couldn't do that. Try again.");
+      return false;
+    } finally {
+      setPending(false);
+    }
+  }, [qc]);
+  return {
+    pending,
+    block: () => run(() => api.setBlocked(conversationId, true), "Blocked. Neither of you can send messages now."),
+    unblock: () => run(() => api.setBlocked(conversationId, false), "Unblocked."),
+    report: (body: { reason: string; messageId?: string; block?: boolean }) =>
+      run(() => api.reportConversation(conversationId, body), "Reported to HR. Thank you for telling us."),
+    resolve: () => run(() => api.resolveReport(conversationId), "Marked as reviewed."),
+  };
 }

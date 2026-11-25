@@ -27,19 +27,30 @@ export function ChatThread({
   me,
   onBack,
   headerExtra,
+  footer,
+  onReport,
+  focusMessageId,
 }: {
   conversation: ConversationSummary;
   me: ChatViewer;
   onBack?: () => void;
   headerExtra?: React.ReactNode;
+  /** Shown instead of the message box when I can't send (blocked, or HR reading a reported chat) */
+  footer?: React.ReactNode;
+  /** Private intern chats: report a message */
+  onReport?: (m: ChatMessage) => void;
+  /** Scroll to and highlight this message once loaded (e.g. the reported one) */
+  focusMessageId?: string | null;
 }) {
+  const pair = conversation.with.kind === "INTERN_PAIR"; // HR reading two interns' reported chat
+  const readOnly = conversation.canSend === false;
   const internChat = conversation.kind === "INTERN_HR";
   const hrViewingIntern = internChat && me.role === "HR";
   const internUserId = conversation.with.userId;
 
   const isOurSide = useCallback(
-    (m: ChatMessage) => m.sender.id === me.id || (hrViewingIntern && m.sender.role === "HR"),
-    [me.id, hrViewingIntern],
+    (m: ChatMessage) => !pair && (m.sender.id === me.id || (hrViewingIntern && m.sender.role === "HR")),
+    [me.id, hrViewingIntern, pair],
   );
   const isOtherSideUser = useCallback(
     (userId: string) => (hrViewingIntern ? userId === internUserId : userId !== me.id),
@@ -148,6 +159,15 @@ export function ChatThread({
     });
   }, [t]);
 
+  // Jump to a message given from outside (e.g. the reported one), once loaded.
+  const focused = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusMessageId || t.loading || focused.current === focusMessageId) return;
+    focused.current = focusMessageId;
+    const timer = setTimeout(() => void jumpTo(focusMessageId), 300);
+    return () => clearTimeout(timer);
+  }, [focusMessageId, t.loading, jumpTo]);
+
   // ── Ticks ──────────────────────────────────────────────────────────────────
   const tickFor = (m: ThreadMessage): Tick | null => {
     if (!isOurSide(m) || m.deletedAt) return null;
@@ -227,7 +247,7 @@ export function ChatThread({
                 const ours = isOurSide(m);
                 const first = newDay || !prev || prev.sender.id !== m.sender.id || new Date(m.createdAt).getTime() - new Date(prev.createdAt).getTime() > GROUP_GAP_MS || m.id === firstUnreadId;
                 // Names: an intern sees which HR person wrote; HR sees which colleague wrote.
-                const showName = first && ((!ours && internChat && me.role === "INTERN") || (ours && m.sender.id !== me.id));
+                const showName = first && (pair || (!ours && internChat && me.role === "INTERN") || (ours && m.sender.id !== me.id));
                 return (
                   <Fragment key={m.clientId ?? m.id}>
                     {newDay && (
@@ -235,7 +255,7 @@ export function ChatThread({
                         <span className="rounded-lg bg-card px-3 py-1 text-[12px] font-medium text-muted-foreground shadow-sm ring-1 ring-border">{dayLabel(m.createdAt)}</span>
                       </div>
                     )}
-                    {m.id === firstUnreadId && unreadAtOpen > 0 && (
+                    {m.id === firstUnreadId && unreadAtOpen > 0 && !pair && (
                       <div id="unread-line" className="my-3 flex justify-center bg-primary/[0.06] py-1">
                         <span className="text-[12px] font-medium text-primary">{unreadAtOpen} unread message{unreadAtOpen === 1 ? "" : "s"}</span>
                       </div>
@@ -254,6 +274,8 @@ export function ChatThread({
                       onDelete={(x) => { if (confirm("Delete this message for everyone?")) void t.remove(x); }}
                       onRetry={t.retry}
                       onDiscard={t.discard}
+                      onReport={onReport}
+                      readOnly={readOnly}
                     />
                   </Fragment>
                 );
@@ -286,6 +308,9 @@ export function ChatThread({
         )}
       </div>
 
+      {readOnly ? (
+        <div className="border-t bg-background px-4 py-3 text-center text-[13px] text-muted-foreground">{footer ?? "You can't send messages in this chat."}</div>
+      ) : (
       <Composer
         ref={composer}
         replyTo={replyTo}
@@ -296,6 +321,7 @@ export function ChatThread({
         onSaveEdit={(m, text) => void t.edit(m, text)}
         onTyping={t.notifyTyping}
       />
+      )}
     </div>
   );
 }
