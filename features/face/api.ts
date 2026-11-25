@@ -26,3 +26,6 @@ export const getInternFace = (internId: string) => apiGet<ApiResponse<{ face: In
 
 export const reviewFace = (internId: string, body: { action: "APPROVE" } | { action: "REJECT"; reason: string }) =>
   apiPatch<ApiResponse<{ face: InternFace }>>(`/api/v1/face/${internId}`, body);
+
+export interface MissingFace { _id: string; firstName: string; lastName: string; internshipType?: string; department?: { name: string } | null }
+export const listMissingFaces = () => apiGet<ApiResponse<{ interns: MissingFace[] }>>("/api/v1/face/missing");

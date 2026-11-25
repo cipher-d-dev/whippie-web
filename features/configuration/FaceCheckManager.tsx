@@ -13,9 +13,9 @@ const LEVELS = [
 
 /** Turn the face check on/off and set how close a selfie must match. */
 export function FaceCheckManager() {
-  const { settings, isLoading } = useSettings();
+  const { settings } = useSettings();
   const save = useUpdateSettings();
-  const { enabled, threshold } = settings.faceCheck;
+  const { threshold } = settings.faceCheck;
   const nearest = LEVELS.reduce((a, b) => (Math.abs(b.value - threshold) < Math.abs(a.value - threshold) ? b : a));
 
   return (
@@ -25,25 +25,10 @@ export function FaceCheckManager() {
           Interns take a quick selfie when they check in. It&apos;s compared with the face photo you approved, so nobody can check in for a friend.
           A check-in that doesn&apos;t match is <strong className="font-medium text-foreground">flagged for you</strong>, never refused.
         </p>
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4">
-          <div>
-            <p className="text-sm font-medium">{enabled ? "On" : "Off"}</p>
-            <p className="text-xs text-muted-foreground">
-              {enabled ? "Interns must have a face photo to check in." : "Turning it on asks every intern for a face photo before their next check-in."}
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={enabled}
-            aria-label="Face check"
-            disabled={isLoading || save.isPending}
-            onClick={() => save.mutate({ faceCheck: { enabled: !enabled } })}
-            className={cn("relative h-7 w-12 rounded-full transition-colors disabled:opacity-50", enabled ? "bg-primary" : "bg-input")}
-          >
-            <span className={cn("absolute top-1 h-5 w-5 rounded-full bg-card shadow transition-all", enabled ? "left-6" : "left-1")} />
-          </button>
-        </div>
+        <p className="rounded-lg border bg-muted/40 p-4 text-sm">
+          <span className="font-medium">Required for every intern.</span>{" "}
+          <span className="text-muted-foreground">New interns take their face photo when they first open the app; existing interns are asked before they can check in again.</span>
+        </p>
         <p className="text-xs text-muted-foreground">
           Approve new face photos on <Link href="/verification?tab=face" className="text-primary hover:underline">Verification → Face photos</Link>.
           Photos are private and deleted 30 days after an internship ends.

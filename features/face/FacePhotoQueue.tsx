@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, RotateCcw, ScanFace } from "lucide-react";
-import { useFacePhotos, useReviewFace } from "./hooks";
+import { useFacePhotos, useMissingFaces, useReviewFace } from "./hooks";
 import type { FacePhotoRow } from "./api";
 import { AuthImage } from "@/components/face/AuthImage";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ const REASONS = ["Face is too dark", "Face is blurred", "Not the same person we 
 /** Face photos waiting for HR. Approve, or ask for a retake with a reason. */
 export function FacePhotoQueue() {
   const { data, isLoading } = useFacePhotos("PENDING");
+  const { data: missing } = useMissingFaces();
   const review = useReviewFace();
   const [retake, setRetake] = useState<FacePhotoRow | null>(null);
   const [reason, setReason] = useState("");
@@ -25,18 +26,39 @@ export function FacePhotoQueue() {
 
   if (isLoading) return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-80 rounded-xl" />)}</div>;
 
+  const missingList = missing && missing.length > 0 && (
+    <details className="rounded-xl border bg-card">
+      <summary className="cursor-pointer px-5 py-3.5 text-sm font-medium">
+        {missing.length} intern{missing.length === 1 ? " hasn't" : "s haven't"} sent a face photo yet
+      </summary>
+      <ul className="divide-y border-t">
+        {missing.map((m) => (
+          <li key={m._id} className="flex items-center justify-between px-5 py-2.5 text-sm">
+            <Link href={`/interns/${m._id}`} className="hover:underline">{m.firstName} {m.lastName}</Link>
+            <span className="text-xs text-muted-foreground">{m.department?.name ?? ""}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="border-t px-5 py-2.5 text-xs text-muted-foreground">They&apos;re asked for it the next time they open the app.</p>
+    </details>
+  );
+
   if (rows.length === 0) {
     return (
+      <>
+      {missingList}
       <div className="flex flex-col items-center rounded-xl border border-dashed py-16 text-center">
         <ScanFace className="h-7 w-7 text-muted-foreground" />
         <p className="mt-3 text-sm font-medium">No face photos waiting</p>
         <p className="mt-1 max-w-sm text-xs text-muted-foreground">When an intern sends their face photo for check-in, it appears here for you to approve.</p>
       </div>
+      </>
     );
   }
 
   return (
     <>
+      {missingList}
       <p className="text-sm text-muted-foreground">
         Approve the photo if it&apos;s clearly the person you met. Their check-in selfies are matched to it from then on.
       </p>

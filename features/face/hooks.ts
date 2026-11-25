@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getInternFace, listFacePhotos, reviewFace } from "./api";
+import { getInternFace, listFacePhotos, listMissingFaces, reviewFace } from "./api";
 
 export function useFacePhotos(status?: string) {
   return useQuery({
@@ -31,5 +31,13 @@ export function useReviewFace() {
       toast.success(v.action === "APPROVE" ? "Photo approved. Their check-ins will now be matched to it." : "Asked them for a new photo.");
     },
     onError: (err: Error) => toast.error(err.message || "Couldn't save. Try again."),
+  });
+}
+
+export function useMissingFaces() {
+  return useQuery({
+    queryKey: ["face", "missing"],
+    queryFn: async () => (await listMissingFaces()).data?.interns ?? [],
+    retry: 1,
   });
 }
