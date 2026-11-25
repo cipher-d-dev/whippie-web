@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Ban, Camera, CheckCheck, FileText, Loader2, MessageCircle, Plus, Search } from "lucide-react";
+import { Ban, Camera, CheckCheck, FileText, Flag, Loader2, MessageCircle, Plus, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,11 +55,14 @@ export function ConversationList({
   }, [data, search]);
   const interns = rows.filter((c) => c.kind === "INTERN_HR");
   const staff = rows.filter((c) => c.kind === "STAFF_DM");
+  const reported = rows.filter((c) => c.kind === "INTERN_DM" && c.with.kind === "INTERN_PAIR");
+  const privateChats = rows.filter((c) => c.kind === "INTERN_DM" && c.with.kind !== "INTERN_PAIR");
+  const sectionCount = [interns, staff, reported, privateChats].filter((l) => l.length).length;
 
   const section = (title: string, list: ConversationSummary[]) =>
     list.length > 0 && (
       <div>
-        {interns.length > 0 && staff.length > 0 && <p className="px-4 pb-1 pt-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{title}</p>}
+        {sectionCount > 1 && <p className="px-4 pb-1 pt-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{title}</p>}
         <ul>
           {list.map((c) => {
             const nm = initials(c.with.name);
@@ -72,7 +75,11 @@ export function ConversationList({
                   aria-current={active ? "true" : undefined}
                   className={cn("flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors", active ? "bg-primary/[0.07]" : "hover:bg-muted/60")}
                 >
-                  <PersonAvatar firstName={nm.firstName} lastName={nm.lastName} size="lg" />
+                  {c.with.kind === "HR" ? (
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><MessageCircle className="h-5 w-5" /></span>
+                  ) : (
+                    <PersonAvatar firstName={nm.firstName} lastName={nm.lastName} size="lg" />
+                  )}
                   <span className="min-w-0 flex-1 border-b border-border/60 pb-2.5 pt-0.5">
                     <span className="flex items-baseline justify-between gap-2">
                       <span className="truncate text-[15px] font-medium">{c.with.name}</span>
@@ -82,7 +89,11 @@ export function ConversationList({
                       <Preview c={c} meId={meId} />
                       {c.unread > 0 && <span className="min-w-5 shrink-0 rounded-full bg-primary px-1.5 text-center text-[11px] font-semibold leading-5 text-primary-foreground">{c.unread}</span>}
                     </span>
-                    {c.with.subtitle && <span className="mt-0.5 block truncate text-[11.5px] text-muted-foreground/80">{c.with.subtitle}</span>}
+                    {c.kind === "INTERN_DM" && c.with.kind === "INTERN_PAIR" ? (
+                      <span className={cn("mt-0.5 flex items-center gap-1 text-[11.5px] font-medium", c.reportResolvedAt ? "text-muted-foreground" : "text-danger-foreground")}>
+                        <Flag className="h-3 w-3" /> {c.reportResolvedAt ? "Report reviewed" : `Reported${c.reports?.length && c.reports.length > 1 ? ` ${c.reports.length} times` : ""}`}
+                      </span>
+                    ) : c.with.subtitle && <span className="mt-0.5 block truncate text-[11.5px] text-muted-foreground/80">{c.with.subtitle}</span>}
                   </span>
                 </button>
               </li>
@@ -122,8 +133,11 @@ export function ConversationList({
           </div>
         ) : (
           <>
-            {section("Interns", interns)}
+            {section("Reported", reported)}
+            {section("HR", interns.filter((c) => c.with.kind === "HR"))}
+            {section("Interns", interns.filter((c) => c.with.kind !== "HR"))}
             {section("Staff", staff)}
+            {section("Chats", privateChats)}
           </>
         )}
       </div>
@@ -157,7 +171,13 @@ function NewChatDialog({ open, onOpenChange, onPick }: { open: boolean; onOpenCh
       <DialogContent className="flex max-h-[80vh] flex-col sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New chat</DialogTitle>
-          <DialogDescription>{data && data.interns.length ? "Message an intern (the whole HR team shares intern chats) or a supervisor directly." : "Message someone in HR directly."}</DialogDescription>
+          <DialogDescription>
+            {data?.interns.length
+              ? "Message an intern (the whole HR team shares intern chats) or a supervisor directly."
+              : data?.people[0]?.role === "INTERN"
+                ? "Message another intern privately. Only the two of you can see the chat."
+                : "Message someone in HR directly."}
+          </DialogDescription>
         </DialogHeader>
         <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or department" aria-label="Search people" />
         <div className="-mx-2 min-h-0 flex-1 overflow-y-auto">
@@ -167,7 +187,7 @@ function NewChatDialog({ open, onOpenChange, onPick }: { open: boolean; onOpenCh
             <>
               {people.length > 0 && (
                 <>
-                  <p className="px-2 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{data?.interns.length ? "Supervisors" : "HR"}</p>
+                  <p className="px-2 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{data?.interns.length ? "Supervisors" : data?.people[0]?.role === "INTERN" ? "Interns" : "HR"}</p>
                   <ul>{people.map((p) => row(p.userId, p.name, p.subtitle, () => onPick({ userId: p.userId })))}</ul>
                 </>
               )}

@@ -3,10 +3,10 @@ import type { ApiResponse } from "@/types";
 
 const BASE = "/api/v1/chat";
 
-export type ConversationKind = "INTERN_HR" | "STAFF_DM";
+export type ConversationKind = "INTERN_HR" | "STAFF_DM" | "INTERN_DM";
 
 export interface ChatWith {
-  kind: "HR" | "INTERN" | "HR_PERSON" | "SUPERVISOR";
+  kind: "HR" | "INTERN" | "HR_PERSON" | "SUPERVISOR" | "INTERN_PERSON" | "INTERN_PAIR";
   name: string;
   subtitle?: string | null;
   internId?: string;
@@ -25,6 +25,13 @@ export interface ConversationSummary {
   myReadAt: string | null;
   otherReadAt: string | null;
   otherDeliveredAt: string | null;
+  /** Private intern chats: who blocked whom, from my side */
+  blocked?: { byMe: boolean; byThem: boolean };
+  /** False for HR reading a reported chat, or when blocked */
+  canSend?: boolean;
+  /** HR only: reports on a private intern chat */
+  reports?: { byId: string; byName: string; at: string; reason: string; messageId: string | null }[];
+  reportResolvedAt?: string | null;
   createdAt: string;
 }
 
@@ -101,3 +108,15 @@ export interface ChatContacts {
   people: { userId: string; name: string; subtitle: string; role: string }[];
 }
 export const listContacts = () => apiGet<ApiResponse<ChatContacts>>(`${BASE}/contacts`).then(unwrap);
+
+export const setBlocked = (id: string, blocked: boolean) =>
+  (blocked
+    ? apiPost<ApiResponse<{ conversation: ConversationSummary }>>(`${BASE}/conversations/${id}/block`)
+    : apiDelete<ApiResponse<{ conversation: ConversationSummary }>>(`${BASE}/conversations/${id}/block`)
+  ).then((r) => unwrap(r).conversation);
+
+export const reportConversation = (id: string, body: { reason: string; messageId?: string; block?: boolean }) =>
+  apiPost<ApiResponse<{ conversation: ConversationSummary }>>(`${BASE}/conversations/${id}/report`, body).then((r) => unwrap(r).conversation);
+
+export const resolveReport = (id: string) =>
+  apiPost<ApiResponse<{ conversation: ConversationSummary }>>(`${BASE}/conversations/${id}/report/resolve`).then((r) => unwrap(r).conversation);
