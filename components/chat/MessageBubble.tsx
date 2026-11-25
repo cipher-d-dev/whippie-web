@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useRef, useState } from "react";
-import { AlertCircle, Ban, Check, CheckCheck, Clock3, Copy, Flag, MoreHorizontal, Pencil, Reply, Trash2 } from "lucide-react";
+import { AlertCircle, Ban, Check, CheckCheck, Clock3, Copy, Flag, MoreHorizontal, Pencil, Plus, Reply, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -9,7 +9,9 @@ import {
 import { cn } from "@/lib/utils/cn";
 import type { ThreadMessage } from "@/features/chat/hooks";
 import { MessageAttachments } from "./Attachments";
-import { clock, linkify } from "./format";
+import { clock } from "./format";
+import { RichText, stripFormatting } from "./RichText";
+import { QUICK_REACTIONS, isEmojiOnly, stickerLabel } from "./emoji-data";
 
 const SWIPE_TRIGGER = 56;
 const EDIT_WINDOW_MS = 15 * 60_000;
@@ -36,6 +38,11 @@ export interface BubbleProps {
   onReport?: (m: ThreadMessage) => void;
   /** Read-only view (HR reading a reported chat): no reply/edit/delete */
   readOnly?: boolean;
+  meId: string;
+  /** Toggle my reaction */
+  onReact?: (m: ThreadMessage, emoji: string) => void;
+  /** Open the full emoji picker to react */
+  onPickReaction?: (m: ThreadMessage) => void;
 }
 
 function TickIcon({ tick }: { tick: Tick }) {
@@ -86,6 +93,10 @@ export const MessageBubble = memo(function MessageBubble(p: BubbleProps) {
   const canEdit = !p.readOnly && mine && !deleted && !local && !!m.text && age < EDIT_WINDOW_MS;
   const canDelete = !p.readOnly && mine && !deleted && !local && age < DELETE_WINDOW_MS;
   const copy = () => navigator.clipboard?.writeText(m.text).then(() => toast.success("Copied"));
+  const canReact = !p.readOnly && !deleted && !local && !!p.onReact;
+  const myReaction = m.reactions?.find((r) => r.users.some((u) => u.id === p.meId))?.emoji;
+  // Stickers and messages of only 1–3 emoji are shown large without a bubble, like WhatsApp.
+  const bare = !deleted && (!!m.sticker || (isEmojiOnly(m.text) && !m.attachments.length && !m.replyTo));
 
   const sideBtn = "hidden h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-0 hover:bg-muted hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 sm:flex";
   const actions = (
@@ -95,7 +106,28 @@ export const MessageBubble = memo(function MessageBubble(p: BubbleProps) {
         <DropdownMenuTrigger asChild>
           <button type="button" aria-label="Message options" className={cn(sideBtn, "flex w-0 overflow-hidden sm:w-7", menuOpen && "sm:opacity-100")}><MoreHorizontal className="h-4 w-4" /></button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align={ours ? "end" : "start"} className="w-44">
+        <DropdownMenuContent align={ours ? "end" : "start"} className="w-56">
+          {canReact && (
+            <div className="flex items-center justify-between gap-0.5 px-1 pb-1 pt-0.5" role="group" aria-label="React">
+              {QUICK_REACTIONS.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => { p.onReact!(m, e); setMenuOpen(false); }}
+                  aria-label={`React ${e}`}
+                  aria-pressed={myReaction === e}
+                  className={cn("flex h-8 w-8 items-center justify-center rounded-full text-xl transition-transform hover:scale-110", myReaction === e && "bg-primary/15")}
+                >
+                  {e}
+                </button>
+              ))}
+              {p.onPickReaction && (
+                <button type="button" onClick={() => { setMenuOpen(false); p.onPickReaction!(m); }} aria-label="More reactions" className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground hover:text-foreground">
+                  <Plus className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
           {!p.readOnly && <DropdownMenuItem onClick={() => p.onReply(m)}><Reply className="mr-2 h-4 w-4" /> Reply</DropdownMenuItem>}
           {m.text && <DropdownMenuItem onClick={copy}><Copy className="mr-2 h-4 w-4" /> Copy</DropdownMenuItem>}
           {p.onReport && !mine && (
@@ -132,7 +164,7 @@ export const MessageBubble = memo(function MessageBubble(p: BubbleProps) {
       </span>
 
       <div
-        className="relative flex max-w-[min(78%,560px)] items-center gap-1"
+        className={cn("relative flex max-w-[min(78%,560px)] items-center gap-1", (m.reactions?.length ?? 0) > 0 && "mb-3.5")}
         style={{ transform: dx ? `translateX(${dx}px)` : undefined, transition: dx ? "none" : "transform 160ms ease-out" }}
       >
         {/* desktop: actions beside the bubble on hover */}
@@ -140,15 +172,17 @@ export const MessageBubble = memo(function MessageBubble(p: BubbleProps) {
 
         <div
           className={cn(
-            "relative min-w-[84px] rounded-2xl px-3 pb-1.5 pt-2 text-[14.5px] leading-snug shadow-[0_1px_0.5px_rgba(0,0,0,0.08)] transition-colors",
-            ours ? "bg-primary text-primary-foreground" : "bg-card text-foreground ring-1 ring-border",
-            p.first && (ours ? "rounded-tr-md" : "rounded-tl-md"),
+            "relative min-w-[84px] rounded-2xl text-[14.5px] leading-snug transition-colors",
+            bare
+              ? "flex flex-col items-end bg-transparent p-0"
+              : cn("px-3 pb-1.5 pt-2 shadow-[0_1px_0.5px_rgba(0,0,0,0.08)]", ours ? "bg-primary text-primary-foreground" : "bg-card text-foreground ring-1 ring-border"),
+            !bare && p.first && (ours ? "rounded-tr-md" : "rounded-tl-md"),
             p.highlighted && (ours ? "ring-4 ring-primary/30" : "ring-4 ring-primary/25"),
             local?.status === "failed" && "opacity-80",
           )}
         >
           {p.showName && (
-            <p className={cn("mb-0.5 text-[12.5px] font-semibold", ours ? "text-white/85" : "text-primary")}>
+            <p className={cn("mb-0.5 self-start text-[12.5px] font-semibold", bare ? "text-primary" : ours ? "text-white/85" : "text-primary")}>
               {m.sender.name}{m.sender.role === "HR" ? " · HR" : ""}
             </p>
           )}
@@ -164,7 +198,7 @@ export const MessageBubble = memo(function MessageBubble(p: BubbleProps) {
             >
               <span className={cn("block text-[12px] font-semibold", ours ? "text-white" : "text-primary")}>{m.replyTo.senderName}</span>
               <span className={cn("line-clamp-2", ours ? "text-white/85" : "text-muted-foreground")}>
-                {m.replyTo.deleted ? <em>This message was deleted</em> : m.replyTo.text}
+                {m.replyTo.deleted ? <em>This message was deleted</em> : stripFormatting(m.replyTo.text)}
               </span>
             </button>
           )}
@@ -173,6 +207,11 @@ export const MessageBubble = memo(function MessageBubble(p: BubbleProps) {
             <p className={cn("flex items-center gap-1.5 italic", ours ? "text-white/80" : "text-muted-foreground")}>
               <Ban className="h-3.5 w-3.5" /> {mine ? "You deleted this message" : "This message was deleted"}
             </p>
+          ) : m.sticker ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`/stickers/${m.sticker}.svg`} alt={`Sticker: ${stickerLabel(m.sticker)}`} className="h-36 w-36 select-none" draggable={false} />
+          ) : bare ? (
+            <p className="text-[44px] leading-tight" aria-label={m.text}>{m.text}</p>
           ) : (
             <>
               {m.attachments.length > 0 && (
@@ -182,13 +221,7 @@ export const MessageBubble = memo(function MessageBubble(p: BubbleProps) {
               )}
               {m.text && (
                 <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                  {linkify(m.text).map((part, i) =>
-                    part.href ? (
-                      <a key={i} href={part.href} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">{part.text}</a>
-                    ) : (
-                      <span key={i}>{part.text}</span>
-                    ),
-                  )}
+                  <RichText text={m.text} />
                   {/* room for the time so it never overlaps the last line */}
                   <span aria-hidden className="inline-block w-[72px]" />
                 </p>
@@ -196,11 +229,38 @@ export const MessageBubble = memo(function MessageBubble(p: BubbleProps) {
             </>
           )}
 
-          <span className={cn("absolute bottom-1 right-2.5 flex items-center gap-1 text-[11px]", ours ? "text-white/75" : "text-muted-foreground", !m.text && !deleted && "relative bottom-0 right-0 mt-1 justify-end")}>
+          <span className={cn(
+            "flex items-center gap-1 text-[11px]",
+            bare
+              ? "mt-0.5 rounded-full bg-card/90 px-1.5 py-0.5 text-muted-foreground shadow-sm ring-1 ring-border"
+              : cn(ours ? "text-white/75" : "text-muted-foreground", !m.text && !deleted ? "mt-1 justify-end" : "absolute bottom-1 right-2.5"),
+          )}>
             {m.editedAt && !deleted && <span>edited</span>}
             <time dateTime={m.createdAt}>{clock(m.createdAt)}</time>
-            {p.tick && <TickIcon tick={p.tick} />}
+            {p.tick && <span className={cn(bare && p.tick === "read" && "[&_svg]:text-info")}><TickIcon tick={p.tick} /></span>}
           </span>
+
+          {(m.reactions?.length ?? 0) > 0 && (
+            <div className={cn("absolute -bottom-4 z-[1] flex gap-0.5", ours ? "right-2" : "left-2")}>
+              {m.reactions!.map((r) => {
+                const mineHere = r.users.some((u) => u.id === p.meId);
+                return (
+                  <button
+                    key={r.emoji}
+                    type="button"
+                    disabled={!canReact}
+                    onClick={() => p.onReact?.(m, r.emoji)}
+                    title={r.users.map((u) => (u.id === p.meId ? "You" : u.name)).join(", ")}
+                    aria-label={`${r.emoji} ${r.users.length}: ${r.users.map((u) => (u.id === p.meId ? "you" : u.name)).join(", ")}${mineHere ? ". Tap to remove yours" : ""}`}
+                    className={cn("flex h-6 items-center gap-0.5 rounded-full bg-card px-1.5 text-[13px] shadow-sm ring-1", mineHere ? "ring-primary/50" : "ring-border")}
+                  >
+                    <span>{r.emoji}</span>
+                    {r.users.length > 1 && <span className="text-[11px] font-medium text-muted-foreground">{r.users.length}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
         </div>
 

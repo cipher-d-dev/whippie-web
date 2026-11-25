@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Ban, Camera, CheckCheck, FileText, Flag, Loader2, MessageCircle, Plus, Search } from "lucide-react";
+import { Ban, BellOff, Camera, CheckCheck, FileText, Flag, Loader2, MessageCircle, Mic, Plus, Search, Sticker } from "lucide-react";
+import { stripFormatting } from "./RichText";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,12 +20,15 @@ function Preview({ c, meId }: { c: ConversationSummary; meId: string }) {
   const mine = lm.senderId === meId;
   const read = mine && c.otherReadAt && c.otherReadAt >= lm.at;
   const who = !mine && c.kind === "INTERN_HR" && c.with.kind === "INTERN" && lm.senderName && lm.senderId !== c.with.userId ? `${lm.senderName.split(" ")[0]}: ` : "";
-  const icon = lm.text.startsWith("📷") ? <Camera className="h-3.5 w-3.5 shrink-0" /> : lm.text.startsWith("📄") ? <FileText className="h-3.5 w-3.5 shrink-0" /> : null;
+  const icon = lm.text.startsWith("📷") ? <Camera className="h-3.5 w-3.5 shrink-0" />
+    : lm.text.startsWith("📄") ? <FileText className="h-3.5 w-3.5 shrink-0" />
+    : lm.text.startsWith("🎤") ? <Mic className="h-3.5 w-3.5 shrink-0" />
+    : lm.text.startsWith("✨") ? <Sticker className="h-3.5 w-3.5 shrink-0" /> : null;
   return (
     <span className="flex min-w-0 items-center gap-1">
       {mine && <CheckCheck className={cn("h-4 w-4 shrink-0", read ? "text-info" : "text-muted-foreground/70")} aria-label={read ? "Read" : "Sent"} />}
       {icon}
-      <span className="truncate">{who}{icon ? lm.text.slice(2).trim() : lm.text}</span>
+      <span className="truncate">{who}{icon ? [...lm.text].slice(1).join("").trim() : stripFormatting(lm.text)}</span>
     </span>
   );
 }
@@ -87,6 +91,7 @@ export function ConversationList({
                     </span>
                     <span className="mt-0.5 flex items-center justify-between gap-2 text-[13.5px] text-muted-foreground">
                       <Preview c={c} meId={meId} />
+                      {c.mutedUntil && <BellOff className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" aria-label="Muted" />}
                       {c.unread > 0 && <span className="min-w-5 shrink-0 rounded-full bg-primary px-1.5 text-center text-[11px] font-semibold leading-5 text-primary-foreground">{c.unread}</span>}
                     </span>
                     {c.kind === "INTERN_DM" && c.with.kind === "INTERN_PAIR" ? (

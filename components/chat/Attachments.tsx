@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { FileText, ImageOff, Loader2 } from "lucide-react";
-import { apiGetBlob } from "@/lib/api/client";
+import { useEffect, useRef, useState } from "react";
+import { FileText, ImageOff, Loader2, Pause, Play } from "lucide-react";
+import { apiGetBlob } from "@/features/chat/api";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils/cn";
 import { attachmentPath, type ChatAttachment } from "@/features/chat/api";
@@ -44,7 +44,9 @@ export function MessageAttachments({
   return (
     <div className="space-y-1">
       {attachments.map((a) =>
-        a.mime.startsWith("image/") ? (
+        a.mime.startsWith("audio/") ? (
+          <VoicePlayer key={a.index} messageId={messageId} a={a} local={localFiles?.[a.index]} mine={mine} />
+        ) : a.mime.startsWith("image/") ? (
           <ImageAttachment key={a.index} messageId={messageId} a={a} local={localFiles?.[a.index]} />
         ) : (
           <FileAttachment key={a.index} messageId={messageId} a={a} local={localFiles?.[a.index]} mine={mine} />
@@ -110,4 +112,88 @@ function FileAttachment({ messageId, a, local, mine }: { messageId: string; a: C
       </span>
     </button>
   );
+}
+
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+const SPEEDS = [1, 1.5, 2];
+
+/** A voice note: play/pause, a seek bar, time, and 1× / 1.5× / 2× speed. Loads only when played. */
+export function VoicePlayer({ messageId, a, local, mine }: { messageId: string; a: ChatAttachment; local?: File; mine: boolean }) {
+  const [want, setWant] = useState(!!local);
+  const { url, failed } = useBlobUrl(want && !local ? attachmentPath(messageId, a.index) : null, local);
+  const audio = useRef<HTMLAudioElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [pos, setPos] = useState(0);
+  const [dur, setDur] = useState(a.duration ?? 0);
+  const [speed, setSpeed] = useState(1);
+  const pendingPlay = useRef(false);
+
+  useEffect(() => {
+    if (url && pendingPlay.current && audio.current) { pendingPlay.current = false; void audio.current.play(); }
+  }, [url]);
+
+  const toggle = () => {
+    const el = audio.current;
+    if (!url) { pendingPlay.current = true; setWant(true); return; }
+    if (!el) return;
+    if (el.paused) void el.play(); else el.pause();
+  };
+  const loading = want && !url && !failed;
+
+  return (
+    <div className={cn("flex w-64 max-w-full items-center gap-2.5 py-0.5", failed && "opacity-60")}>
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={failed}
+        aria-label={playing ? "Pause voice message" : "Play voice message"}
+        className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", mine ? "bg-white/20 hover:bg-white/30" : "bg-primary/10 text-primary hover:bg-primary/15")}
+      >
+        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 translate-x-px" />}
+      </button>
+      <div className="min-w-0 flex-1">
+        <input
+          type="range"
+          min={0}
+          max={dur || 1}
+          step={0.1}
+          value={Math.min(pos, dur || 1)}
+          onChange={(e) => { const v = Number(e.target.value); setPos(v); if (audio.current) audio.current.currentTime = v; }}
+          aria-label="Position in voice message"
+          className={cn("h-1.5 w-full cursor-pointer appearance-none rounded-full", mine ? "accent-white bg-white/30" : "accent-[hsl(var(--primary))] bg-primary/15")}
+        />
+        <div className={cn("mt-1 flex justify-between text-[11px]", mine ? "text-white/75" : "text-muted-foreground")}>
+          <span className="font-mono tabular-nums">{failed ? "Unavailable" : mmss(playing || pos ? pos : dur)}</span>
+          <button
+            type="button"
+            onClick={() => { const n = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]; setSpeed(n); if (audio.current) audio.current.playbackRate = n; }}
+            className={cn("rounded-full px-1.5 font-semibold", mine ? "bg-white/20" : "bg-muted")}
+            aria-label={`Playback speed ${speed} times`}
+          >
+            {speed}×
+          </button>
+        </div>
+      </div>
+      {url && (
+        <audio
+          ref={audio}
+          src={url}
+          preload="metadata"
+          onPlay={() => { setPlaying(true); if (audio.current) audio.current.playbackRate = speed; }}
+          onPause={() => setPlaying(false)}
+          onEnded={() => { setPlaying(false); setPos(0); }}
+          onTimeUpdate={(e) => setPos(e.currentTarget.currentTime)}
+          onLoadedMetadata={(e) => { const d = e.currentTarget.duration; if (Number.isFinite(d) && d > 0) setDur(d); }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Just the private image (for grids and viewers). */
+export function PrivateImage({ messageId, index, alt, className }: { messageId: string; index: number; alt: string; className?: string }) {
+  const { url, failed } = useBlobUrl(attachmentPath(messageId, index));
+  if (failed) return <div className={cn("flex items-center justify-center bg-muted text-muted-foreground", className)}><ImageOff className="h-5 w-5" /></div>;
+  // eslint-disable-next-line @next/next/no-img-element
+  return url ? <img src={url} alt={alt} className={className} /> : <div className={cn("animate-pulse bg-muted", className)} />;
 }

@@ -32,10 +32,13 @@ export interface ConversationSummary {
   /** HR only: reports on a private intern chat */
   reports?: { byId: string; byName: string; at: string; reason: string; messageId: string | null }[];
   reportResolvedAt?: string | null;
+  /** No push notifications until then (null: not muted) */
+  mutedUntil?: string | null;
   createdAt: string;
 }
 
-export interface ChatAttachment { index: number; name: string; mime: string; size: number }
+export interface ChatAttachment { index: number; name: string; mime: string; size: number; /** voice notes, seconds */ duration?: number | null }
+export interface ChatReaction { emoji: string; users: { id: string; name: string }[] }
 
 export interface ChatMessage {
   id: string;
@@ -43,6 +46,8 @@ export interface ChatMessage {
   sender: { id: string; name: string; role: string | null };
   text: string;
   attachments: ChatAttachment[];
+  sticker?: string | null;
+  reactions?: ChatReaction[];
   replyTo: { id: string; senderName: string; text: string; deleted: boolean } | null;
   clientId: string | null;
   editedAt: string | null;
@@ -82,7 +87,7 @@ export const listMessages = (id: string, q: { before?: string; after?: string; a
   return apiGet<ApiResponse<MessagePage>>(`${BASE}/conversations/${id}/messages${qs.size ? `?${qs}` : ""}`).then(unwrap);
 };
 
-export const sendMessage = (id: string, body: { text: string; replyTo?: string; uploads?: string[]; clientId?: string }) =>
+export const sendMessage = (id: string, body: { text: string; replyTo?: string; uploads?: string[]; sticker?: string; clientId?: string }) =>
   apiPost<ApiResponse<{ message: ChatMessage }>>(`${BASE}/conversations/${id}/messages`, body).then((r) => unwrap(r).message);
 
 export const editMessage = (messageId: string, text: string) =>
@@ -98,8 +103,11 @@ export const getUnread = () => apiGet<ApiResponse<{ chats: number }>>(`${BASE}/u
 export const getRealtimeToken = () =>
   apiGet<ApiResponse<{ enabled: boolean; tokenRequest: unknown }>>(`${BASE}/realtime-token`).then(unwrap);
 
-export const uploadChatFile = (file: Blob, name: string) =>
-  apiUploadFile<ApiResponse<{ upload: UploadedFile }>>(`${BASE}/uploads?name=${encodeURIComponent(name)}`, file).then((r) => unwrap(r).upload);
+export const uploadChatFile = (file: Blob, name: string, voice?: { duration: number }) =>
+  apiUploadFile<ApiResponse<{ upload: UploadedFile }>>(
+    `${BASE}/uploads?name=${encodeURIComponent(name)}${voice ? `&kind=voice&duration=${Math.round(voice.duration)}` : ""}`,
+    file,
+  ).then((r) => unwrap(r).upload);
 
 export const attachmentPath = (messageId: string, index: number) => `${BASE}/messages/${messageId}/attachments/${index}`;
 
@@ -120,3 +128,32 @@ export const reportConversation = (id: string, body: { reason: string; messageId
 
 export const resolveReport = (id: string) =>
   apiPost<ApiResponse<{ conversation: ConversationSummary }>>(`${BASE}/conversations/${id}/report/resolve`).then((r) => unwrap(r).conversation);
+
+export const reactToMessage = (messageId: string, emoji: string) =>
+  apiPost<ApiResponse<{ message: ChatMessage }>>(`${BASE}/messages/${messageId}/reactions`, { emoji }).then((r) => unwrap(r).message);
+
+export const muteConversation = (id: string, period: "8h" | "1w" | "always" | "off") =>
+  apiPost<ApiResponse<{ conversation: ConversationSummary }>>(`${BASE}/conversations/${id}/mute`, { for: period }).then((r) => unwrap(r).conversation);
+
+export interface SharedFile { messageId: string; index: number; name: string; mime: string; size: number; duration: number | null; at: string }
+export interface ChatInfo {
+  conversation: ConversationSummary;
+  profile: {
+    name: string;
+    avatarUrl?: string | null;
+    department?: string | null;
+    station?: string | null;
+    internshipType?: string | null;
+    since?: string | null;
+    lastSeenAt?: string | null;
+    role?: string | null;
+    internId?: string | null;
+    team?: string[];
+  } | null;
+  media: SharedFile[];
+  docs: SharedFile[];
+  voice: SharedFile[];
+  links: { messageId: string; url: string; at: string }[];
+}
+export const getChatInfo = (id: string) => apiGet<ApiResponse<ChatInfo>>(`${BASE}/conversations/${id}/info`).then(unwrap);
+export { apiGetBlob } from "@/lib/api/client";
